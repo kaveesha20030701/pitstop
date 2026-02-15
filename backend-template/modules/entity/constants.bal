@@ -15,13 +15,13 @@
 // under the License.
 
 # client retry configuration for max retry attempts.
-const int CONSTANT_RETRY_COUNT = 3;
+const CONSTANT_RETRY_COUNT = 3;
 
 # client retry configuration for wait interval in seconds.
-const decimal CONSTANT_RETRY_INTERVAL = 3.0;
+const CONSTANT_RETRY_INTERVAL = 3.0d;
 
 # client retry configuration for interval increment in seconds.
-const float CONSTANT_RETRY_BACKOFF_FACTOR = 2.0;
+const CONSTANT_RETRY_BACKOFF_FACTOR = 2.0f;
 
 # client retry configuration for maximum wait interval in seconds.
-const decimal CONSTANT_RETRY_MAX_INTERVAL = 20.0;
+const CONSTANT_RETRY_MAX_INTERVAL = 20.0d;

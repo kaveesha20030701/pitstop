@@ -17,9 +17,6 @@
 import ballerina/http;
 import ballerina/log;
 
-public configurable string notificationTo = ?;
-public configurable string notificationFrom = ?;
-
 # Send an email alert via the email service.
 #
 # + payload - Payload for the email service

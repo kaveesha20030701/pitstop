@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import se_wiki.types;
+import pitstop.types;
 
 import ballerina/lang.regexp;
 import ballerina/log;
@@ -58,7 +58,7 @@ public isolated function hasSuggestedContentFromPinnedContents(string userEmail,
         }
     } else {
         log:printWarn("Failed to fetch suggestions from pinned contents for user ", result,
-            userEmail = userEmail);
+                userEmail = userEmail);
     }
     return false;
 }
@@ -100,7 +100,7 @@ isolated function getRelatedContents(string userEmail, string[] uniqueTags, stri
     }
 
     types:ContentResponse[] contents = check getContentsByTagsAndKeywords(
-        userEmail, uniqueTags, searchedKeywords, 'limit, 0);
+            userEmail, uniqueTags, searchedKeywords, 'limit, 0);
     log:printDebug("Related contents fetched", count = contents.length());
     return contents;
 }

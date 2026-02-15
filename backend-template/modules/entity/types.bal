@@ -27,7 +27,7 @@ type EmployeeServiceConfig record {|
 |};
 
 // Get employee graphQL service Responses.
-# [HR Entity] Return record for single employee.
+# Employee.
 public type Employee record {|
     # First Name
     string firstName;

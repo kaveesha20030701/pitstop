@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import se_wiki.constants;
+import pitstop.constants;
 
 import ballerina/constraint;
 import ballerina/sql;

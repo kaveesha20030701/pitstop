@@ -16,7 +16,7 @@
 
 import ballerina/http;
 
-configurable EmailServiceConfig emailServiceConfig = ?;
+public configurable EmailServiceConfig emailServiceConfig = ?;
 
 final http:Client emailClient = check new (emailServiceConfig.emailServiceEndpoint, {
     auth: {

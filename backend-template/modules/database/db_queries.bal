@@ -14,10 +14,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import se_wiki.entity;
-import se_wiki.types;
-import ballerina/sql;
+import pitstop.entity;
+import pitstop.types;
 
+import ballerina/sql;
 
 # Create a route path.
 #
@@ -760,11 +760,11 @@ isolated function getContentDetailsQuery() returns sql:ParameterizedQuery => `
         ) AS lastVerifiedBy,
         DATE_FORMAT(MAX(c.last_verified_on), '%Y-%m-%d %H:%i:%s') AS lastVerifiedDate
     FROM 
-        se_wiki.content AS c
+        content AS c
     JOIN 
-        se_wiki.section AS s ON s.section_id = c.section_id
+        section AS s ON s.section_id = c.section_id
     JOIN
-        se_wiki.route AS r ON r.route_id = s.route_id
+        route AS r ON r.route_id = s.route_id
     WHERE
         c.is_deleted = 0
         AND c.content_type != ${ROUTE_CONTENT_TYPE}
@@ -1477,7 +1477,8 @@ isolated function searchContentsQuery(ContentFilter filter) returns sql:Paramete
             query = sql:queryConcat(query, ` AND 1 = 0`);
         } else {
             // Convert to value list for IN clause
-            sql:Value[] values = from string d in trimmed select d;
+            sql:Value[] values = from string d in trimmed
+                select d;
 
             // Subquery to get the latest content by description
             sql:ParameterizedQuery latestSub = sql:queryConcat(`

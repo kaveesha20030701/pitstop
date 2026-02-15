@@ -19,7 +19,7 @@
 # + requiredRoles - Required Role list
 # + userRoles - Roles list, the user has
 # + return - Allow or not
-public isolated function checkPermission(string[] requiredRoles, string[] userRoles) returns boolean {
+public isolated function hasPermission(string[] requiredRoles, string[] userRoles) returns boolean {
     if userRoles.length() == 0 && requiredRoles.length() > 0 {
         return false;
     }

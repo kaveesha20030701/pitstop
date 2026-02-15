@@ -777,7 +777,7 @@ public final string commentNotificationTemplate = string `
                                                         font-weight: 500;
                                                       "
                                                     >
-                                                    Sales se_wiki Notification
+                                                    Sales pitstop Notification
                                                     </p>
                                                     <p
                                                       style="
@@ -1077,7 +1077,7 @@ public final string commentNotificationTemplate = string `
                               "
                             >
                               Best regards,<br />
-                              Sales se_wiki App Team
+                              Sales pitstop App Team
                             </p>
                           </td>
                         </tr>

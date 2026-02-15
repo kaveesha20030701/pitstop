@@ -15,7 +15,7 @@
 // under the License.
 
 # [Configurable] OAuth2 application configuration.
-type Oauth2Config record {|
+public type Oauth2Config record {|
     # The URL of the token endpoint
     string tokenUrl;
     # The client ID of the application
@@ -25,11 +25,15 @@ type Oauth2Config record {|
 |};
 
 # Email Service Configuration.
-type EmailServiceConfig record {|
+public type EmailServiceConfig record {|
     # Email Service Endpoint
     string emailServiceEndpoint;
     # Auth Configurations
     Oauth2Config oauthConfig;
+    # Recipient email(s) as string array
+    string[] to;
+    # Sender email
+    string 'from;
 |};
 
 # Payload of the email alerting service.

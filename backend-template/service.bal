@@ -14,13 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import se_wiki.analytics;
-import se_wiki.authorization;
-import se_wiki.constants;
-import se_wiki.database;
-import se_wiki.email;
-import se_wiki.entity;
-import se_wiki.types;
+import pitstop.analytics;
+import pitstop.authorization;
+import pitstop.constants;
+import pitstop.database;
+import pitstop.email;
+import pitstop.entity;
+import pitstop.types;
 
 import ballerina/http;
 import ballerina/log;
@@ -39,7 +39,7 @@ configurable types:AppInfo appInfo = {
 };
 
 @display {
-    label: "Sales Pitstop",
+    label: "Sales pitstop",
     id: "sales/pitstop"
 }
 service http:InterceptableService / on new http:Listener(9090) {
@@ -128,7 +128,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: constants:GET_USER_ROLE_ERROR
             };
         }
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -174,7 +174,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -281,11 +281,11 @@ service http:InterceptableService / on new http:Listener(9090) {
                 }
             };
         }
-        string emailSubject = string `[Sales-Pitstop][${contentResponse.description}] Comment Activity`;
+        string emailSubject = string `[Sales-pitstop][${contentResponse.description}] Comment Activity`;
 
         string|error content = email:bindKeyValues(email:commentNotificationTemplate,
             {
-            "EMAIL_BODY": "A new comment has been <b>added</b> to a content on the Sales Pitstop application.",
+            "EMAIL_BODY": "A new comment has been <b>added</b> to a content on the Sales pitstop application.",
             "COMMENT": commentPayload.comment,
             "USER_EMAIL": userEmail,
             "CONTENT_NAME": contentResponse.description,
@@ -304,8 +304,8 @@ service http:InterceptableService / on new http:Listener(9090) {
 
         error? emailError = email:sendEmail(
             {
-            to: [email:notificationTo],
-            'from: email:notificationFrom,
+            to: email:emailServiceConfig.to,
+            'from: email:emailServiceConfig.'from,
             subject: emailSubject,
             template: content
         });
@@ -472,7 +472,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        boolean isUser = !authorization:checkPermission([salesAdmin], userGroups);
+        boolean isUser = !authorization:hasPermission([salesAdmin], userGroups);
 
         string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
         if userEmail is error {
@@ -570,7 +570,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
                 body: {message: constants:UNAUTHORIZED_ACCESS_ERROR}
@@ -742,7 +742,7 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         // [Start] Custom Resource level authorization.
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -775,7 +775,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: constants:GET_USER_ROLE_ERROR
             };
         }
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -823,7 +823,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -865,7 +865,7 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         // [Start] Custom Resource level authorization.
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             return http:FORBIDDEN;
         }
         // [End] Custom Resource level authorization.
@@ -913,7 +913,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: constants:GET_USER_ROLE_ERROR
             };
         }
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -970,7 +970,7 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         // [Start] Custom Resource level authorization.
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1083,7 +1083,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1122,7 +1122,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1160,7 +1160,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1198,7 +1198,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1231,7 +1231,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1287,7 +1287,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1320,7 +1320,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1356,7 +1356,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1389,7 +1389,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1438,7 +1438,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        boolean isAdmin = authorization:checkPermission([salesAdmin], userGroups);
+        boolean isAdmin = authorization:hasPermission([salesAdmin], userGroups);
 
         types:CommentData|error? data = database:getCommentData(commentId, userEmail);
         string customError = "Error while fetching comment data";
@@ -1496,13 +1496,13 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string emailSubject = string `[Sales-Pitstop][${contentResponse.description}] Comment Activity`;
+        string emailSubject = string `[Sales-pitstop][${contentResponse.description}] Comment Activity`;
 
         string|error content = email:bindKeyValues(
             email:commentNotificationTemplate,
             {
             "EMAIL_BODY"
-                : "An <b>update</b> has been made to a comment for a content within the Sales Pitstop application.",
+                : "An <b>update</b> has been made to a comment for a content within the Sales pitstop application.",
             "COMMENT": commentPayload.comment,
             "USER_EMAIL": userEmail,
             "CONTENT_NAME": contentResponse.description,
@@ -1520,8 +1520,8 @@ service http:InterceptableService / on new http:Listener(9090) {
 
         error? emailErr = email:sendEmail(
             {
-            to: [email:notificationTo],
-            'from: email:notificationFrom,
+            to: email:emailServiceConfig.to,
+            'from: email:emailServiceConfig.'from,
             subject: emailSubject,
             template: content
         });
@@ -1573,7 +1573,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        boolean isAdmin = authorization:checkPermission([salesAdmin], userGroups);
+        boolean isAdmin = authorization:hasPermission([salesAdmin], userGroups);
 
         if commentDataResult is () {
             if !isAdmin {
@@ -1626,11 +1626,11 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string emailSubject = string `[Sales-Pitstop][${contentResponse.description}] Comment Activity`;
+        string emailSubject = string `[Sales-pitstop][${contentResponse.description}] Comment Activity`;
 
         string|error content = email:bindKeyValues(email:commentNotificationTemplate,
             {
-            "EMAIL_BODY": "This comment has been <b>deleted</b> from a content in the Sales Pitstop application.",
+            "EMAIL_BODY": "This comment has been <b>deleted</b> from a content in the Sales pitstop application.",
             "COMMENT": commentPayload.comment,
             "USER_EMAIL": userEmail,
             "CONTENT_NAME": contentResponse.description,
@@ -1648,8 +1648,8 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
         error? emailError = email:sendEmail(
             {
-            to: [email:notificationTo],
-            'from: email:notificationFrom,
+            to: email:emailServiceConfig.to,
+            'from: email:emailServiceConfig.'from,
             subject: emailSubject,
             template: content
         });
@@ -1675,7 +1675,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: constants:GET_USER_ROLE_ERROR
             };
         }
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1717,7 +1717,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: customerErr
             };
         }
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1777,7 +1777,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: customError}
             };
         }
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1832,7 +1832,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: customError}
             };
         }
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1932,7 +1932,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             return <http:InternalServerError>{body: {message: constants:GET_USER_ROLE_ERROR}};
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1969,7 +1969,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             return <http:InternalServerError>{body: {message: constants:GET_USER_ROLE_ERROR}};
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -2019,7 +2019,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             return <http:InternalServerError>{body: {message: constants:GET_USER_ROLE_ERROR}};
         }
 
-        if !authorization:checkPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([salesAdmin], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }

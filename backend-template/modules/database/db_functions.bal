@@ -14,9 +14,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import se_wiki.constants;
-import se_wiki.entity;
-import se_wiki.types;
+import pitstop.constants;
+import pitstop.entity;
+import pitstop.types;
 
 import ballerina/lang.regexp;
 import ballerina/log;
@@ -27,12 +27,7 @@ import ballerina/sql;
 # + route - Route details
 # + return - Sql error if any
 public isolated function addRoutePath(RoutePayload route) returns error? {
-    sql:ExecutionResult|sql:Error result = dbClient->execute(addRoutePathQuery(route));
-
-    if result is sql:Error {
-        log:printError(constants:ADD_ROUTE_ERROR, result);
-        return error(constants:ADD_ROUTE_ERROR);
-    }
+    _ = check dbClient->execute(addRoutePathQuery(route));
 }
 
 # Get all routes.
@@ -50,12 +45,7 @@ public isolated function getAllRoutesFlat() returns types:Route[]|error {
 # + content - Content details
 # + return - Error or nil
 public isolated function addContent(types:ContentPayload content, string createdBy) returns error? {
-    sql:ExecutionResult|sql:Error result = dbClient->execute(addContentQuery(content, createdBy));
-
-    if result is sql:Error {
-        log:printError(constants:ADD_CONTENT_ERROR, result);
-        return error(constants:ADD_CONTENT_ERROR);
-    }
+    _ = check dbClient->execute(addContentQuery(content, createdBy));
 }
 
 # Verify the presence of content.
@@ -104,12 +94,7 @@ public isolated function checkSectionExists(string? title = (), int? routeId = (
 # + comment - Comment details
 # + return - Error or nil
 public isolated function addComment(types:Comment comment) returns error? {
-    sql:ExecutionResult|sql:Error result = dbClient->execute(addCommentQuery(comment));
-
-    if result is sql:Error {
-        log:printError(constants:ADD_COMMENT_ERROR, result);
-        return error(constants:ADD_COMMENT_ERROR);
-    }
+    _ = check dbClient->execute(addCommentQuery(comment));
 }
 
 # Get all contents under a given section.
@@ -127,7 +112,7 @@ public isolated function getContentsBySectionId(boolean isUser, int sectionId, s
     stream<ContentResponse, sql:Error?> resultStream = dbClient->query(
     getContentsBySectionIdQuery(isUser, sectionId, userEmail, 'limit, 'offset));
 
-    error? e = from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
+    error? response = from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
             types:ContentResponse convertedContent = {...contentRest};
             if customContentTheme is string {
@@ -146,8 +131,8 @@ public isolated function getContentsBySectionId(boolean isUser, int sectionId, s
             contents.push(convertedContent);
         };
 
-    if e is error {
-        log:printError(constants:GET_CONTENTS_ERROR, e, sectionId = sectionId);
+    if response is error {
+        log:printError(constants:GET_CONTENTS_ERROR, response, sectionId = sectionId);
         return error(constants:GET_CONTENTS_ERROR, sectionId = sectionId);
     }
     return contents;
@@ -187,12 +172,7 @@ public isolated function deleteSectionById(int sectionId) returns int|error? {
 # + likeContent - Like details
 # + return - Error or nil
 public isolated function addLike(types:LikeContent likeContent) returns error? {
-    sql:ExecutionResult|sql:Error result = dbClient->execute(addLikeQuery(likeContent));
-
-    if result is sql:Error {
-        log:printError(constants:ADD_LIKE_ERROR, result);
-        return error(constants:ADD_LIKE_ERROR);
-    }
+    _ = check dbClient->execute(addLikeQuery(likeContent));
 }
 
 # Delete route path and corresponding sections of a given route ID.
@@ -276,7 +256,8 @@ public isolated function getPageDetails(string routePath) returns types:PageResp
 public isolated function updateContent(int contentId, types:UpdateContentPayload updateContentPayload, string userEmail)
     returns int|error? {
 
-    sql:ExecutionResult result = check dbClient->execute(updateContentQuery(contentId, updateContentPayload, userEmail));
+    sql:ExecutionResult result =
+        check dbClient->execute(updateContentQuery(contentId, updateContentPayload, userEmail));
     return result.affectedRowCount;
 }
 
@@ -319,7 +300,7 @@ public isolated function getSectionByRoutePath(int 'limit, int 'offset, string? 
 
     stream<Section, sql:Error?> resultStream = dbClient->query(getSectionByRoutePathQuery('limit, 'offset, routePath));
 
-    error? e = from Section {customSectionTheme, ...sectionRest} in resultStream
+    error? response = from Section {customSectionTheme, ...sectionRest} in resultStream
         do {
             types:Section convertedSection = {...sectionRest};
             if customSectionTheme is string {
@@ -333,8 +314,8 @@ public isolated function getSectionByRoutePath(int 'limit, int 'offset, string? 
             sections.push(convertedSection);
         };
 
-    if e is error {
-        log:printError(constants:GET_ALL_SECTION_IDS_ERROR, e, routePath = routePath);
+    if response is error {
+        log:printError(constants:GET_ALL_SECTION_IDS_ERROR, response, routePath = routePath);
         return error(constants:GET_ALL_SECTION_IDS_ERROR);
     }
     return sections;
@@ -346,12 +327,7 @@ public isolated function getSectionByRoutePath(int 'limit, int 'offset, string? 
 # + section - Section details
 # + return - Error or nil
 public isolated function addSection(types:SectionPayload section) returns error? {
-    sql:ExecutionResult|sql:Error result = dbClient->execute(addSectionQuery(section));
-
-    if result is sql:Error {
-        log:printError(constants:ADD_SECTION_ERROR, result);
-        return error(constants:ADD_SECTION_ERROR);
-    }
+    _ = check dbClient->execute(addSectionQuery(section));
 }
 
 # Get user ID using user email.
@@ -376,12 +352,7 @@ public isolated function getUserIdByUserEmail(string userEmail) returns int|erro
 # + user - User details
 # + return - Error or nil
 public isolated function addUser(entity:Employee user) returns error? {
-    sql:ExecutionResult|sql:Error result = dbClient->execute(addUserQuery(user));
-
-    if result is sql:Error {
-        log:printError(constants:ADD_USER_ERROR, result);
-        return error(constants:ADD_USER_ERROR);
-    }
+    _ = check dbClient->execute(addUserQuery(user));
 }
 
 # Get comments by content ID.
@@ -496,14 +467,8 @@ public isolated function reorderContents(types:ReorderContentPayload reorderPayl
 
     transaction {
         sql:ParameterizedQuery query = reorderContentsQuery(reorderPayload);
-        sql:ExecutionResult|sql:Error result = dbClient->execute(query);
-
-        if result is sql:Error {
-            rollback;
-            return error(constants:UPDATE_CONTENTS_ORDER_ERROR, result);
-        } else {
-            check commit;
-        }
+        _ = check dbClient->execute(query);
+        check commit;
     }
     return;
 }
@@ -513,21 +478,14 @@ public isolated function reorderContents(types:ReorderContentPayload reorderPayl
 # + reorderPayload - Reorder section payload
 # + return - Error or nil
 public isolated function reorderSections(types:ReorderSectionPayload reorderPayload) returns error? {
-
     if reorderPayload.reorderSections.length() == 0 {
         return;
     }
 
     transaction {
         sql:ParameterizedQuery query = reorderSectionsQuery(reorderPayload);
-        sql:ExecutionResult|sql:Error result = dbClient->execute(query);
-
-        if result is sql:Error {
-            rollback;
-            return error(constants:UPDATE_SECTIONS_ORDER_ERROR, result);
-        } else {
-            check commit;
-        }
+        _ = check dbClient->execute(query);
+        check commit;
     }
     return;
 }
@@ -543,14 +501,8 @@ public isolated function reorderRoutes(types:ReorderRoutesPayload reorderRoutesP
 
     transaction {
         sql:ParameterizedQuery query = reorderRoutesQuery(reorderRoutesPayload);
-        sql:ExecutionResult|sql:Error result = dbClient->execute(query);
-
-        if result is sql:Error {
-            rollback;
-            return error(constants:UPDATE_ROUTES_ORDER_ERROR, result);
-        } else {
-            check commit;
-        }
+        _ = check dbClient->execute(query);
+        check commit;
     }
 }
 
@@ -808,12 +760,7 @@ public isolated function pinContents(types:PinContents pinContents) returns int|
 # + pinContents - Pin details
 # + return - Error or nil
 public isolated function unpinContents(types:PinContents pinContents) returns error? {
-    sql:ExecutionResult|sql:Error result = dbClient->execute(unpinContentsQuery(pinContents));
-
-    if result is sql:Error {
-        log:printError(constants:PIN_CONTENT_ERROR, result);
-        return error(constants:PIN_CONTENT_ERROR);
-    }
+    _ = check dbClient->execute(unpinContentsQuery(pinContents));
 }
 
 # Get pinned content for a user.
@@ -1005,7 +952,7 @@ public isolated function getSuggestionsFromRecentActivity(string userEmail, stri
         string[] viewedContentNames, int 'limit, int 'offset) returns types:ContentResponse[]|error {
 
     log:printDebug("Fetched analytics data", searchedKeywords = searchedKeywords,
-        viewedContentNames = viewedContentNames);
+            viewedContentNames = viewedContentNames);
 
     if searchedKeywords.length() == 0 && viewedContentNames.length() == 0 {
         log:printDebug("No recent activity from analytics");

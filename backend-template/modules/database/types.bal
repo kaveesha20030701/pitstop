@@ -14,7 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import se_wiki.types;
+import pitstop.types;
+
 import ballerina/sql;
 
 # [Configurable] Database configuration.
@@ -27,11 +28,11 @@ type DatabaseConfig record {|
     string password;
     # Database Name
     string database;
-    # maxOpenConnections -   The maximum open connections
+    # Maximum open connections
     int maxOpenConnections = 10;
-    # maxConnectionLifeTime - The maximum lifetime of a connection
+    # Maximum lifetime of a connection
     decimal maxConnectionLifeTime = 180.0;
-    # minIdleConnections - The minimum idle time of a connection  
+    # Minimum idle time of a connection  
     int minIdleConnections = 5;
 |};
 
@@ -363,7 +364,7 @@ public type CustomerTestimonialUpdatePayload record {|
 # Content query mode enum.
 public enum ContentQueryMode {
     TEXT = "text",
-    TAGS = "tags", 
+    TAGS = "tags",
     TAGS_AND_KEYWORDS = "tagsAndKeywords",
     TRENDING = "trending"
 }

@@ -33,7 +33,10 @@ type AsgardeoJwt record {|
     string[] groups;
 |};
 
-type AppRoles record { 
-    string authorizedRoles;
+# Application roles.
+type AppRoles record {
+    # Admin role name
+    string adminRole;
+    # Employee role name
+    string employeeRole;
 };
-
