@@ -34,6 +34,22 @@ import { useAppDispatch} from "@slices/store";
 
 import { CustomStylingInfo, PageDialogBoxProps, validationPageSchema } from "../../types/types";
 
+const toValidCssStyle = (config?: CustomStylingInfo): React.CSSProperties => {
+  if (!config) return {};
+
+  const cssStyle: React.CSSProperties = {};
+
+  if (config.fontWeight) cssStyle.fontWeight = config.fontWeight;
+  if (config.fontStyle) cssStyle.fontStyle = config.fontStyle;
+  if (config.color) cssStyle.color = config.color;
+  if (config.background) cssStyle.background = config.background;
+  if (config.fontSize) cssStyle.fontSize = config.fontSize;
+  if (config.fontFamily) cssStyle.fontFamily = config.fontFamily;
+  if (config.underline) cssStyle.textDecoration = "underline";
+
+  return cssStyle;
+};
+
 const PageDialogBox = ({
   open,
   type,
@@ -209,7 +225,7 @@ const PageDialogBox = ({
                 value={formik.values.title}
                 inputProps={{
                   style: {
-                    ...(titleDefaultStyleConfigs || {}),
+                    ...toValidCssStyle(titleDefaultStyleConfigs),
                   },
                 }}
               />
@@ -262,7 +278,7 @@ const PageDialogBox = ({
                 inputProps={{
                   style: {
                     fontSize: 14,
-                    ...(descriptionDefaultStyleConfigs || {}),
+                    ...toValidCssStyle(descriptionDefaultStyleConfigs),
                   },
                 }}
               />
