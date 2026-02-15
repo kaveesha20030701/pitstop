@@ -43,6 +43,8 @@ const ALLOWED_TAGS = new Set([
   "a",
 ]);
 
+const VOID_ELEMENTS = new Set(["br", "hr", "img", "input"]);
+
 // Allowed CSS properties for inline styles
 const ALLOWED_STYLE_PROPS = new Set([
   "color",
@@ -150,6 +152,10 @@ export const safeHtmlParserOptions: HTMLReactParserOptions = {
           <>{domToReact(el.children as DOMNode[], safeHtmlParserOptions)}</>
         );
       }
+    }
+
+    if (VOID_ELEMENTS.has(tag)) {
+      return React.createElement(tag, props);
     }
 
     return React.createElement(
