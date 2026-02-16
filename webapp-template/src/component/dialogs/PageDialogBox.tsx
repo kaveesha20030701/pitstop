@@ -13,6 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import CloseIcon from "@mui/icons-material/Close";
 import DescriptionIcon from "@mui/icons-material/Description";
 import TitleIcon from "@mui/icons-material/Title";
@@ -73,6 +74,44 @@ const PageDialogBox = ({
     type === "add" ? "Create a new page for sales pitstop" : "Update page details";
   const orange100 = (theme.palette as any).orange?.[100] ?? theme.palette.secondary.main;
 
+  const handleAddPage = (values: typeof formik.values) => {
+    dispatch(
+      createNewRoute({
+        newContent: {
+          label: values.label,
+          title: values.title,
+          description: values.description !== "" ? values.description : undefined,
+          parentId,
+          customPageTheme: {
+            title: titleDefaultStyleConfigs,
+            description: descriptionDefaultStyleConfigs,
+          },
+          isVisible: values.isVisible,
+        },
+        routePath: window.location.pathname,
+      }),
+    );
+  };
+
+  const handleUpdatePage = (values: typeof formik.values) => {
+    dispatch(
+      updateRoute({
+        page: {
+          routeId: values.routeId,
+          title: values.title,
+          description: values.description,
+          menuItem: values.label,
+          customPageTheme: {
+            title: titleDefaultStyleConfigs,
+            description: descriptionDefaultStyleConfigs,
+          },
+          isVisible: values.isVisible,
+        },
+        routePath: window.location.pathname,
+      }),
+    );
+  };
+
   const formik = useFormik({
     initialValues: {
       routeId: initialValues?.routeId ? initialValues.routeId : 0,
@@ -83,43 +122,10 @@ const PageDialogBox = ({
     },
     validationSchema: validationPageSchema,
     onSubmit: (values) => {
-      switch (type) {
-        case "add":
-          dispatch(
-            createNewRoute({
-              newContent: {
-                label: values.label,
-                title: values.title,
-                description: values.description !== "" ? values.description : undefined,
-                parentId,
-                customPageTheme: {
-                  title: titleDefaultStyleConfigs,
-                  description: descriptionDefaultStyleConfigs,
-                },
-                isVisible: values.isVisible,
-              },
-              routePath: window.location.pathname,
-            }),
-          );
-          break;
-        case "update":
-          dispatch(
-            updateRoute({
-              page: {
-                routeId: values.routeId,
-                title: values.title,
-                description: values.description,
-                menuItem: values.label,
-                customPageTheme: {
-                  title: titleDefaultStyleConfigs,
-                  description: descriptionDefaultStyleConfigs,
-                },
-                isVisible: values.isVisible,
-              },
-              routePath: window.location.pathname,
-            }),
-          );
-          break;
+      if (type === "add") {
+        handleAddPage(values);
+      } else if (type === "update") {
+        handleUpdatePage(values);
       }
 
       handleClose();

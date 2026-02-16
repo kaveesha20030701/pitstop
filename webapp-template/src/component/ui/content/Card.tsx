@@ -13,78 +13,76 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  useAppDispatch,
-  useAppSelector,
-  RootState,
-} from "@slices/store";
-import { FILETYPE, Role, CONTENT_SUBTYPE } from "../../../utils/types";
-import IframeViewerDialogBox from "../../../component/dialogs/IframeViewerDialogBox";
-import UpdateContentDialogBox from "../../dialogs/ContentDialogBox";
-import ExpandedContentCard from "./ExpandedContent";
-import Card from "@mui/material/Card";
-import CardActions from "@mui/material/CardActions";
-import IconButton from "@mui/material/IconButton";
-import DeleteIcon from "@mui/icons-material/Delete";
-import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import FavoriteIcon from "@mui/icons-material/Favorite";
+import ArticleIcon from "@mui/icons-material/Article";
 import BrokenImageIcon from "@mui/icons-material/BrokenImage";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import DeleteIcon from "@mui/icons-material/Delete";
+import DescriptionIcon from "@mui/icons-material/Description";
+import FavoriteIcon from "@mui/icons-material/Favorite";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import LinkIcon from "@mui/icons-material/Link";
+import MenuBookIcon from "@mui/icons-material/MenuBook";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PushPinIcon from "@mui/icons-material/PushPin";
 import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
+import SlideshowIcon from "@mui/icons-material/Slideshow";
+import UpdateIcon from "@mui/icons-material/Update";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import wso2LogoWhite from "@assets/images/wso2-logo-white.png";
 import {
   Box,
+  Button,
   CardContent,
   CardHeader,
+  CardMedia,
+  Chip,
   Divider,
+  Fade,
   Grow,
   Menu,
   MenuItem,
+  Modal,
   Tooltip,
   Typography,
   useTheme,
-  CardMedia,
-  Chip,
-  Button,
-  Modal,
-  Fade
 } from "@mui/material";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
-import UpdateIcon from "@mui/icons-material/Update";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import LinkIcon from "@mui/icons-material/Link";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import DescriptionIcon from "@mui/icons-material/Description";
-import SlideshowIcon from "@mui/icons-material/Slideshow";
-import MenuBookIcon from "@mui/icons-material/MenuBook";
-import ArticleIcon from "@mui/icons-material/Article";
+import Card from "@mui/material/Card";
+import CardActions from "@mui/material/CardActions";
+import IconButton from "@mui/material/IconButton";
 import dayjs from "dayjs";
-import { CustomTheme, CustomButton } from "src/types/types";
+import { useLocation, useNavigate } from "react-router-dom";
+import { CustomButton, CustomTheme } from "src/types/types";
+
+import React, { useCallback, useEffect, useRef, useState } from "react";
+
+import wso2LogoWhite from "@assets/images/wso2-logo-white.png";
+import { GOOGLE_DOCS_DOMAIN, GOOGLE_DRIVE_DOMAIN } from "@config/constant";
+import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
+import { safeParseHtml } from "@utils/safeHtml";
+
+import DeleteDialogBox from "../../../component/dialogs/DeleteDialogBox";
+import IframeViewerDialogBox from "../../../component/dialogs/IframeViewerDialogBox";
+import { enqueueSnackbarMessage } from "../../../slices/commonSlice/common";
+import {
+  createCustomButton,
+  deleteCustomButton,
+  getCustomButtons,
+  updateCustomButton,
+} from "../../../slices/customButtonSlice/customButton";
 import {
   getAllComments,
   likeContent,
-  updateContent,
   pinContent,
   unpinContent,
+  updateContent,
 } from "../../../slices/pageSlice/page";
-import {
-  getCustomButtons,
-  createCustomButton,
-  updateCustomButton,
-  deleteCustomButton,
-} from "../../../slices/customButtonSlice/customButton";
-import { enqueueSnackbarMessage } from "../../../slices/commonSlice/common";
-import { getGoogleDocsDownloadUrl, getEmbedUrl } from "../../../utils/utils";
-import DeleteDialogBox from "../../../component/dialogs/DeleteDialogBox";
+import { CONTENT_SUBTYPE, FILETYPE, Role } from "../../../utils/types";
+import { getEmbedUrl, getGoogleDocsDownloadUrl } from "../../../utils/utils";
+import UpdateContentDialogBox from "../../dialogs/ContentDialogBox";
 import CustomButtonConfigDialog from "../../dialogs/CustomButtonConfigDialog";
-import { useNavigate, useLocation } from "react-router-dom";
-import { safeParseHtml } from "@utils/safeHtml";
-import { GOOGLE_DRIVE_DOMAIN, GOOGLE_DOCS_DOMAIN } from "@config/constant";
+import ExpandedContentCard from "./ExpandedContent";
 
 interface ComponentCardProps {
   contentId: number;
@@ -145,23 +143,18 @@ const ComponentCard = ({
   onContentUnpinned,
   isInPinnedSection,
 }: ComponentCardProps) => {
-  const authorizedRoles: Role[] = useAppSelector(
-    (state: RootState) => state.auth.roles
-  );
+  const authorizedRoles: Role[] = useAppSelector((state: RootState) => state.auth.roles);
   const location = useLocation();
   const [like, setLike] = useState(status);
   const [localLikesCount, setLocalLikesCount] = useState(initialLikesCount);
-  const pinnedContentIds = useAppSelector(
-    (state: RootState) => state.page.pinnedContentIds
-  );
+  const pinnedContentIds = useAppSelector((state: RootState) => state.page.pinnedContentIds);
   const isPinned = pinnedContentIds.includes(contentId);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [isCommentDrawerOpen, setIsCommentDrawerOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
-  const [isCustomButtonDialogOpen, setIsCustomButtonDialogOpen] =
-    useState(false);
+  const [isCustomButtonDialogOpen, setIsCustomButtonDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [imageError, setImageError] = useState(false);
   const isMenuItemsOpen = Boolean(anchorEl);
@@ -178,7 +171,6 @@ const ComponentCard = ({
     setIsInfoModalOpen((prev) => !prev);
   };
 
-
   const getButtonIcon = (iconName?: string) => {
     switch (iconName) {
       case "link":
@@ -193,15 +185,12 @@ const ComponentCard = ({
         return <MenuBookIcon />;
       case "article":
         return <ArticleIcon />;
-      case "none":
-        return null;
       default:
         return null;
     }
   };
 
   const handleCustomButtonAction = (button: CustomButton) => {
-    //------------------------------Matomo Custom Button event tracker---------------------------------//
     if (window.config?.IS_MATOMO_ENABLED) {
       _paq.push([
         "trackEvent",
@@ -210,8 +199,6 @@ const ComponentCard = ({
         `Button: ${button.label}`,
       ]);
     }
-    //----------------------------------------------------------------------------------------//
-
     switch (button.action) {
       case "link":
         if (button.actionValue) {
@@ -249,13 +236,11 @@ const ComponentCard = ({
     }
   };
   const customButtonsFromStore = useAppSelector(
-    (state: RootState) =>
-      state.customButton.buttonsByContentId[contentId.toString()] || []
+    (state: RootState) => state.customButton.buttonsByContentId[contentId.toString()] || [],
   );
 
-  const [localCustomButtons, setLocalCustomButtons] = useState<CustomButton[]>(
-    customButtonsFromStore
-  );
+  const [localCustomButtons, setLocalCustomButtons] =
+    useState<CustomButton[]>(customButtonsFromStore);
   const [localIsVisible, setLocalIsVisible] = useState(isVisible);
 
   useEffect(() => {
@@ -283,16 +268,12 @@ const ComponentCard = ({
 
     const originalButtonIds = customButtonsFromStore.map((btn) => btn.id);
     const newButtonIds = buttons.map((btn) => btn.id).filter((id) => id > 0);
-    const deletedButtonIds = originalButtonIds.filter(
-      (id) => !newButtonIds.includes(id)
-    );
+    const deletedButtonIds = originalButtonIds.filter((id) => !newButtonIds.includes(id));
 
     const newButtons = reorderedButtons.filter((btn) => btn.id < 0);
     const existingButtons = reorderedButtons.filter((btn) => btn.id > 0);
     const buttonsToUpdate = existingButtons.filter((btn) => {
-      const original = customButtonsFromStore.find(
-        (orig) => orig.id === btn.id
-      );
+      const original = customButtonsFromStore.find((orig) => orig.id === btn.id);
       return (
         original &&
         (original.label !== btn.label ||
@@ -313,9 +294,7 @@ const ComponentCard = ({
       hasOperations = true;
       operationType = "delete";
       for (const buttonId of deletedButtonIds) {
-        await dispatch(
-          deleteCustomButton({ buttonId, showNotification: false })
-        ).unwrap();
+        await dispatch(deleteCustomButton({ buttonId, showNotification: false })).unwrap();
       }
     }
 
@@ -337,18 +316,14 @@ const ComponentCard = ({
           isVisible: button.isVisible !== false,
         };
 
-        if (
-          !buttonToSave.contentId ||
-          !buttonToSave.action ||
-          !buttonToSave.actionValue?.trim()
-        ) {
+        if (!buttonToSave.contentId || !buttonToSave.action || !buttonToSave.actionValue?.trim()) {
           continue;
         }
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { id: _, ...newButtonData } = buttonToSave;
         await dispatch(
-          createCustomButton({ button: newButtonData, showNotification: false })
+          createCustomButton({ button: newButtonData, showNotification: false }),
         ).unwrap();
 
         if (index < newButtons.length - 1) {
@@ -373,15 +348,11 @@ const ComponentCard = ({
           isVisible: button.isVisible !== false,
         };
 
-        if (
-          !buttonToSave.contentId ||
-          !buttonToSave.action ||
-          !buttonToSave.actionValue?.trim()
-        ) {
+        if (!buttonToSave.contentId || !buttonToSave.action || !buttonToSave.actionValue?.trim()) {
           continue;
         }
         await dispatch(
-          updateCustomButton({ button: buttonToSave, showNotification: false })
+          updateCustomButton({ button: buttonToSave, showNotification: false }),
         ).unwrap();
       }
     }
@@ -421,7 +392,7 @@ const ComponentCard = ({
             vertical: "bottom",
             horizontal: "right",
           },
-        })
+        }),
       );
       setTimeout(() => {
         dispatch(getCustomButtons(contentId.toString()));
@@ -465,22 +436,16 @@ const ComponentCard = ({
     const urlSectionId = sectionIdParam ? parseInt(sectionIdParam, 10) : null;
 
     return {
-      shouldOpenComments:
-        contentId !== null && urlSectionId === sectionId && !urlProcessed,
+      shouldOpenComments: contentId !== null && urlSectionId === sectionId && !urlProcessed,
       contentId: contentId && !isNaN(contentId) ? contentId : null,
     };
   }, [sectionId, urlProcessed]);
 
   useEffect(() => {
     if (!isExpanded) {
-      const { shouldOpenComments, contentId: urlContentId } =
-        getCommentDialogFromUrl();
+      const { shouldOpenComments, contentId: urlContentId } = getCommentDialogFromUrl();
 
-      if (
-        shouldOpenComments &&
-        urlContentId === contentId &&
-        !urlCheckDone.current
-      ) {
+      if (shouldOpenComments && urlContentId === contentId && !urlCheckDone.current) {
         setIsCommentDrawerOpen(true);
         dispatch(getAllComments({ contentId }));
         urlCheckDone.current = true;
@@ -510,9 +475,7 @@ const ComponentCard = ({
   };
 
   const togglePin = () => {
-    const action = isPinned
-      ? unpinContent({ contentId })
-      : pinContent({ contentId });
+    const action = isPinned ? unpinContent({ contentId }) : pinContent({ contentId });
 
     dispatch(action)
       .unwrap()
@@ -541,7 +504,7 @@ const ComponentCard = ({
               vertical: "bottom",
               horizontal: "right",
             },
-          })
+          }),
         );
       });
   };
@@ -554,7 +517,7 @@ const ComponentCard = ({
         contentId,
         content: { isVisible: newVisibility },
         routePath: location.pathname,
-      })
+      }),
     )
       .unwrap()
       .catch(() => {
@@ -567,7 +530,7 @@ const ComponentCard = ({
               vertical: "bottom",
               horizontal: "right",
             },
-          })
+          }),
         );
       });
   };
@@ -588,25 +551,24 @@ const ComponentCard = ({
 
   const getEmbedContent = () => {
     const embedUrl = getEmbedUrl(contentType as FILETYPE, contentLink, contentSubtype);
-    
+
     return (
       <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
-      <iframe
-        title="Content Viewer"
-        src={embedUrl}
-        width={`${PREVIEW_W}px`}
-        height={`${PREVIEW_H}px`}
-        sandbox="allow-same-origin allow-scripts allow-presentation allow-popups"
-        style={{
-          ...(authorizedRoles.includes(Role.SALES_ADMIN) &&
-          !localIsVisible
-            ? {
-                opacity: 0.6,
-                filter: "grayscale(80%) blur(0.5px)",
-              }
-            : {}),
-        }}
-      /> 
+        <iframe
+          title="Content Viewer"
+          src={embedUrl}
+          width={`${PREVIEW_W}px`}
+          height={`${PREVIEW_H}px`}
+          sandbox="allow-same-origin allow-scripts allow-presentation allow-popups"
+          style={{
+            ...(authorizedRoles.includes(Role.SALES_ADMIN) && !localIsVisible
+              ? {
+                  opacity: 0.6,
+                  filter: "grayscale(80%) blur(0.5px)",
+                }
+              : {}),
+          }}
+        />
       </Box>
     );
   };
@@ -722,7 +684,10 @@ const ComponentCard = ({
             FILETYPE.Lms,
             FILETYPE.GSheet,
           ].includes(contentType as FILETYPE) &&
-            !(contentType === FILETYPE.External_Link && contentSubtype === CONTENT_SUBTYPE.Video )) || thumbnail) && (
+            !(
+              contentType === FILETYPE.External_Link && contentSubtype === CONTENT_SUBTYPE.Video
+            )) ||
+            thumbnail) && (
             <Box sx={{ position: "absolute", top: 12, right: 12, zIndex: 20 }}>
               <Tooltip title="Open preview" arrow>
                 <IconButton
@@ -763,8 +728,7 @@ const ComponentCard = ({
                 height="100%"
                 gap={0.5}
                 sx={{
-                  ...(authorizedRoles.includes(Role.SALES_ADMIN) &&
-                  !localIsVisible
+                  ...(authorizedRoles.includes(Role.SALES_ADMIN) && !localIsVisible
                     ? {
                         opacity: 0.7,
                         filter: "grayscale(80%)",
@@ -772,12 +736,7 @@ const ComponentCard = ({
                     : {}),
                 }}
               >
-                <img
-                  alt="logo"
-                  width="48"
-                  height="auto"
-                  src={wso2LogoWhite}
-                />
+                <img alt="logo" width="48" height="auto" src={wso2LogoWhite} />
                 <Typography
                   variant="caption"
                   sx={{
@@ -785,8 +744,7 @@ const ComponentCard = ({
                     textAlign: "center",
                     fontSize: 18,
                     fontWeight: 600,
-                    ...(authorizedRoles.includes(Role.SALES_ADMIN) &&
-                    !localIsVisible
+                    ...(authorizedRoles.includes(Role.SALES_ADMIN) && !localIsVisible
                       ? {
                           color: "rgba(255,255,255,0.6)",
                         }
@@ -805,8 +763,7 @@ const ComponentCard = ({
                 position: "relative",
                 width: "100%",
                 height: "100%",
-                ...(authorizedRoles.includes(Role.SALES_ADMIN) &&
-                !localIsVisible
+                ...(authorizedRoles.includes(Role.SALES_ADMIN) && !localIsVisible
                   ? {
                       "&::after": {
                         content: '"HIDDEN"',
@@ -836,16 +793,12 @@ const ComponentCard = ({
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                   filter:
-                    authorizedRoles.includes(Role.SALES_ADMIN) &&
-                    !localIsVisible
+                    authorizedRoles.includes(Role.SALES_ADMIN) && !localIsVisible
                       ? "blur(4px) grayscale(70%)"
                       : "blur(5px)",
                   transform: "scale(1.1)",
                   opacity:
-                    authorizedRoles.includes(Role.SALES_ADMIN) &&
-                    !localIsVisible
-                      ? 0.5
-                      : 0.7,
+                    authorizedRoles.includes(Role.SALES_ADMIN) && !localIsVisible ? 0.5 : 0.7,
                 }}
               />
               <Box
@@ -867,8 +820,7 @@ const ComponentCard = ({
                     width="100%"
                     sx={{
                       backgroundColor: "rgba(0,0,0,0.08)",
-                      ...(authorizedRoles.includes(Role.SALES_ADMIN) &&
-                      !localIsVisible
+                      ...(authorizedRoles.includes(Role.SALES_ADMIN) && !localIsVisible
                         ? {
                             opacity: 0.7,
                             filter: "grayscale(80%)",
@@ -880,8 +832,7 @@ const ComponentCard = ({
                       sx={{
                         fontSize: 22,
                         color:
-                          authorizedRoles.includes(Role.SALES_ADMIN) &&
-                          !localIsVisible
+                          authorizedRoles.includes(Role.SALES_ADMIN) && !localIsVisible
                             ? "rgba(255,255,255,0.5)"
                             : "text.secondary",
                       }}
@@ -889,8 +840,7 @@ const ComponentCard = ({
                     <Typography
                       variant="caption"
                       color={
-                        authorizedRoles.includes(Role.SALES_ADMIN) &&
-                        !localIsVisible
+                        authorizedRoles.includes(Role.SALES_ADMIN) && !localIsVisible
                           ? "rgba(255,255,255,0.5)"
                           : "text.secondary"
                       }
@@ -908,8 +858,7 @@ const ComponentCard = ({
                       height: "100%",
                       objectFit: "contain",
                       position: "relative",
-                      ...(authorizedRoles.includes(Role.SALES_ADMIN) &&
-                      !localIsVisible
+                      ...(authorizedRoles.includes(Role.SALES_ADMIN) && !localIsVisible
                         ? {
                             opacity: 0.6,
                             filter: "grayscale(70%)",
@@ -971,15 +920,10 @@ const ComponentCard = ({
             action={
               authorizedRoles.includes(Role.SALES_ADMIN) ? (
                 <Box sx={{ display: "flex", gap: 0.5 }}>
-                  <Tooltip
-                    title={localIsVisible ? "Hide Content" : "Show Content"}
-                    arrow
-                  >
+                  <Tooltip title={localIsVisible ? "Hide Content" : "Show Content"} arrow>
                     <IconButton
                       size="small"
-                      aria-label={
-                        localIsVisible ? "Hide Content" : "Show Content"
-                      }
+                      aria-label={localIsVisible ? "Hide Content" : "Show Content"}
                       onClick={toggleVisibility}
                       sx={{
                         color: "#fff",
@@ -997,9 +941,7 @@ const ComponentCard = ({
                     </IconButton>
                   </Tooltip>
                   <IconButton
-                    onClick={(e: React.MouseEvent<HTMLElement>) =>
-                      setAnchorEl(e.currentTarget)
-                    }
+                    onClick={(e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget)}
                     aria-label="more"
                     id="long-button"
                     aria-controls={isMenuItemsOpen ? "long-menu" : undefined}
@@ -1154,7 +1096,7 @@ const ComponentCard = ({
                         {configured.map((button, i) => (
                           <Tooltip
                             key={button.id || `button-${i}`}
-                            title={ button.label || ""}
+                            title={button.label || ""}
                             arrow
                             placement="top"
                           >
@@ -1178,12 +1120,12 @@ const ComponentCard = ({
                                 flex: 1,
                                 minWidth: 0,
                                 borderRadius: 8,
-                                borderColor: "#ff7300", 
-                                color: "#ff7300", 
+                                borderColor: "#ff7300",
+                                color: "#ff7300",
                                 backgroundColor: "transparent",
                                 "&:hover": {
                                   color: "white",
-                                  borderColor: "orange", 
+                                  borderColor: "orange",
                                 },
                                 "& .MuiButton-startIcon": {
                                   marginRight: "4px",
@@ -1243,11 +1185,7 @@ const ComponentCard = ({
               })()}
             </Box>
           </CardContent>
-          <Modal
-            open={isInfoModalOpen}
-            onClose={toggleInfoModal}
-            closeAfterTransition
-          >
+          <Modal open={isInfoModalOpen} onClose={toggleInfoModal} closeAfterTransition>
             <Fade in={isInfoModalOpen}>
               <Box
                 sx={{

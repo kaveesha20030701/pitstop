@@ -13,29 +13,29 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
-import React, { useState } from "react";
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  IconButton,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Tooltip,
-  useTheme,
-} from "@mui/material";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import EditIcon from "@mui/icons-material/Edit";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
-import { CustomerTestimonialCardProps } from "../../../types/types";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import {
+  Box,
+  Card,
+  CardContent,
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Tooltip,
+  Typography,
+  useTheme,
+} from "@mui/material";
 
+import React, { useState } from "react";
+
+import { CustomerTestimonialCardProps } from "../../../types/types";
 
 const CustomerTestimonialCard: React.FC<CustomerTestimonialCardProps> = ({
   testimonial,
@@ -91,12 +91,8 @@ const CustomerTestimonialCard: React.FC<CustomerTestimonialCardProps> = ({
         },
       }}
     >
-
       {/* Shareable Toggle Button */}
-      <Tooltip
-        title={testimonial.isShareable ? "Shareable" : "Not Shareable"}
-        placement="top"
-      >
+      <Tooltip title={testimonial.isShareable ? "Shareable" : "Not Shareable"} placement="top">
         <span
           style={{
             position: "absolute",
@@ -111,18 +107,14 @@ const CustomerTestimonialCard: React.FC<CustomerTestimonialCardProps> = ({
             size="small"
             disableRipple
             sx={{
-              backgroundColor: testimonial.isShareable
-                ? "success.main"
-                : "error.main",
+              backgroundColor: testimonial.isShareable ? "success.main" : "error.main",
               boxShadow: "0 2px 12px rgba(0, 0, 0, 0.15)",
               color: theme.palette.common.white,
               opacity: 1,
               cursor: "default",
               pointerEvents: "none",
               "&:hover": {
-                backgroundColor: testimonial.isShareable
-                  ? "success.dark"
-                  : "error.dark",
+                backgroundColor: testimonial.isShareable ? "success.dark" : "error.dark",
                 boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
               },
             }}
@@ -171,10 +163,7 @@ const CustomerTestimonialCard: React.FC<CustomerTestimonialCardProps> = ({
           >
             <MenuItem onClick={handleEdit}>
               <ListItemIcon>
-                <EditIcon
-                  fontSize="small"
-                  sx={{ color: theme.palette.primary.main }}
-                />
+                <EditIcon fontSize="small" sx={{ color: theme.palette.primary.main }} />
               </ListItemIcon>
               <ListItemText>Edit</ListItemText>
             </MenuItem>
@@ -209,8 +198,7 @@ const CustomerTestimonialCard: React.FC<CustomerTestimonialCardProps> = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background:
-              "linear-gradient(135deg, #fff5f0 0%, #ffe8d9 50%, #ffd4b8 100%)",
+            background: "linear-gradient(135deg, #fff5f0 0%, #ffe8d9 50%, #ffd4b8 100%)",
             overflow: "hidden",
           }}
         >
@@ -224,7 +212,6 @@ const CustomerTestimonialCard: React.FC<CustomerTestimonialCardProps> = ({
               bottom: 0,
               background:
                 "radial-gradient(circle at 20% 50%, rgba(255, 115, 0, 0.1) 0%, transparent 50%)",
-
               animation: "float 6s ease-in-out infinite",
             }}
           />

@@ -34,14 +34,11 @@ const ListItemLink = (props: ListItemLinkProps) => {
   const [open, setOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { primary, to, theme, isActive, children, routeId, level, label, handleSideBar, isRoutevisible } = props;
+  const { primary, to, theme, isActive, children, routeId, level, label, handleSideBar, isRouteVisible } = props;
   const { pathname } = useLocation();
   const dispatch = useAppDispatch();
 
   const isTopLevel = level === 1;
-
-  // Remove the click handler - let React Router handle navigation
-  // The Redux state will update via the useEffect below
 
   useEffect(() => {
     if (matchPath(to, pathname) !== null) {
@@ -83,7 +80,7 @@ const ListItemLink = (props: ListItemLinkProps) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  if (isRoutevisible == 0) {
+  if (isRouteVisible == 0) {
     return null;
   }
 
@@ -134,7 +131,6 @@ const ListItemLink = (props: ListItemLinkProps) => {
           <ExpandMore
             sx={{
               color: theme.palette.primary.contrastText,
-              // keep orange only for nested active items if you want
               ...(isActive &&
                 !isTopLevel && { color: theme.palette.primary.main }),
             }}
@@ -144,7 +140,6 @@ const ListItemLink = (props: ListItemLinkProps) => {
           sx={{
             "& .MuiListItemText-primary": {
               color: theme.palette.primary.contrastText,
-              // again, only change color for nested active items
               ...(isActive &&
                 !isTopLevel && { color: theme.palette.primary.main }),
               fontSize: "14px",
@@ -203,8 +198,7 @@ const ListItemLink = (props: ListItemLinkProps) => {
                 handleSideBar={handleSideBar}
                 isActive={matchPath(component.path, pathname) !== null}
                 children={component.children}
-                level={level + 1}
-              />
+                level={level + 1} isRouteVisible={0}              />
             </Box>
           ))}
         </Collapse>
@@ -225,5 +219,5 @@ interface ListItemLinkProps {
   children?: RouteResponse[];
   level: number;
   handleSideBar: () => void;
-  isRoutevisible?: number;
+  isRouteVisible: number;
 }

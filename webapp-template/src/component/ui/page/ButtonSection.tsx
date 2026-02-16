@@ -14,25 +14,24 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { Box, Button, IconButton, Menu, MenuItem, alpha } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import EditIcon from "@mui/icons-material/Edit";
+import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useAppSelector, RootState, useAppDispatch } from "@slices/store";
+import EditIcon from "@mui/icons-material/Edit";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Box, Button, IconButton, Menu, MenuItem, alpha } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import {
-  updateRouterPath,
-  updateRouteContent,
-  createRouteContent,
-} from "@slices/routeSlice/route";
-import { getPageData } from "@slices/pageSlice/page";
-import { RouteResponse, RouteContentItem } from "../../../types/types";
-import { Role } from "@utils/types";
-import { useState } from "react";
-import RouteContentDialogBox from "@component/dialogs/RouteContentDialogBox";
-import DeleteContentDialogBox from "@component/dialogs/DeleteDialogBox";
-import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
 
+import { useState } from "react";
+
+import DeleteContentDialogBox from "@component/dialogs/DeleteDialogBox";
+import RouteContentDialogBox from "@component/dialogs/RouteContentDialogBox";
+import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
+import { getPageData } from "@slices/pageSlice/page";
+import { createRouteContent, updateRouteContent, updateRouterPath } from "@slices/routeSlice/route";
+import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
+import { Role } from "@utils/types";
+
+import { RouteContentItem, RouteResponse } from "../../../types/types";
 
 const ButtonSection = () => {
   const {
@@ -40,23 +39,17 @@ const ButtonSection = () => {
     routeContents,
     routeId: currentRouteId,
   } = useAppSelector((state: RootState) => state.route);
-  const authorizedRoles = useAppSelector(
-    (state: RootState) => state.auth.roles
-  );
+  const authorizedRoles = useAppSelector((state: RootState) => state.auth.roles);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedContent, setSelectedContent] =
-    useState<RouteContentItem | null>(null);
+  const [selectedContent, setSelectedContent] = useState<RouteContentItem | null>(null);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const handleMenuOpen = (
-    event: React.MouseEvent<HTMLElement>,
-    content: RouteContentItem
-  ) => {
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, content: RouteContentItem) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
     setSelectedContent(content);
@@ -67,8 +60,10 @@ const ButtonSection = () => {
   };
 
   const navigateToRoute = (route: RouteResponse) => {
-
-    if ((route.isRouteVisible === false || route.isRouteVisible === undefined) && !authorizedRoles.includes(Role.SALES_ADMIN)) {
+    if (
+      (route.isRouteVisible === false || route.isRouteVisible === undefined) &&
+      !authorizedRoles.includes(Role.SALES_ADMIN)
+    ) {
       dispatch(
         enqueueSnackbarMessage({
           message: "This page is currently hidden.",
@@ -77,9 +72,9 @@ const ButtonSection = () => {
             vertical: "bottom",
             horizontal: "right",
           },
-        })
+        }),
       );
-      return;    
+      return;
     }
     navigate(route.path);
     dispatch(
@@ -88,7 +83,7 @@ const ButtonSection = () => {
         currentPath: route.path,
         label: route.menuItem,
         children: route.children ?? [],
-      })
+      }),
     );
     dispatch(getPageData(route.path));
   };
@@ -118,20 +113,13 @@ const ButtonSection = () => {
           gap: 2,
           background:
             theme.palette.mode === "dark"
-              ? alpha(
-                  theme.palette.primary.main,
-                  theme.palette.action.hoverOpacity
-                )
-              : alpha(
-                  theme.palette.primary.main,
-                  theme.palette.action.activatedOpacity
-                ),
+              ? alpha(theme.palette.primary.main, theme.palette.action.hoverOpacity)
+              : alpha(theme.palette.primary.main, theme.palette.action.activatedOpacity),
         })}
       >
         {combinedItems.map((item, index) => {
           const isContent = item.type === "content";
-          const label =
-            "menuItem" in item ? item.menuItem : item.description ?? "Unnamed";
+          const label = "menuItem" in item ? item.menuItem : (item.description ?? "Unnamed");
 
           return (
             <Button
@@ -172,8 +160,9 @@ const ButtonSection = () => {
             variant="contained"
             sx={{ borderRadius: 3, textTransform: "uppercase" }}
             onClick={() => setIsCreateDialogOpen(true)}
+            startIcon={<AddIcon />}
           >
-            + Add
+            Add
           </Button>
         )}
       </Box>
@@ -212,9 +201,7 @@ const ButtonSection = () => {
           description={selectedContent.description}
           contentLink={selectedContent.contentLink}
           onUpdate={(payload) =>
-            dispatch(
-              updateRouteContent({ content: payload, routeId: currentRouteId })
-            )
+            dispatch(updateRouteContent({ content: payload, routeId: currentRouteId }))
           }
         />
       )}
@@ -225,9 +212,7 @@ const ButtonSection = () => {
         mode="create"
         routeId={currentRouteId}
         onCreate={(payload) =>
-          dispatch(
-            createRouteContent({ content: payload, routeId: payload.routeId })
-          )
+          dispatch(createRouteContent({ content: payload, routeId: payload.routeId }))
         }
       />
 

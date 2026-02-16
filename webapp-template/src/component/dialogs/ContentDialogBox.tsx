@@ -14,53 +14,56 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
+import CategoryIcon from "@mui/icons-material/Category";
+import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/Delete";
+import DescriptionIcon from "@mui/icons-material/Description";
+import ImageIcon from "@mui/icons-material/Image";
+import LabelIcon from "@mui/icons-material/Label";
+import LinkIcon from "@mui/icons-material/Link";
+import TitleIcon from "@mui/icons-material/Title";
+import {
+  Autocomplete,
+  Box,
+  Button,
+  Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  FormControlLabel,
+  FormHelperText,
+  IconButton,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
+  createFilterOptions,
+  useTheme,
+} from "@mui/material";
+import { useFormik } from "formik";
+
+import React, { useEffect, useRef, useState } from "react";
+
+import RichTextEditor from "@component/common/RichTextEditor";
 import {
   createNewContent,
-  updateContent,
   createTag,
   deleteTag,
   getAllTags,
+  updateContent,
 } from "@slices/pageSlice/page";
+import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
+import { CONTENT_SUBTYPE, FILETYPE } from "@utils/types";
+
 import {
   ContentDialogBoxProps,
   CustomStylingInfo,
   TagResponse,
   validationContentSchema,
 } from "../../types/types";
-import React, { useState, useRef, useEffect } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  FormControl,
-  MenuItem,
-  Select,
-  TextField,
-  FormHelperText,
-  Box,
-  IconButton,
-  Checkbox,
-  FormControlLabel,
-  useTheme,
-  Autocomplete,
-  createFilterOptions,
-  Typography,
-  Stack,
-} from "@mui/material";
-import { useFormik } from "formik";
-import { FILETYPE, CONTENT_SUBTYPE } from "@utils/types";
-import DeleteIcon from "@mui/icons-material/Delete";
-import CloseIcon from "@mui/icons-material/Close";
-import DescriptionIcon from "@mui/icons-material/Description";
-import LinkIcon from "@mui/icons-material/Link";
-import ImageIcon from "@mui/icons-material/Image";
-import LabelIcon from "@mui/icons-material/Label";
-import TitleIcon from "@mui/icons-material/Title";
-import CategoryIcon from "@mui/icons-material/Category";
-import RichTextEditor from "@component/common/RichTextEditor";
 
 const ContentDialogBox = ({
   isOpen,
@@ -72,7 +75,7 @@ const ContentDialogBox = ({
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const tagInfo = useAppSelector((state: RootState) =>
-    state.page.tagData.map((tag: TagResponse) => tag.tagName)
+    state.page.tagData.map((tag: TagResponse) => tag.tagName),
   );
 
   const [noteDefaultStyleConfigs, setNoteDefaultStyleConfigs] = useState<
@@ -106,20 +109,66 @@ const ContentDialogBox = ({
     }
   };
 
+  const handleAddContent = (values: typeof formik.values, tagsString: string) => {
+    const newLink = {
+      contentLink: values.contentLink,
+      contentType: values.contentType,
+      contentSubtype:
+        values.contentType === FILETYPE.External_Link ? values.contentSubtype : undefined,
+      description: values.description,
+      thumbnail: values.thumbnail,
+      note: values.note,
+      sectionId: sectionId ? sectionId : 0,
+      customContentTheme: {
+        note: noteDefaultStyleConfigs,
+      },
+      tags: tagsString,
+      isReused: values.isReused,
+    };
+    dispatch(
+      createNewContent({
+        content: newLink,
+        routePath: window.location.pathname,
+      }),
+    );
+  };
+
+  const handleUpdateContent = (values: typeof formik.values, tagsString: string) => {
+    const updatedContent = {
+      contentLink: values.contentLink,
+      contentType: values.contentType,
+      contentSubtype:
+        values.contentType === FILETYPE.External_Link ? values.contentSubtype : undefined,
+      description: values.description,
+      thumbnail: values.thumbnail,
+      note: values.note,
+      customContentTheme: {
+        note: noteDefaultStyleConfigs,
+      },
+      verifyContent: values.verifyContent,
+      tags: tagsString,
+      isReused: values.isReused,
+    };
+    dispatch(
+      updateContent({
+        content: updatedContent,
+        contentId: values.contentId,
+        routePath: window.location.pathname,
+      }),
+    );
+  };
+
   const formik = useFormik({
     initialValues: {
       contentId: initialValues?.contentId ? initialValues.contentId : 0,
       sectionId: initialValues?.sectionId ? initialValues.sectionId : 0,
       contentLink: initialValues?.contentLink ? initialValues.contentLink : "",
       contentType: initialValues?.contentType ? initialValues.contentType : "",
-      contentSubtype:
-        (initialValues as any)?.contentSubtype || CONTENT_SUBTYPE.Generic,
+      contentSubtype: (initialValues as any)?.contentSubtype || CONTENT_SUBTYPE.Generic,
       description: initialValues?.description ? initialValues.description : "",
       thumbnail: initialValues?.thumbnail ? initialValues.thumbnail : "",
       note: initialValues?.note ? initialValues.note : "",
-      verifyContent: initialValues?.verifyContent
-        ? initialValues.verifyContent
-        : false,
+      verifyContent: initialValues?.verifyContent ? initialValues.verifyContent : false,
       tags: initialValues?.tags ? initialValues.tags : [],
       isReused: Boolean(initialValues?.isReused),
     },
@@ -127,61 +176,13 @@ const ContentDialogBox = ({
     enableReinitialize: true,
     onSubmit: (values) => {
       const tagsString = values.tags.join(",");
-      switch (type) {
-        case "add": {
-          const newLink = {
-            contentLink: values.contentLink,
-            contentType: values.contentType,
-            contentSubtype:
-              values.contentType === FILETYPE.External_Link
-                ? values.contentSubtype
-                : undefined,
-            description: values.description,
-            thumbnail: values.thumbnail,
-            note: values.note,
-            sectionId: sectionId ? sectionId : 0,
-            customContentTheme: {
-              note: noteDefaultStyleConfigs,
-            },
-            tags: tagsString,
-            isReused: values.isReused,
-          };
-          dispatch(
-            createNewContent({
-              content: newLink,
-              routePath: window.location.pathname,
-            })
-          );
-          break;
-        }
-        case "update": {
-          const updatedContent = {
-            contentLink: values.contentLink,
-            contentType: values.contentType,
-            contentSubtype:
-              values.contentType === FILETYPE.External_Link
-                ? values.contentSubtype
-                : undefined,
-            description: values.description,
-            thumbnail: values.thumbnail,
-            note: values.note,
-            customContentTheme: {
-              note: noteDefaultStyleConfigs,
-            },
-            verifyContent: values.verifyContent,
-            tags: tagsString,
-            isReused: values.isReused,
-          };
-          dispatch(
-            updateContent({
-              content: updatedContent,
-              contentId: values.contentId,
-              routePath: window.location.pathname,
-            })
-          );
-          break;
-        }
+
+      if (type === "add") {
+        handleAddContent(values, tagsString);
+      } else if (type === "update") {
+        handleUpdateContent(values, tagsString);
       }
+
       handleClose();
       formik.resetForm();
     },
@@ -228,12 +229,7 @@ const ContentDialogBox = ({
           position: "relative",
         }}
       >
-        <Typography
-          variant="h4"
-          fontWeight="bold"
-          gutterBottom
-          sx={{ mb: 0.5 }}
-        >
+        <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ mb: 0.5 }}>
           {dialogBoxTitle()}
         </Typography>
         <Typography variant="body2" sx={{ opacity: 0.95 }}>
@@ -277,21 +273,15 @@ const ContentDialogBox = ({
               value={formik.values.description}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              error={
-                formik.touched.description && Boolean(formik.errors.description)
-              }
-              helperText={
-                formik.touched.description && formik.errors.description
-              }
+              error={formik.touched.description && Boolean(formik.errors.description)}
+              helperText={formik.touched.description && formik.errors.description}
             />
           </Box>
 
           {/* Component Type */}
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-              <CategoryIcon
-                sx={{ color: theme.palette.primary.main, mr: 1, fontSize: 22 }}
-              />
+              <CategoryIcon sx={{ color: theme.palette.primary.main, mr: 1, fontSize: 22 }} />
               <Typography
                 variant="body1"
                 fontWeight="700"
@@ -305,13 +295,8 @@ const ContentDialogBox = ({
                 fullWidth
                 value={formik.values.contentType}
                 onBlur={formik.handleBlur}
-                onChange={(event) =>
-                  formik.setFieldValue("contentType", event.target.value)
-                }
-                error={
-                  formik.touched.contentType &&
-                  Boolean(formik.errors.contentType)
-                }
+                onChange={(event) => formik.setFieldValue("contentType", event.target.value)}
+                error={formik.touched.contentType && Boolean(formik.errors.contentType)}
                 displayEmpty
               >
                 <MenuItem value="" disabled>
@@ -324,9 +309,7 @@ const ContentDialogBox = ({
                 ))}
               </Select>
               {formik.touched.contentType && formik.errors.contentType && (
-                <FormHelperText error>
-                  {formik.errors.contentType}
-                </FormHelperText>
+                <FormHelperText error>{formik.errors.contentType}</FormHelperText>
               )}
             </FormControl>
 
@@ -340,17 +323,11 @@ const ContentDialogBox = ({
                   External Link Type
                 </Typography>
                 <Select
-                  value={
-                    formik.values.contentSubtype || CONTENT_SUBTYPE.Generic
-                  }
-                  onChange={(e) =>
-                    formik.setFieldValue("contentSubtype", e.target.value)
-                  }
+                  value={formik.values.contentSubtype || CONTENT_SUBTYPE.Generic}
+                  onChange={(e) => formik.setFieldValue("contentSubtype", e.target.value)}
                   displayEmpty
                 >
-                  <MenuItem value={CONTENT_SUBTYPE.Generic}>
-                    Generic link
-                  </MenuItem>
+                  <MenuItem value={CONTENT_SUBTYPE.Generic}>Generic link</MenuItem>
                   <MenuItem value={CONTENT_SUBTYPE.GDoc}>Google Doc</MenuItem>
                   <MenuItem value={CONTENT_SUBTYPE.Pdf}>PDF</MenuItem>
                   <MenuItem value={CONTENT_SUBTYPE.Video}>Video / MP4</MenuItem>
@@ -362,9 +339,7 @@ const ContentDialogBox = ({
           {/* Component Link */}
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-              <LinkIcon
-                sx={{ color: theme.palette.primary.main, mr: 1, fontSize: 22 }}
-              />
+              <LinkIcon sx={{ color: theme.palette.primary.main, mr: 1, fontSize: 22 }} />
               <Typography
                 variant="body1"
                 fontWeight="700"
@@ -380,21 +355,15 @@ const ContentDialogBox = ({
               value={formik.values.contentLink}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              error={
-                formik.touched.contentLink && Boolean(formik.errors.contentLink)
-              }
-              helperText={
-                formik.touched.contentLink && formik.errors.contentLink
-              }
+              error={formik.touched.contentLink && Boolean(formik.errors.contentLink)}
+              helperText={formik.touched.contentLink && formik.errors.contentLink}
             />
           </Box>
 
           {/* Document Thumbnail Link */}
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-              <ImageIcon
-                sx={{ color: theme.palette.primary.main, mr: 1, fontSize: 22 }}
-              />
+              <ImageIcon sx={{ color: theme.palette.primary.main, mr: 1, fontSize: 22 }} />
               <Typography
                 variant="body1"
                 fontWeight="700"
@@ -410,9 +379,7 @@ const ContentDialogBox = ({
               value={formik.values.thumbnail}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              error={
-                formik.touched.thumbnail && Boolean(formik.errors.thumbnail)
-              }
+              error={formik.touched.thumbnail && Boolean(formik.errors.thumbnail)}
               helperText={formik.touched.thumbnail && formik.errors.thumbnail}
             />
           </Box>
@@ -420,9 +387,7 @@ const ContentDialogBox = ({
           {/* Additional Notes */}
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-              <DescriptionIcon
-                sx={{ color: theme.palette.primary.main, mr: 1, fontSize: 22 }}
-              />
+              <DescriptionIcon sx={{ color: theme.palette.primary.main, mr: 1, fontSize: 22 }} />
               <Typography
                 variant="body1"
                 fontWeight="700"
@@ -434,9 +399,7 @@ const ContentDialogBox = ({
 
             <Box sx={{ position: "relative" }}>
               <RichTextEditor
-                value={
-                  noteDefaultStyleConfigs?.htmlContent || formik.values.note
-                }
+                value={noteDefaultStyleConfigs?.htmlContent || formik.values.note}
                 onChange={(html) => {
                   setNoteDefaultStyleConfigs({
                     ...noteDefaultStyleConfigs,
@@ -445,10 +408,7 @@ const ContentDialogBox = ({
                   });
                   const tempDiv = document.createElement("div");
                   tempDiv.innerHTML = html;
-                  formik.setFieldValue(
-                    "note",
-                    tempDiv.textContent || tempDiv.innerText || ""
-                  );
+                  formik.setFieldValue("note", tempDiv.textContent || tempDiv.innerText || "");
                 }}
                 placeholder="Add notes (select text to format)"
                 height="180px"
@@ -464,9 +424,7 @@ const ContentDialogBox = ({
           {/* Tags */}
           <Box>
             <Box sx={{ display: "flex", alignItems: "center", mb: 1.5 }}>
-              <LabelIcon
-                sx={{ color: theme.palette.primary.main, mr: 1, fontSize: 22 }}
-              />
+              <LabelIcon sx={{ color: theme.palette.primary.main, mr: 1, fontSize: 22 }} />
               <Typography
                 variant="body1"
                 fontWeight="700"
@@ -564,9 +522,7 @@ const ContentDialogBox = ({
               justifyContent: "space-between",
               p: 2,
               backgroundColor:
-                theme.palette.mode === "dark"
-                  ? theme.palette.grey[800]
-                  : theme.palette.grey[50],
+                theme.palette.mode === "dark" ? theme.palette.grey[800] : theme.palette.grey[50],
               borderRadius: 2,
             }}
           >
@@ -592,10 +548,7 @@ const ContentDialogBox = ({
                     variant="body2"
                     fontWeight="600"
                     sx={{
-                      color:
-                        theme.palette.mode === "dark"
-                          ? theme.palette.common.white
-                          : "inherit",
+                      color: theme.palette.mode === "dark" ? theme.palette.common.white : "inherit",
                     }}
                   >
                     Verify Content
@@ -611,9 +564,7 @@ const ContentDialogBox = ({
                     id="isReused"
                     name="isReused"
                     checked={Boolean(formik.values.isReused)}
-                    onChange={(e) =>
-                      formik.setFieldValue("isReused", e.target.checked)
-                    }
+                    onChange={(e) => formik.setFieldValue("isReused", e.target.checked)}
                     onBlur={formik.handleBlur}
                     sx={{
                       color: theme.palette.primary.main,
@@ -628,10 +579,7 @@ const ContentDialogBox = ({
                     variant="body2"
                     fontWeight="600"
                     sx={{
-                      color:
-                        theme.palette.mode === "dark"
-                          ? theme.palette.common.white
-                          : "inherit",
+                      color: theme.palette.mode === "dark" ? theme.palette.common.white : "inherit",
                     }}
                   >
                     Reused Content
@@ -664,9 +612,7 @@ const ContentDialogBox = ({
 
         <Button
           variant="contained"
-          onClick={(e: React.MouseEvent<HTMLButtonElement>) =>
-            formik.handleSubmit(e as any)
-          }
+          onClick={(e: React.MouseEvent<HTMLButtonElement>) => formik.handleSubmit(e as any)}
           disabled={!formik.isValid}
           sx={{
             textTransform: "none",

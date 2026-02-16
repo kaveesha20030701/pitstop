@@ -36,7 +36,6 @@ const AppHandler = () => {
   const auth = useAppSelector((state: RootState) => state.auth);
   const route = useAppSelector((state: RootState) => state.route);
 
-  //------------------Redirect Paths--------------------//
   const router = useMemo(() => createBrowserRouter([
     {
       path: "/",
@@ -65,7 +64,6 @@ const AppHandler = () => {
       errorElement: <Error />,
     },
   ]), [route.routes]);
-  //------------------------------------------------------//
 
   return (
     <>

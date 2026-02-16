@@ -83,8 +83,7 @@ const ViewContent: React.FC<ContentsProps> = ({
     })
   );
 
-  //-----------------------------------------------------------------------//
-  //-------------------- Drag and Drop--------------------------------------//
+  //Drag and Drop
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
@@ -143,7 +142,6 @@ const ViewContent: React.FC<ContentsProps> = ({
       return [...prevTemp, ...newSections];
     });
   }, [sections.sectionData]);
-  //-----------------------------------------------------------------------//
 
   useEffect(() => {
     if (sections.sectionState === "success") {

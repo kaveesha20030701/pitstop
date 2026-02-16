@@ -28,8 +28,8 @@ const Sidebar = (props: SidebarProps) => {
   const routes = useAppSelector((state: RootState) => state.route.routes);
   const theme = useTheme();
   const { pathname } = useLocation();
-  //----------------------For the Drawer creating the tree structure-----------------------//
 
+  //For the Drawer creating the tree structure
   const drawer = (
     <>
       <List sx={{ mt: 10 }}>
@@ -45,6 +45,7 @@ const Sidebar = (props: SidebarProps) => {
             children={r.children}
             handleSideBar={props.handleDrawer}
             level={1}
+            isRouteVisible={0}
           />
         ))}
       </List>

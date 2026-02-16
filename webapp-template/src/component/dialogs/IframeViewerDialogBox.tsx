@@ -174,7 +174,8 @@ const IframeViewerDialogBox: React.FC<IframeViewerDialogBoxProps> = ({
       loadAttemptedRef.current = false;
       errorTimeoutRef.current = setTimeout(() => {
         if (!loadAttemptedRef.current) {
-          // Timeout for load attempt check
+          setIframeError(true);
+          setIsLoading(false);
         }
       }, 5000);
 

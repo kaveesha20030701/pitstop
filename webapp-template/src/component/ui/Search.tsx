@@ -72,11 +72,9 @@ export default function Search() {
 
     if (searchText) {
       dispatch(searchContent({ userInput: searchText }));
-      //---------Matomo Search tracking integration----------//
       if (window.config?.IS_MATOMO_ENABLED) {
         _paq.push(["trackSiteSearch", searchText, false, false]);
       }
-      //-----------------------------------------------------//
     }
 
     if (tags.length > 0) {

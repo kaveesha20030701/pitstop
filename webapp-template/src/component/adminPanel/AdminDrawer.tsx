@@ -180,9 +180,7 @@ const AdminPanelSideBar = (props: SidebarProps) => {
     [routes, findRouteById, getAllChildIds]
   );
   const anyCheckboxSelected = selectedRouteIds.size > 0;
-  //---------------------------------------------------------------------------------------//
-
-  //----------------------For the Drawer creating the tree structure-----------------------//
+  //For the Drawer creating the tree structure
   const dragHandle = (
     <IconButton
       size="small"

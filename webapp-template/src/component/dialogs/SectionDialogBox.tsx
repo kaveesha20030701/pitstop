@@ -13,6 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import CategoryIcon from "@mui/icons-material/Category";
 import CloseIcon from "@mui/icons-material/Close";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -150,6 +151,49 @@ const SectionDialogBox = ({
     return `Update section details and settings`;
   };
 
+  const handleAddSection = (values: typeof formik.values) => {
+    dispatch(
+      createNewSection({
+        section: {
+          ...values,
+          routeId,
+          customSectionTheme: {
+            title: titleDefaultStyleConfigs,
+            description: descriptionDefaultStyleConfigs,
+            cropSizing: croppedImageDefaultSizing,
+          },
+        },
+        routePath: window.location.pathname,
+      }),
+    );
+  };
+
+  const handleUpdateSection = (values: typeof formik.values) => {
+    if (!sectionId) {
+      return;
+    }
+    
+    dispatch(
+      updateSection({
+        section: {
+          sectionId,
+          title: values.title,
+          description: values.description,
+          sectionType: values.sectionType,
+          imageUrl: values.imageUrl,
+          redirectUrl: values.redirectUrl,
+          tags: values.tags,
+          customSectionTheme: {
+            title: titleDefaultStyleConfigs,
+            description: descriptionDefaultStyleConfigs,
+            cropSizing: croppedImageDefaultSizing,
+          },
+        },
+        routePath: window.location.pathname,
+      }),
+    );
+  };
+
   const formik = useFormik({
     initialValues: {
       title: initialValues?.title ? initialValues.title : "",
@@ -162,53 +206,12 @@ const SectionDialogBox = ({
     enableReinitialize: true,
     validationSchema: validationSectionSchema,
     onSubmit: (values) => {
-      switch (type) {
-        case "add":
-          dispatch(
-            createNewSection({
-              section: {
-                ...values,
-                routeId,
-                customSectionTheme: {
-                  title: titleDefaultStyleConfigs,
-                  description: descriptionDefaultStyleConfigs,
-                  cropSizing: croppedImageDefaultSizing,
-                },
-              },
-              routePath: window.location.pathname,
-            }),
-          );
-          break;
-
-        case "update": {
-          if (!sectionId) {
-            return;
-          }
-          const updatedSection = {
-            ...values,
-          };
-          dispatch(
-            updateSection({
-              section: {
-                sectionId,
-                title: updatedSection.title,
-                description: updatedSection.description,
-                sectionType: updatedSection.sectionType,
-                imageUrl: updatedSection.imageUrl,
-                redirectUrl: updatedSection.redirectUrl,
-                tags: updatedSection.tags,
-                customSectionTheme: {
-                  title: titleDefaultStyleConfigs,
-                  description: descriptionDefaultStyleConfigs,
-                  cropSizing: croppedImageDefaultSizing,
-                },
-              },
-              routePath: window.location.pathname,
-            }),
-          );
-          break;
-        }
+      if (type === "add") {
+        handleAddSection(values);
+      } else if (type === "update") {
+        handleUpdateSection(values);
       }
+
       handleClose();
       formik.resetForm();
     },

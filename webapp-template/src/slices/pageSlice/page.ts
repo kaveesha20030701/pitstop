@@ -284,13 +284,12 @@ export const PageSlice = createSlice({
           contentState: CONTENT_STATE_LOADING,
         };
 
-        //--------Remove the existing section and add the updated section------//
+        //Remove the existing section and add the updated section
         const updatedSectionData = [
           ...state.sectionData.slice(0, sectionIndex),
           updatedSection,
           ...state.sectionData.slice(sectionIndex + 1),
         ];
-        //-----------------------------------------------------------------------//
 
         state.sectionData = updatedSectionData;
       })
@@ -383,15 +382,14 @@ export const PageSlice = createSlice({
               contentOffset: action.meta.arg.offset,
             };
           }
-          //----------------------------------------------------------------------//
 
-          //--------Remove the existing section and add the updated section------//
+          //Remove the existing section and add the updated section
           const updatedSectionData = [
             ...state.sectionData.slice(0, sectionIndex),
             updatedSection,
             ...state.sectionData.slice(sectionIndex + 1),
           ];
-          //-----------------------------------------------------------------------//
+
           state.sectionData = updatedSectionData;
           state.state = CONTENT_STATE_SUCCESS;
         } else {
@@ -691,7 +689,7 @@ export const PageSlice = createSlice({
   },
 });
 
-//-------------------------Get Section data--------------------------//
+//Get Section data
 export const getSectionInfo = createAsyncThunk(
   "pitstop/getSectionInfo",
   async (
@@ -734,9 +732,8 @@ export const getSectionInfo = createAsyncThunk(
     });
   }
 );
-//--------------------------------------------------------------------------//
 
-//-------------------------Get Vertical Section data--------------------------//
+//Get Vertical Section data
 export const getVerticalSectionInfo = createAsyncThunk(
   "pitstop/getVerticalSectionInfo",
   async (_, { dispatch }) => {
@@ -780,9 +777,8 @@ export const getVerticalSectionInfo = createAsyncThunk(
     return { verticalSectionInfo };
   }
 );
-//--------------------------------------------------------------------------//
 
-//-------------------------Get Content data--------------------------//
+//Get Content data
 export const getContentsInfo = createAsyncThunk(
   "pitstop/getContentsInfo",
   async (
@@ -839,7 +835,7 @@ export const getContentsInfo = createAsyncThunk(
     });
   }
 );
-// ---------------------------- Get Trending Contents ----------------------------
+//Get Trending Contents 
 export const getTrendingContents = createAsyncThunk(
   "pitstop/getTrendingContents",
   async (_, { dispatch }) => {
@@ -865,9 +861,8 @@ export const getTrendingContents = createAsyncThunk(
     });
   }
 );
-//--------------------------------------------------------------------------//
 
-//-------------------------Get Page data--------------------------//
+//Get Page data
 export const getPageData = createAsyncThunk(
   "pitstop/getPageData",
   async (routePath: string, { dispatch }) => {
@@ -905,9 +900,8 @@ export const getPageData = createAsyncThunk(
     });
   }
 );
-//--------------------------------------------------------------------------//
 
-//----------Create a new Content to a particular section-----------------------//
+//Create a new Content to a particular section
 
 export const createNewContent = createAsyncThunk(
   "pitstop/createNewContent",
@@ -990,9 +984,8 @@ export const updateContent = createAsyncThunk(
     });
   }
 );
-//---------------------------------------------------------------------------//
 
-//-------------------------Delete a particular content--------------------------//
+//Delete a particular content
 
 export const deleteContent = createAsyncThunk(
   "pitstop/deleteContent",
@@ -1032,9 +1025,8 @@ export const deleteContent = createAsyncThunk(
     });
   }
 );
-//---------------------------------------------------------------------------//
 
-//-------------------------Fetch the content for my board page--------------------------//
+//Fetch the content for my board page
 
 export const fetchMyBoardSection = createAsyncThunk(
   "pitstop/fetchMyBoardSection",
@@ -1080,9 +1072,7 @@ export const fetchMyBoardSection = createAsyncThunk(
   }
 );
 
-//---------------------------------------------------------------------------//
-
-//----------------------------Add a like to a content-----------------------//
+//Add a like to a content
 
 export const likeContent = createAsyncThunk(
   "pitstop/likeContent",
@@ -1110,9 +1100,7 @@ export const likeContent = createAsyncThunk(
   }
 );
 
-//---------------------------------------------------------------------------//
-
-//----------------------------Pin a content-----------------------//
+//Pin a content
 
 export const pinContent = createAsyncThunk(
   "pitstop/pinContent",
@@ -1156,9 +1144,7 @@ export const pinContent = createAsyncThunk(
   }
 );
 
-//---------------------------------------------------------------------------//
-
-//----------------------------Unpin a content-----------------------//
+//Unpin a content
 
 export const unpinContent = createAsyncThunk(
   "pitstop/unpinContent",
@@ -1202,9 +1188,7 @@ export const unpinContent = createAsyncThunk(
   }
 );
 
-//---------------------------------------------------------------------------//
-
-//----------------------------Get pinned content IDs-----------------------//
+//Get pinned content IDs
 
 export const getPinnedContentIds = createAsyncThunk(
   "pitstop/getPinnedContentIds",
@@ -1233,9 +1217,7 @@ export const getPinnedContentIds = createAsyncThunk(
   }
 );
 
-//---------------------------------------------------------------------------//
-
-//----------------------------Add a comment to a content-----------------------//
+//Add a comment to a content
 
 export const addComment = createAsyncThunk(
   "pitstop/commentContent",
@@ -1254,9 +1236,7 @@ export const addComment = createAsyncThunk(
   }
 );
 
-//-----------------------------------------------------------------------------//
-
-//--------------Get all comments of a particular content-----------------------//
+//Get all comments of a particular content
 
 export const getAllComments = createAsyncThunk(
   "pitstop/fetchComments",
@@ -1292,7 +1272,7 @@ export const getAllComments = createAsyncThunk(
   }
 );
 
-//----------------------------Search content by text-----------------------//
+//-Search content by text
 
 export const searchContent = createAsyncThunk(
   "pitstop/searchContent",
@@ -1326,7 +1306,7 @@ export const searchContent = createAsyncThunk(
   }
 );
 
-//----------------------------Filter content by tags-----------------------//
+//Filter content by tags
 
 export const filterContent = createAsyncThunk(
   "pitstop/filterContent",
@@ -1361,8 +1341,6 @@ export const filterContent = createAsyncThunk(
   }
 );
 
-//---------------------------------------------------------------------------//
-
 export const reorderContents = createAsyncThunk(
   "pitstop/reorderContents",
   async (payload: ReorderContentsPayload, { dispatch }) => {
@@ -1392,7 +1370,7 @@ export const reorderContents = createAsyncThunk(
   }
 );
 
-// ---------------------------- Update Comment ----------------------------
+// Update Comment
 export const updateComment = createAsyncThunk(
   "pitstop/updateComment",
   async (payload: UpdateCommentPayload, { dispatch }) => {
@@ -1423,7 +1401,7 @@ export const updateComment = createAsyncThunk(
   }
 );
 
-// ---------------------------- Delete Comment ----------------------------
+//Delete Comment
 export const deleteComment = createAsyncThunk(
   "pitstop/deleteComment",
   async (payload: UpdateCommentPayload, { dispatch }) => {
@@ -1455,8 +1433,6 @@ export const deleteComment = createAsyncThunk(
   }
 );
 
-//---------------------------------------------------------------------------//
-
 export const reorderSections = createAsyncThunk(
   "pitstop/reorderSections",
   async (payload: ReorderSectionsPayload, { dispatch }) => {
@@ -1485,7 +1461,7 @@ export const reorderSections = createAsyncThunk(
   }
 );
 
-//----------------------------Get content details for report-----------------------//
+//Get content details for report
 
 export const getContentReport = createAsyncThunk(
   "pitstop/contentReport",
@@ -1516,7 +1492,7 @@ export const getContentReport = createAsyncThunk(
   }
 );
 
-//-----------------Get all existing tags-----------------------//
+//Get all existing tags
 
 export const getAllTags = createAsyncThunk(
   "pitstop/fetchTags",
@@ -1546,7 +1522,7 @@ export const getAllTags = createAsyncThunk(
   }
 );
 
-//-----------------Get blocked iframe Urls-----------------------//
+//Get blocked iframe Urls
 
 export const getBlockedIframeUrls = createAsyncThunk(
   "pitstop/fetchBlockedIframeUrls",
@@ -1576,7 +1552,7 @@ export const getBlockedIframeUrls = createAsyncThunk(
   }
 );
 
-//----------------------------Create a new tag-----------------------//
+//Create a new tag
 export const createTag = createAsyncThunk(
   "pitstop/createTag",
   async (payload: { tagName: string }, { dispatch }) => {
@@ -1612,7 +1588,7 @@ export const createTag = createAsyncThunk(
     });
   }
 );
-//----------------------------Delete a tag-----------------------//
+//Delete a tag
 export const deleteTag = createAsyncThunk(
   "pitstop/deleteTag",
   async (payload: { tagName: string }, { dispatch }) => {

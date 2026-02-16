@@ -78,6 +78,7 @@ const StylePicker = ({ defaultStyleConfigs, setDefaultStyleConfigs, type, handle
   const fontSizeHandler = (event: React.MouseEvent<HTMLButtonElement>) => {
     setFontSizeAnchorEl(event.currentTarget);
   };
+  
   const fontFamilyHandler = (event: React.MouseEvent<HTMLButtonElement>) => {
     setFontFamilyAnchorEl(event.currentTarget);
   };

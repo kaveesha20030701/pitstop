@@ -109,14 +109,12 @@ const ExpandedContentCard: React.FC<ComponentCardProps> = ({
       setComment("");
 
       if (window.config?.IS_MATOMO_ENABLED) {
-        //------------------------------Matomo Add Comment event tracker---------------------------------//
         _paq.push([
           "trackEvent",
           "User Interaction",
           "Add Comment",
           `Content: ${description}`,
         ]);
-        //----------------------------------------------------------------------------------------//
       }
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {

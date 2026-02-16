@@ -28,7 +28,6 @@
     "@reduxjs/toolkit": "^2.8.2",
     "@uiw/react-markdown-preview": "^5.1.4",
     "axios": "^1.10.0",
-    "bootstrap": "^5.3.8",
     "dayjs": "^1.11.13",
     "formik": "^2.4.6",
     "framer-motion": "^12.23.5",

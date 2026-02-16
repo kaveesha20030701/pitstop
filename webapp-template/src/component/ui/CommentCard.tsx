@@ -94,14 +94,13 @@ const CommentCard: React.FC<CommentCardProps> = ({
       ).unwrap();
 
       if (window.config?.IS_MATOMO_ENABLED) {
-        //------------------------------Matomo Edit Comment event tracker---------------------------------//
         _paq.push([
           "trackEvent",
           "User Interaction",
           "Edit Comment",
           `Content: ${description}`,
         ]);
-        //----------------------------------------------------------------------------------------//
+       
       }
       setEditing(false);
       
@@ -140,14 +139,12 @@ const CommentCard: React.FC<CommentCardProps> = ({
       ).unwrap();
 
       if (window.config?.IS_MATOMO_ENABLED) {
-        //------------------------------Matomo Delete Comment event tracker---------------------------------//
         _paq.push([
           "trackEvent",
           "User Interaction",
           "Delete Comment",
           `Content: ${description}`,
         ]);
-        //----------------------------------------------------------------------------------------//
       }
       setDeleting(false);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
