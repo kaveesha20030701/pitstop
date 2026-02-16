@@ -39,8 +39,8 @@ configurable types:AppInfo appInfo = {
 };
 
 @display {
-    label: "Sales pitstop",
-    id: "sales/pitstop"
+    label: "Pitstop",
+    id: "pitstop"
 }
 service http:InterceptableService / on new http:Listener(9090) {
 

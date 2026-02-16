@@ -686,7 +686,6 @@ isolated function reorderContentsQuery(types:ReorderContentPayload reorderPayloa
 # + reorderPayload - Reorder section payload
 # + return - SQL parameterized query
 isolated function reorderSectionsQuery(types:ReorderSectionPayload reorderPayload) returns sql:ParameterizedQuery {
-
     sql:ParameterizedQuery[] caseStatements = from var section in reorderPayload.reorderSections
         select `WHEN section_id = ${section.sectionId} THEN ${section.sectionOrder}`;
     sql:ParameterizedQuery caseClause = sql:queryConcat(...caseStatements);
