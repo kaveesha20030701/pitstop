@@ -523,8 +523,8 @@ modules = [
 
 [[package]]
 org = "wso2"
-name = "se_wiki"
-version = "0.0.1"
+name = "pitstop"
+version = "0.1.0"
 dependencies = [
 	{org = "ballerina", name = "constraint"},
 	{org = "ballerina", name = "graphql"},
@@ -541,13 +541,13 @@ dependencies = [
 	{org = "ballerinax", name = "mysql"}
 ]
 modules = [
-	{org = "wso2", packageName = "se_wiki", moduleName = "se_wiki"},
-	{org = "wso2", packageName = "se_wiki", moduleName = "se_wiki.analytics"},
-	{org = "wso2", packageName = "se_wiki", moduleName = "se_wiki.authorization"},
-	{org = "wso2", packageName = "se_wiki", moduleName = "se_wiki.constants"},
-	{org = "wso2", packageName = "se_wiki", moduleName = "se_wiki.database"},
-	{org = "wso2", packageName = "se_wiki", moduleName = "se_wiki.email"},
-	{org = "wso2", packageName = "se_wiki", moduleName = "se_wiki.entity"},
-	{org = "wso2", packageName = "se_wiki", moduleName = "se_wiki.types"}
+	{org = "wso2", packageName = "pitstop", moduleName = "pitstop"},
+	{org = "wso2", packageName = "pitstop", moduleName = "pitstop.analytics"},
+	{org = "wso2", packageName = "pitstop", moduleName = "pitstop.authorization"},
+	{org = "wso2", packageName = "pitstop", moduleName = "pitstop.constants"},
+	{org = "wso2", packageName = "pitstop", moduleName = "pitstop.database"},
+	{org = "wso2", packageName = "pitstop", moduleName = "pitstop.email"},
+	{org = "wso2", packageName = "pitstop", moduleName = "pitstop.entity"},
+	{org = "wso2", packageName = "pitstop", moduleName = "pitstop.types"}
 ]
 

@@ -17,9 +17,4 @@ import ballerina/http;
 
 configurable string analyticsServiceBaseUrl = ?;
 
-final http:Client analyticsClient = check new (analyticsServiceBaseUrl, {
-    httpVersion: http:HTTP_1_1,
-    http1Settings: {
-        keepAlive: http:KEEPALIVE_NEVER
-    }
-});
+final http:Client analyticsClient = check new (analyticsServiceBaseUrl);

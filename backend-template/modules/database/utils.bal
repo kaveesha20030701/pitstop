@@ -15,6 +15,7 @@
 // under the License.
 
 import pitstop.types;
+import pitstop.constants;
 
 import ballerina/lang.regexp;
 import ballerina/log;
@@ -196,3 +197,90 @@ isolated function trimArray(string[] arr) returns string[] =>
 let string trimmed = element.trim()
 where trimmed.length() > 0
 select trimmed;
+
+# Transform content response from database format to application format.
+#
+# + customContentTheme - Custom theme
+# + tags - Tags as comma separated string or ()
+# + contentRest - Rest of the content response fields
+# + return - Transformed content response or error
+public isolated function transformContentResponse(string? customContentTheme, string? tags, 
+        types:ContentResponse contentRest) returns types:ContentResponse|error {
+    
+    types:ContentResponse convertedContent = {...contentRest};
+    
+    if customContentTheme is string {
+        types:CustomTheme convertedCustomContentTheme = check customContentTheme.fromJsonStringWithType();
+        convertedContent.customContentTheme = convertedCustomContentTheme;
+    }
+    
+    if tags is string {
+        regexp:RegExp separator = re `,`;
+        string[] tagsArray = separator.split(tags);
+        convertedContent.tags = tagsArray;
+    }
+    
+    return convertedContent;
+}
+
+# Transform section response from database format to application format.
+#
+# + customSectionTheme - Custom theme
+# + sectionRest - Rest of the section response fields
+# + return - Transformed section response or error
+public isolated function transformSectionResponse(string? customSectionTheme, types:Section sectionRest) 
+        returns types:Section|error {
+    
+    types:Section convertedSection = {...sectionRest};
+    
+    if customSectionTheme is string {
+        types:CustomTheme convertedCustomSectionTheme = check customSectionTheme.fromJsonStringWithType();
+        convertedSection.customSectionTheme = convertedCustomSectionTheme;
+    }
+    
+    return convertedSection;
+}
+
+# Convert a PinnedContentResponse DB row into a ContentResponse.
+#
+# + row - Pinned content DB row
+# + return - ContentResponse or error
+public isolated function toContentResponseFromPinned(PinnedContentResponse row)
+        returns types:ContentResponse|error {
+
+    types:ContentResponse convertedContent = {
+        contentId: row.contentId,
+        sectionId: row.sectionId,
+        contentLink: row.contentLink,
+        contentType: row.contentType,
+        contentSubtype: row.contentSubtype,
+        thumbnail: row.thumbnail,
+        note: row.note,
+        description: row.description,
+        likesCount: row.likesCount,
+        status: row.status,
+        contentOrder: row.contentOrder,
+        createdOn: row.createdOn,
+        commentCount: row.commentCount,
+        customContentTheme: (),
+        tags: (),
+        isVisible: row.isVisible,
+        isReused: row.isReused
+    };
+
+    if row.customContentTheme is string {
+        types:CustomTheme|error convertedCustomContentTheme = row.customContentTheme.fromJsonStringWithType();
+        if convertedCustomContentTheme is error {
+            log:printError(constants:GET_PINNED_CONTENT_ERROR, convertedCustomContentTheme);
+            return error(constants:GET_PINNED_CONTENT_ERROR);
+        }
+        convertedContent.customContentTheme = convertedCustomContentTheme;
+    }
+
+    if row.tags is string {
+        regexp:RegExp separator = re `,`;
+        convertedContent.tags = separator.split(row.tags);
+    }
+
+    return convertedContent;
+}

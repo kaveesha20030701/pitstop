@@ -18,7 +18,6 @@ import pitstop.constants;
 import pitstop.entity;
 import pitstop.types;
 
-import ballerina/lang.regexp;
 import ballerina/log;
 import ballerina/sql;
 
@@ -114,19 +113,11 @@ public isolated function getContentsBySectionId(boolean isUser, int sectionId, s
 
     error? response = from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse convertedContent = {...contentRest};
-            if customContentTheme is string {
-                types:CustomTheme|error convertedCustomContentTheme = customContentTheme.fromJsonStringWithType();
-                if convertedCustomContentTheme is error {
-                    log:printError(constants:GET_CONTENTS_ERROR, convertedCustomContentTheme, sectionId = sectionId);
-                    return error(constants:GET_CONTENTS_ERROR, sectionId = sectionId);
-                }
-                convertedContent.customContentTheme = convertedCustomContentTheme;
-            }
-            if tags is string {
-                regexp:RegExp separator = re `,`;
-                string[] tagsArray = separator.split(tags);
-                convertedContent.tags = tagsArray;
+            types:ContentResponse|error convertedContent = transformContentResponse(customContentTheme, tags, 
+                    {...contentRest});
+            if convertedContent is error {
+                log:printError(constants:GET_CONTENTS_ERROR, convertedContent, sectionId = sectionId);
+                return error(constants:GET_CONTENTS_ERROR, sectionId = sectionId);
             }
             contents.push(convertedContent);
         };
@@ -302,14 +293,10 @@ public isolated function getSectionByRoutePath(int 'limit, int 'offset, string? 
 
     error? response = from Section {customSectionTheme, ...sectionRest} in resultStream
         do {
-            types:Section convertedSection = {...sectionRest};
-            if customSectionTheme is string {
-                types:CustomTheme|error convertedCustomSectionTheme = customSectionTheme.fromJsonStringWithType();
-                if convertedCustomSectionTheme is error {
-                    log:printError(constants:GET_SECTION_ERROR, convertedCustomSectionTheme, routePath = routePath);
-                    return error(constants:GET_SECTION_ERROR, routePath = routePath);
-                }
-                convertedSection.customSectionTheme = convertedCustomSectionTheme;
+            types:Section|error convertedSection = transformSectionResponse(customSectionTheme, {...sectionRest});
+            if convertedSection is error {
+                log:printError(constants:GET_SECTION_ERROR, convertedSection, routePath = routePath);
+                return error(constants:GET_SECTION_ERROR, routePath = routePath);
             }
             sections.push(convertedSection);
         };
@@ -395,19 +382,11 @@ public isolated function getContentsByText(string userInput, string userEmail)
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse convertedContent = {...contentRest};
-            if customContentTheme is string {
-                types:CustomTheme|error convertedCustomContentTheme = customContentTheme.fromJsonStringWithType();
-                if convertedCustomContentTheme is error {
-                    log:printError(constants:GET_CONTENTS_BY_TEXT_ERROR, convertedCustomContentTheme);
-                    return error(constants:GET_CONTENTS_BY_TEXT_ERROR);
-                }
-                convertedContent.customContentTheme = convertedCustomContentTheme;
-            }
-            if tags is string {
-                regexp:RegExp separator = re `,`;
-                string[] tagsArray = separator.split(tags);
-                convertedContent.tags = tagsArray;
+            types:ContentResponse|error convertedContent = transformContentResponse(customContentTheme, tags, 
+                    {...contentRest});
+            if convertedContent is error {
+                log:printError(constants:GET_CONTENTS_BY_TEXT_ERROR, convertedContent);
+                return error(constants:GET_CONTENTS_BY_TEXT_ERROR);
             }
             contents.push(convertedContent);
         };
@@ -436,19 +415,11 @@ public isolated function getContentsByTags(string[] inputTags, string userEmail)
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse convertedContent = {...contentRest};
-            if customContentTheme is string {
-                types:CustomTheme|error convertedCustomContentTheme = customContentTheme.fromJsonStringWithType();
-                if convertedCustomContentTheme is error {
-                    log:printError(constants:GET_CONTENTS_ERROR, convertedCustomContentTheme);
-                    return error(constants:GET_CONTENTS_ERROR);
-                }
-                convertedContent.customContentTheme = convertedCustomContentTheme;
-            }
-            if tags is string {
-                regexp:RegExp separator = re `,`;
-                string[] tagsArray = separator.split(tags);
-                convertedContent.tags = tagsArray;
+            types:ContentResponse|error convertedContent = transformContentResponse(customContentTheme, tags, 
+                    {...contentRest});
+            if convertedContent is error {
+                log:printError(constants:GET_CONTENTS_ERROR, convertedContent);
+                return error(constants:GET_CONTENTS_ERROR);
             }
             contents.push(convertedContent);
         };
@@ -726,19 +697,11 @@ public isolated function getRecentContents(string userEmail, int 'limit, int 'of
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse convertedContent = {...contentRest};
-            if customContentTheme is string {
-                types:CustomTheme|error convertedCustomContentTheme = customContentTheme.fromJsonStringWithType();
-                if convertedCustomContentTheme is error {
-                    log:printError(constants:GET_RECENT_CONTENT_ERROR, convertedCustomContentTheme);
-                    return error(constants:GET_RECENT_CONTENT_ERROR);
-                }
-                convertedContent.customContentTheme = convertedCustomContentTheme;
-            }
-            if tags is string {
-                regexp:RegExp separator = re `,`;
-                string[] tagsArray = separator.split(tags);
-                convertedContent.tags = tagsArray;
+            types:ContentResponse|error convertedContent = transformContentResponse(customContentTheme, tags, 
+                    {...contentRest});
+            if convertedContent is error {
+                log:printError(constants:GET_RECENT_CONTENT_ERROR, convertedContent);
+                return error(constants:GET_RECENT_CONTENT_ERROR);
             }
             contents.push(convertedContent);
         };
@@ -776,46 +739,17 @@ public isolated function getPinnedContents(string userEmail, int 'limit, int 'of
     stream<PinnedContentResponse, sql:Error?> resultStream = dbClient->query(
         getPinnedContentsQuery(userEmail, 'limit, 'offset));
 
-    check from PinnedContentResponse {customContentTheme, tags, ...contentRest} in resultStream
+    check from PinnedContentResponse row in resultStream
         do {
-            types:ContentResponse convertedContent = {
-                contentId: contentRest.contentId,
-                sectionId: contentRest.sectionId,
-                contentLink: contentRest.contentLink,
-                contentType: contentRest.contentType,
-                contentSubtype: contentRest.contentSubtype,
-                thumbnail: contentRest.thumbnail,
-                note: contentRest.note,
-                description: contentRest.description,
-                likesCount: contentRest.likesCount,
-                status: contentRest.status,
-                contentOrder: contentRest.contentOrder,
-                createdOn: contentRest.createdOn,
-                commentCount: contentRest.commentCount,
-                customContentTheme: (),
-                tags: (),
-                isVisible: contentRest.isVisible,
-                isReused: contentRest.isReused
-            };
-            if customContentTheme is string {
-                types:CustomTheme|error convertedCustomContentTheme = customContentTheme.fromJsonStringWithType();
-                if convertedCustomContentTheme is error {
-                    log:printError(constants:GET_PINNED_CONTENT_ERROR, convertedCustomContentTheme);
-                    return error(constants:GET_PINNED_CONTENT_ERROR);
-                }
-                convertedContent.customContentTheme = convertedCustomContentTheme;
+            types:ContentResponse|error converted = toContentResponseFromPinned(row);
+            if converted is error {
+                return converted;
             }
-            if tags is string {
-                regexp:RegExp separator = re `,`;
-                string[] tagsArray = separator.split(tags);
-                convertedContent.tags = tagsArray;
-            }
-            contents.push(convertedContent);
+            contents.push(converted);
         };
 
     return contents;
 }
-
 # Check if user has any pinned content.
 #
 # + userEmail - User email
@@ -855,13 +789,7 @@ public isolated function getTrendingContents(string userEmail, string[] names)
 
     check from ContentResponse {customContentTheme, tags, ...rest} in resultStream
         do {
-            types:ContentResponse item = {...rest};
-            if customContentTheme is string {
-                item.customContentTheme = check customContentTheme.fromJsonStringWithType();
-            }
-            if tags is string {
-                item.tags = (re `,`).split(tags);
-            }
+            types:ContentResponse item = check transformContentResponse(customContentTheme, tags, {...rest});
             contents.push(item);
         };
 
@@ -883,16 +811,8 @@ public isolated function getSuggestionsFromPinnedContents(string userEmail, int 
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse convertedContent = {...contentRest};
-            if customContentTheme is string {
-                types:CustomTheme convertedCustomContentTheme = check customContentTheme.fromJsonStringWithType();
-                convertedContent.customContentTheme = convertedCustomContentTheme;
-            }
-            if tags is string {
-                regexp:RegExp separator = re `,`;
-                string[] tagsArray = separator.split(tags);
-                convertedContent.tags = tagsArray;
-            }
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags, 
+                    {...contentRest});
             contents.push(convertedContent);
         };
     return contents;
@@ -922,18 +842,8 @@ public isolated function getContentsByTagsAndKeywords(string userEmail, string[]
 
     check from ContentResponse {customContentTheme, tags: contentTags, ...contentRest} in resultStream
         do {
-            types:ContentResponse convertedContent = {...contentRest};
-
-            if customContentTheme is string {
-                types:CustomTheme convertedCustomContentTheme = check customContentTheme.fromJsonStringWithType();
-                convertedContent.customContentTheme = convertedCustomContentTheme;
-            }
-
-            if contentTags is string {
-                regexp:RegExp separator = re `,`;
-                convertedContent.tags = separator.split(contentTags);
-            }
-
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, contentTags, 
+                    {...contentRest});
             contents.push(convertedContent);
         };
 
@@ -991,13 +901,7 @@ isolated function getViewedContents(string userEmail, string[] viewedContentName
 
     check from ContentResponse {customContentTheme, tags, ...rest} in resultStream
         do {
-            types:ContentResponse item = {...rest};
-            if customContentTheme is string {
-                item.customContentTheme = check customContentTheme.fromJsonStringWithType();
-            }
-            if tags is string {
-                item.tags = (re `,`).split(tags);
-            }
+            types:ContentResponse item = check transformContentResponse(customContentTheme, tags, {...rest});
             contents.push(item);
         };
 

@@ -34,9 +34,9 @@ type AsgardeoJwt record {|
 |};
 
 # Application roles.
-type AppRoles record {
+type AppRoles record {|
     # Admin role name
     string adminRole;
     # Employee role name
     string employeeRole;
-};
+|};

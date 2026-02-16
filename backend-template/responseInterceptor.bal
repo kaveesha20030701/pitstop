@@ -42,5 +42,4 @@ public isolated service class ResponseInterceptor {
         );
         return ctx.next();
     }
-
 }

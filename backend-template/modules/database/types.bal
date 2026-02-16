@@ -258,7 +258,7 @@ public type PinnedContentResponse record {|
     boolean status?;
     # Custom theme for the content
     @sql:Column {name: "styling_info"}
-    string? customContentTheme;
+    string customContentTheme;
     # Content order
     @sql:Column {name: "content_order"}
     int contentOrder;
@@ -269,7 +269,7 @@ public type PinnedContentResponse record {|
     @sql:Column {name: "comment_count"}
     int commentCount;
     # Content tags
-    string tags?;
+    string tags;
     # Content visibility
     @sql:Column {name: "is_visible"}
     boolean isVisible;
