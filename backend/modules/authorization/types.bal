@@ -17,12 +17,12 @@
 import ballerina/jwt;
 
 # User info custom type for Asgardeo token.
-public type CustomJwtPayload record {|
+public type CustomJwtPayload record {
     # User email
     string email;
     # Groups
     string[] groups;
-|};
+};
 
 # Asgardeo JWT token, if Asgardeo is configured as Choreo Key Manager, this JWT token will be used.
 type AsgardeoJwt record {|

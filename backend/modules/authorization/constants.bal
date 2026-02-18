@@ -18,3 +18,7 @@
 public const REQUESTED_BY_USER_EMAIL = "requestedByUserEmail";
 public const REQUESTED_BY_USER_ROLES = "requestedByUserRoles";
 public const JWT_ASSERTION = "x-jwt-assertion";
+
+// Application Privileges.
+public const EMPLOYEE_PRIVILEGE = 987;
+public const SALES_ADMIN_PRIVILEGE = 537;

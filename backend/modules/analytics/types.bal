@@ -19,6 +19,7 @@ public type Event record {|
     string label;
     # Number of unique visitors
     int nb_uniq_visitors;
+    json...;
 |};
 
 # Request structure for analytics.
