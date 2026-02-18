@@ -53,7 +53,7 @@ export interface AuthState {
   isIdTokenExpired: boolean | null;
   decodedIdToken: DecodedIDTokenPayload | null;
   roles: Role[];
-  userPrivileges: number[] | null;
+  userPrivileges: string[] | null;
   errorMessage: string | null;
   authFlowState: AuthFlowState;
 }

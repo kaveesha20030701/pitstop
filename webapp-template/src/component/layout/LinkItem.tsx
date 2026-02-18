@@ -24,7 +24,7 @@ import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import { NavLink, LinkProps as RouterLinkProps, useLocation, matchPath } from "react-router-dom";
-import { Box, Collapse } from "@mui/material";
+import { Box } from "@mui/material";
 
 const Link = React.forwardRef<HTMLAnchorElement, RouterLinkProps>((itemProps, ref) => {
   return <NavLink ref={ref} {...itemProps} />;
@@ -33,7 +33,6 @@ const Link = React.forwardRef<HTMLAnchorElement, RouterLinkProps>((itemProps, re
 const ListItemLink = (props: ListItemLinkProps) => {
   const [open, setOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const { primary, to, theme, isActive, children, routeId, level, label, handleSideBar, isRouteVisible } = props;
   const { pathname } = useLocation();
   const dispatch = useAppDispatch();
@@ -57,32 +56,18 @@ const ListItemLink = (props: ListItemLinkProps) => {
     setOpen(false);
   };
 
-  const adjustDropdownPosition = () => {
-    if (dropdownRef.current && navRef.current) {
-      const dropdownRect = dropdownRef.current.getBoundingClientRect();
-      const navRect = navRef.current.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-
-      if (level > 1 && navRect.right + dropdownRect.width > viewportWidth) {
-        dropdownRef.current.style.right = "100%";
-        dropdownRef.current.style.left = "auto";
-      } else {
-        dropdownRef.current.style.left = level === 1 ? "0" : "100%";
-        dropdownRef.current.style.right = "auto";
-      }
+  const handleClickOutside = (event: MouseEvent) => {
+    if (navRef.current && !navRef.current.contains(event.target as Node)) {
+      setOpen(false);
     }
   };
-  
-  useEffect(() => {
-    if (open && dropdownRef.current) {
-      adjustDropdownPosition();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
 
-  if (isRouteVisible == 0) {
-    return null;
-  }
+  useEffect(() => {
+    if (open) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [open]);
 
   return (
   <Box
@@ -91,7 +76,7 @@ const ListItemLink = (props: ListItemLinkProps) => {
       onMouseOut={handleMouseOut}
       sx={{
         position: "relative",
-        display: "block",
+        display: "inline-block",
         margin: 0,
       }}
     >
@@ -154,24 +139,23 @@ const ListItemLink = (props: ListItemLinkProps) => {
 
       {/* Dropdown Menu */}
       {children && children.length > 0 && (
-        <Collapse
-          in={open}
-          timeout={300}
-          unmountOnExit
-          ref={dropdownRef}
+        <Box
+          onMouseOver={handleMouseOver}
+          onMouseOut={handleMouseOut}
           sx={{
             position: "absolute",
-            top: level === 1 ? "100%" : "0",
+            top: level === 1 ? "calc(100% + 2px)" : "0",
             left: level === 1 ? "0" : "100%",
-            display: "inline-block",
+            ml: level > 1 ? "4px" : 0,
+            display: open ? "inline-block" : "none",
             background: theme.palette.secondary.main,
             color: theme.palette.primary.contrastText,
             borderRadius: theme.spacing(0.5),
             boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.2)",
             zIndex: 1300,
             width: "auto",
-            minWidth: "120px",
-            padding: "4px 8px",
+            minWidth: "180px",
+            padding: "8px 4px",
             whiteSpace: "nowrap",
           }}
         >
@@ -198,10 +182,12 @@ const ListItemLink = (props: ListItemLinkProps) => {
                 handleSideBar={handleSideBar}
                 isActive={matchPath(component.path, pathname) !== null}
                 children={component.children}
-                level={level + 1} isRouteVisible={0}              />
+                level={level + 1}
+                isRouteVisible={0}
+              />
             </Box>
           ))}
-        </Collapse>
+        </Box>
       )}
     </Box>
   );
