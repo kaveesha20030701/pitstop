@@ -61,8 +61,6 @@ service http:InterceptableService / on new http:Listener(9090) {
 
         int[] privileges = [authorization:EMPLOYEE_PRIVILEGE];
 
-        // "HEADER_REQUESTED_GROUP_BY" is the groups of the user access this resource.
-        // interceptor set this value after validating the jwt.
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
             log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
