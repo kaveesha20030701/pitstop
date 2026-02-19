@@ -57,7 +57,7 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + ctx - Request object
     # + return - Internal Server Error or Employee Privileges object
     resource function get employee\-privileges(http:RequestContext ctx)
-        returns int[]|http:BadRequest|http:InternalServerError {
+        returns int[]|http:InternalServerError {
 
         int[] privileges = [authorization:EMPLOYEE_PRIVILEGE];
 
