@@ -88,7 +88,7 @@ const SuggestedCarousel: React.FC<SuggestedCarouselProps> = ({ items }) => {
         <Box
           sx={{
             textAlign: "center",
-            mb: 3,
+            mb: 5,
             px: 1,
             display: "flex",
             justifyContent: "center",
