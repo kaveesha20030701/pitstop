@@ -347,11 +347,11 @@ export default function ActionAreaCard() {
                               >
                                 {isContent ? (
                                   <LinkIcon
-                                    sx={{ fontSize: 22, color: "#ff7300" }}
+                                    sx={{ fontSize: 22, color: theme.palette.primary.main }}
                                   />
                                 ) : (
                                   <FolderIcon
-                                    sx={{ fontSize: 22, color: "#ff7300" }}
+                                    sx={{ fontSize: 22, color: theme.palette.primary.main }}
                                   />
                                 )}
                               </Box>
@@ -496,10 +496,7 @@ export default function ActionAreaCard() {
                               sx={{
                                 fontSize: 40,
                                 opacity: 0.9,
-                                color: (t) =>
-                                  t.palette.mode === "dark"
-                                    ? t.palette.warning.light
-                                    : t.palette.warning.main,
+                                color: theme.palette.primary.main
                               }}
                             />
                             <Typography

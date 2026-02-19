@@ -38,6 +38,7 @@ import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import Fab from "@mui/material/Fab";
 import {
   Box,
@@ -55,7 +56,7 @@ import {
   ListItemText,
   Button
 } from "@mui/material";
-import { styled, Theme, useTheme } from "@mui/material/styles";
+import { alpha, styled, Theme, useTheme } from "@mui/material/styles";
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
 import React, {
   useEffect,
@@ -181,10 +182,10 @@ const Header = (props: HeaderProps) => {
         path: "/MORE",
         routeId: ROUTE_ID_MORE,
         routeOrder: 6.5,
-        children: baseMenuRoutes.slice(6),
+        children: baseMenuRoutes.slice(5),
         isRouteVisible: true,
       };
-      finalRoutes = [...baseMenuRoutes.slice(0, 6), moreItem];
+      finalRoutes = [...baseMenuRoutes.slice(0, 5), moreItem];
     } else {
       finalRoutes = [...baseMenuRoutes];
     }
@@ -330,7 +331,7 @@ const Header = (props: HeaderProps) => {
                 }}
                 onClick={() => navigate("/")}
               >
-                {"Sales Pitstop"}
+                {window.config?.APP_NAME ?? "Sales Pitstop"}
               </Typography>
 
               {/* -------Desktop View----------- */}
@@ -374,7 +375,7 @@ const Header = (props: HeaderProps) => {
                             transform: "translateX(-50%)",
                             width: isMyBoardActive ? "80%" : "0%",
                             height: "5px",
-                            backgroundColor: "#FF7300",
+                            backgroundColor: theme.palette.primary.main,
                             borderRadius: "2px 2px 0 0",
                             transition: "width 0.3s ease",
                           },
@@ -413,7 +414,7 @@ const Header = (props: HeaderProps) => {
                       children={r.children}
                       level={1}
                       handleSideBar={handleCloseSideBar}
-                      isRoutevisible={r.isRouteVisible ? 1 : 0}
+                      isRouteVisible={r.isRouteVisible ? 1 : 0}
                     />
                   );
                 })}
@@ -425,6 +426,66 @@ const Header = (props: HeaderProps) => {
                 gap={2}
                 sx={{ marginLeft: theme.spacing(2) }}
               >
+{window.config?.IS_PITSTOP_APP !== undefined && (
+  <Tooltip title={`Switch to ${window.config.IS_PITSTOP_APP ? "SE Wiki" : "Sales Pitstop"}`}>
+    <Box
+      component="a"
+      href={window.config.IS_PITSTOP_APP ? window.config.SE_WIKI_URL : window.config.SALES_PITSTOP_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 0.5,
+        px: 1.5,
+        py: 0.5,
+        borderRadius: "8px",
+        textDecoration: "none",
+        fontSize: "0.85rem",
+        letterSpacing: "0.01em",
+        color: theme.palette.primary.main,
+        background:
+          theme.palette.mode === "dark"
+            ? `linear-gradient(135deg, ${alpha(
+                theme.palette.primary.main,
+                0.15
+              )} 0%, ${alpha(
+                theme.palette.warning.main,
+                0.08
+              )} 100%)`
+            : `linear-gradient(135deg, ${alpha(
+                theme.palette.primary.main,
+                0.08
+              )} 0%, ${alpha(
+                theme.palette.warning.main,
+                0.05
+              )} 100%)`,
+        transition: "all 0.2s ease",
+        "&:hover": {
+          background:
+            theme.palette.mode === "dark"
+              ? `linear-gradient(135deg, ${alpha(
+                  theme.palette.primary.main,
+                  0.25
+                )} 0%, ${alpha(
+                  theme.palette.warning.main,
+                  0.15
+                )} 100%)`
+              : `linear-gradient(135deg, ${alpha(
+                  theme.palette.primary.main,
+                  0.15
+                )} 0%, ${alpha(
+                  theme.palette.warning.main,
+                  0.1
+                )} 100%)`,
+        },
+      }}
+    >
+      {window.config.IS_PITSTOP_APP ? "SE Wiki" : "Sales Pitstop"}
+      <OpenInNewIcon sx={{ fontSize: "0.8rem" }} />
+    </Box>
+  </Tooltip>
+)}
                 <Tooltip
                   title={
                     theme.palette.mode === "light" ? "Dark mode" : "Light mode"
@@ -582,16 +643,12 @@ const Header = (props: HeaderProps) => {
               aria-label="scroll to top"
               onClick={scrollToTop}
               sx={{
-                position: "fixed",
-                bottom: theme.spacing(2),
-                right: theme.spacing(2),
-                zIndex: theme.zIndex.modal + 1,
-                display: "none",
-                width: 44,
-                height: 44,
-                minHeight: 0,
-                p: 0,
-                color: theme.palette.common.white,
+              position: "fixed",
+              bottom: theme.spacing(2),
+              right: theme.spacing(2),
+              zIndex: theme.zIndex.modal + 1,
+              display: "none",
+              color: theme.palette.common.white,
               }}
             >
               <KeyboardArrowUpIcon sx={{ fontSize: 28 }} />

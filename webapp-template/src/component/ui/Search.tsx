@@ -218,7 +218,7 @@ export default function Search() {
                       icon={<LocalOfferIcon sx={{ fontSize: 14 }} />}
                       variant="outlined"
                       sx={{
-                        borderColor: theme.palette.orange[200],
+                        borderColor: theme.palette.primary.dark,
                         color: theme.palette.common.white,
                         fontWeight: 500,
                         fontSize: "0.85rem",

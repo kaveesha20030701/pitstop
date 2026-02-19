@@ -54,7 +54,7 @@ export interface AuthState {
   decodedIdToken: DecodedIDTokenPayload | null;
   roles: Role[];
   userPrivileges: string[] | null;
-  errorMessage: string | null;
+  errorMessage: number | null;
   authFlowState: AuthFlowState;
 }
 

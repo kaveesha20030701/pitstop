@@ -32,6 +32,9 @@ declare global {
       IS_MATOMO_ENABLED: boolean;
       MATOMO_URL: string;
       MATOMO_SITE_ID: string;
+      IS_PITSTOP_APP: boolean;
+      SALES_PITSTOP_URL: string;
+      SE_WIKI_URL: string;
     };
   }
 }

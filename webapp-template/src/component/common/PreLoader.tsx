@@ -90,7 +90,7 @@ const PreLoader = (props: PreLoaderProps) => {
                   fontWeight: 300,
                 }}
               >
-                {props.message || "SALES PITSTOP"}
+                {props.message || (window.config?.IS_PITSTOP_APP ? "SALES PITSTOP" : "SE-WIKI")}
               </Typography>
             </Box>
             <Box>

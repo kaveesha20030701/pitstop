@@ -18,13 +18,13 @@ import { AppConfig } from "@config/config";
 import { ApiService } from "@utils/apiService";
 
 export const getUserPrivileges = () => {
-  return new Promise<string[]>((resolve, reject) => {
+  return new Promise<number[]>((resolve, reject) => {
     ApiService.getInstance()
       .get(AppConfig.serviceUrls.employeePrivilege)
       .then(
         (res) => {
-          const groups: string[] = res.data.groups || [];
-          resolve(groups);
+          const privileges: number[] = res.data;
+          resolve(privileges);
         },
         () => {
           reject("error");

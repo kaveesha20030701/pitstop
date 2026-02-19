@@ -24,6 +24,11 @@ declare module "@mui/material/styles" {
       200: string;
       300: string;
     };
+    blue: {
+      100: string;
+      200: string;
+      300: string;
+    };
     redAccent: {
       100: string;
       200: string;
@@ -36,10 +41,28 @@ declare module "@mui/material/styles" {
       200: string;
       300: string;
     };
+    blue?: {
+      100: string;
+      200: string;
+      300: string;
+    };
     redAccent?: {
       100: string;
       200: string;
     };
+  }
+
+  // Extend primary to include all three shades
+  interface PaletteColor {
+    light: string;  
+    main: string; 
+    dark: string; 
+  }
+
+  interface SimplePaletteColorOptions {
+    light?: string;
+    main: string;
+    dark?: string;
   }
 }
 
@@ -47,21 +70,27 @@ declare module "@mui/material/styles" {
 export const tokens = (mode: PaletteMode) => ({
   ...(mode === "dark"
     ? {
-        // Dark mode neutrals 
+        // Dark mode neutrals
         grey: {
-          100: "#FFFFFF", 
-          200: "#D6DBE1", 
-          300: "#A9B2C2", 
-          400: "#2B333D", 
+          100: "#FFFFFF",
+          200: "#D6DBE1",
+          300: "#A9B2C2",
+          400: "#2B333D",
           500: "#0F1216",
-          600: "#1B2128", 
+          600: "#1B2128",
           700: "#757575",
         },
-        // Brand orange scale (light → main)
+        // Brand orange scale (light → main) for Pitstop
         orange: {
           100: "#e66700",
           200: "#e56700",
           300: "#ff7300", // primary main
+        },
+        // Brand blue scale for SE Wiki
+        blue: {
+          100: "#3b82f6",
+          200: "#2563eb",
+          300: "#1d4ed8", // primary main for SE Wiki
         },
         // Error/red accent
         redAccent: {
@@ -73,18 +102,24 @@ export const tokens = (mode: PaletteMode) => ({
         // Light mode neutrals (text → darkest, backgrounds → light)
         grey: {
           100: "#0A0C10",
-          200: "#0F1216", 
+          200: "#0F1216",
           300: "#3B4147",
-          400: "#b2b4b8ff", 
-          500: "#F7F8F9", 
+          400: "#b2b4b8ff",
+          500: "#F7F8F9",
           600: "#FFFFFF",
           700: "#757575",
         },
-        // Brand orange scale (tints → main)
+        // Brand orange scale (tints → main) for Pitstop
         orange: {
           100: "#f7931e",
           200: "#ff811a",
           300: "#ff7300", // primary main
+        },
+        // Brand blue scale for SE Wiki
+        blue: {
+          100: "#60a5fa",
+          200: "#3b82f6",
+          300: "#2563eb", // primary main for SE Wiki
         },
         // Error/red accent
         redAccent: {
@@ -97,46 +132,33 @@ export const tokens = (mode: PaletteMode) => ({
 // mui theme settings
 export const themeSettings = (mode: PaletteMode) => {
   const colors = tokens(mode);
+  const isPitstopApp = window.config?.IS_PITSTOP_APP ?? true;
+  const primaryColor = isPitstopApp ? colors.orange : colors.blue;
+
+  const primaryPalette = {
+    light: primaryColor[100],  
+    dark: primaryColor[200],  
+    main: primaryColor[300],  
+    contrastText: colors.grey[200],
+  };
+
   return {
     palette: {
       mode: mode,
-      ...(mode === "dark"
-        ? {
-            primary: {
-              main: colors.orange[300], // primary main
-              contrastText: colors.grey[200],
-            },
-            // For the appBar and the footer
-            secondary: {
-              dark: colors.grey[400],     
-              main: colors.grey[600],     
-              light: colors.grey[200],    
-              contrastText: colors.grey[100], 
-            },
-            background: {
-              default: colors.grey[500],  
-            },
-            orange: colors.orange,
-            redAccent: colors.redAccent,
-          }
-        : {
-            // palette values for light mode
-            primary: {
-              main: colors.orange[300],   // primary main
-              contrastText: colors.grey[200],
-            },
-            secondary: {
-              light: colors.grey[200],    
-              dark: colors.grey[400],     
-              main: colors.grey[600],     
-              contrastText: colors.grey[100], 
-            },
-            background: {
-              default: colors.grey[500],  
-            },
-            orange: colors.orange,
-            redAccent: colors.redAccent,
-          }),
+      primary: primaryPalette,
+      tonalOffset: 0,
+      secondary: {
+        light: colors.grey[200],
+        dark: colors.grey[400],
+        main: colors.grey[600],
+        contrastText: colors.grey[100],
+      },
+      background: {
+        default: colors.grey[500],
+      },
+      orange: colors.orange,
+      blue: colors.blue,
+      redAccent: colors.redAccent,
     },
     typography: {
       fontSize: 13,

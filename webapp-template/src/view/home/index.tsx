@@ -178,8 +178,9 @@ function Home() {
   }, [page.sectionData]);
 
   useEffect(() => {
+    const isPitstopApp = window.config?.IS_PITSTOP_APP ?? false;
     const isAdmin = roles.includes(Role.SALES_ADMIN);
-    setHasTestimonialSection(isAdmin || customerTestimonials.length >= 4);
+    setHasTestimonialSection(isPitstopApp && (isAdmin || customerTestimonials.length >= 4));
   }, [customerTestimonials.length, roles]);
 
   useEffect(() => {
@@ -355,7 +356,7 @@ function Home() {
                     fontFamily: customPageTheme?.title?.fontFamily,
                   }}
                 >
-                  SALES PITSTOP
+                  {window.config?.IS_PITSTOP_APP ? "SALES PITSTOP" : "SALES ENGINEERING WIKI"}
                 </Typography>
 
                 <Typography
@@ -460,9 +461,11 @@ function Home() {
                 afterSectionId={-1}
                 AfterSectionComponent={<Box ref={section2Ref}></Box>}
               />
-              <Box ref={section3Ref}>
-                <CustomerTestimonialSection />
-              </Box>
+              {hasTestimonialSection && (
+                <Box ref={section3Ref}>
+                  <CustomerTestimonialSection />
+                </Box>
+              )}
             </Box>
           </Box>
         </>

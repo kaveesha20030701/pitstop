@@ -43,6 +43,9 @@ export const UIEditStyles = {
   transform: "scale(1.01)",
 };
 
+export const EMPLOYEE_PRIVILEGE_ID = 987;
+export const SALES_ADMIN_PRIVILEGE_ID = 537;
+
 export const SIDEBAR_WIDTH = 350;
 export const SECTION_LIMIT = 15;
 export const CONTENTS_PER_SECTION = 3;
