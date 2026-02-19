@@ -52,6 +52,29 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + return - App information
     resource function get app\-info() returns types:AppInfo|http:InternalServerError => appInfo;
 
+    # Retrieve the App privileges of the logged in user.
+    #
+    # + ctx - Request object
+    # + return - Internal Server Error or Employee Privileges object
+    resource function get employee\-privileges(http:RequestContext ctx)
+        returns int[]|http:InternalServerError {
+
+        int[] privileges = [authorization:EMPLOYEE_PRIVILEGE];
+
+        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
+        if userGroups is error {
+            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
+            return <http:InternalServerError>{
+                body: constants:GET_USER_ROLE_ERROR
+            };
+        }
+
+        if authorization:hasPermission([salesAdmin], userGroups) {
+            privileges.push(authorization:SALES_ADMIN_PRIVILEGE);
+        }
+        return privileges;
+    }
+
     # Retrieve basic information of a employee.
     #
     # + email - Employee work email
