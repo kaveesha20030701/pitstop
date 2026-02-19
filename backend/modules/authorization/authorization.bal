@@ -54,7 +54,7 @@ public isolated service class JwtInterceptor {
             };
         }
 
-        CustomJwtPayload|error userInfo = decoded[1].cloneWithType(CustomJwtPayload);
+        AsgardeoJwt|error userInfo = decoded[1].cloneWithType(AsgardeoJwt);
         if userInfo is error {
             string errorMsg = "Malformed invoker info object!";
             log:printError(errorMsg, userInfo);
