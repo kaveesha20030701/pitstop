@@ -202,11 +202,7 @@ export const validationSectionSchema = Yup.object({
       : schema.notRequired()
   ),
 });
-
-//-------Slice Interface-------//
-//---------------Payload interface-----------------//
-
-//Export Type
+//Payload interfac
 export interface RoutePayload {
   parentId: number;
   title: string;
@@ -297,9 +293,8 @@ export interface UpdateCommentPayload {
   contentId: number;
   comment: string;
 }
-//-----------------------------------------------------------//
 
-//---------------For Creating New Nav Item-------------------//
+//For Creating New Nav Item
 
 //Response Type
 export interface Page {
@@ -383,7 +378,7 @@ export interface ReorderRoutesPayload {
   reorderRoutes: ReorderRouteItem[];
 }
 
-//------Response interfaces------//
+//Response interfaces
 
 export interface CommentsResponse {
   commentId: number;
@@ -448,7 +443,6 @@ export interface Section {
   isVisible: number; 
   isRouteVisible?: number; 
 }
-//-----------------------------------------------------------//
 
 export interface PageState {
   state: "failed" | "loading" | "idle" | "success";

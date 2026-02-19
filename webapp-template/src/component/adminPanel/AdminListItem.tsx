@@ -187,7 +187,6 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
       setOpen((o) => {
         const next = !o;
         if (next) {
-          //-------------Update Route Path needs to be change into Update navigation_id----------//
           dispatch(
             updateRouterPath({ routeId, currentPath: to, label, children })
           );
@@ -197,7 +196,6 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
     }
   };
 
-  //------------------Dialog Box Functionalities-------------//
   const handleOpenAddDialogBox = () => {
     setOpenAddDialogBox(true);
     handleCloseDrawer();

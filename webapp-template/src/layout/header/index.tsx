@@ -334,7 +334,7 @@ const Header = (props: HeaderProps) => {
                 {window.config?.APP_NAME ?? "Sales Pitstop"}
               </Typography>
 
-              {/* -------Desktop View----------- */}
+              {/*Desktop View*/}
               <List
                 sx={{
                   display: {
@@ -419,7 +419,6 @@ const Header = (props: HeaderProps) => {
                   );
                 })}
               </List>
-              {/* -------------------------------- */}
 
               <Stack
                 flexDirection="row"
@@ -558,7 +557,7 @@ const Header = (props: HeaderProps) => {
                       {userInfo?.name}
                     </Button>
 
-                    {/* -----------DropDown When User clicks on user thumbnail------- */}
+                    {/*DropDown When User clicks on user thumbnail*/}
                     <Menu
                       sx={{ mt: "45px"}}
                       anchorEl={anchorElUser}

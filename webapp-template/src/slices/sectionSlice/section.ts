@@ -80,8 +80,7 @@ export const SectionSlice = createSlice({
   },
 });
 
-//-------------------------Create a new section-----------------------------//
-
+//Create a new section
 export const createNewSection = createAsyncThunk(
   "pitstop/createNewSection",
   async (payload: { section: SectionPayload; routePath: string }, { dispatch }) => {
@@ -119,10 +118,7 @@ export const createNewSection = createAsyncThunk(
   }
 );
 
-//---------------------------------------------------------------------------//
-
-//-----------------------------Delete a section ------------------------------//
-
+//Delete a section
 export const deleteSection = createAsyncThunk(
   "pitstop/deleteSection",
   async (payload: { routeId: number; sectionId: number; routePath: string }, { dispatch }) => {
@@ -161,10 +157,7 @@ export const deleteSection = createAsyncThunk(
   }
 );
 
-//---------------------------------------------------------------------------//
-
-//-------------------------Update a section----------------------------------//
-
+//Update a section
 export const updateSection = createAsyncThunk(
   "pitstop/updateSection",
   async (payload: { section: UpdateSectionPayload; routePath: string }, { dispatch }) => {
@@ -203,7 +196,5 @@ export const updateSection = createAsyncThunk(
     });
   }
 );
-
-//---------------------------------------------------------------------------//
 
 export default SectionSlice.reducer;

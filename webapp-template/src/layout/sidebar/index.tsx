@@ -52,8 +52,6 @@ const Sidebar = (props: SidebarProps) => {
     </>
   );
 
-  // ------------------------------------------------------------------------------------//
-
   return (
     <Drawer
       variant="temporary"

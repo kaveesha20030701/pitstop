@@ -18,7 +18,7 @@ import { View } from "./view";
 import { RouteResponse } from "./types/types";
 import React from "react";
 
-//----------Overriding the RouteResponse[] by assigning a page and children to each path-------//
+//Overriding the RouteResponse[] by assigning a page and children to each path
 export const getActiveRoutesV2 = (routes: RouteResponse[] | undefined): RouteResponse[] => {
   if (!routes) return [];
   const routesObj: RouteResponse[] = [];

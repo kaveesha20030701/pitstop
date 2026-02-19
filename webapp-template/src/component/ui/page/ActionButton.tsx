@@ -94,7 +94,7 @@ const ActionButton: React.FC<ActionButtonProps> = () => {
         bottom: 32,
       }}
     >
-      {/* -------------------Admin Actions--------------- */}
+      {/*Admin Actions*/}
       {authorizedRoles.includes(Role.SALES_ADMIN) && (
         <>
             <Box
@@ -143,9 +143,8 @@ const ActionButton: React.FC<ActionButtonProps> = () => {
           />
         </>
       )}
-      {/* ---------------------------------------------- */}
 
-      {/* -------------------------------- UpdateDialogBox -------------------------------------------*/}
+      {/*UpdateDialogBox*/}
       {updatePageData.routeId != 0 && (
         <UpdatePageDialogBox
           type="update"

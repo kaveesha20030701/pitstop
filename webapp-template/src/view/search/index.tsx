@@ -95,7 +95,7 @@ export default function Layout() {
             <Outlet />
           </Suspense>
 
-          {/* ---------------------------Search Functionalities--------------------- */}
+          {/* Functionalities*/}
 
           <CustomBox
             sx={{ position: "relative", width: "100%", minHeight: "400px" }}
@@ -183,7 +183,7 @@ export default function Layout() {
               mx: "auto",
             }}
           >
-            {/* -------------------- Results count -------------------- */}
+            {/*Results count*/}
             {searchState === "success" && searchData.length > 0 && (
               <Box sx={{ mb: 4 }}>
                 <Typography variant="h5" color="text.secondary" fontWeight={600}>
@@ -192,7 +192,7 @@ export default function Layout() {
               </Box>
             )}
 
-            {/* -------------------- Search Results -------------------- */}
+            {/*Search Results*/}
             <Grid
               container
               spacing={{ xs: 2, md: 3 }}
@@ -235,7 +235,7 @@ export default function Layout() {
                   </Grid>
                 ))}
 
-              {/* -------------------- Empty state -------------------- */}
+              {/*Empty state*/}
               {searchState === "success" && searchData.length === 0 && (
                 <Grid item xs={12}>
                   <Box
@@ -280,10 +280,10 @@ export default function Layout() {
                   </Box>
                 </Grid>
               )}
-              {/* -------------------- END Empty state -------------------- */}
+              {/*END Empty state*/}
             </Grid>
 
-            {/* -------------------- Pagination -------------------- */}
+            {/*Pagination*/}
             {searchState === "success" && searchData.length > ITEMS_PER_PAGE && (
               <Box
                 sx={{
@@ -305,7 +305,6 @@ export default function Layout() {
               </Box>
             )}
           </Box>
-          {/* ---------------------------------------------------------------------- */}
           <Box sx={{ height: "38px", width: "100%" }} aria-hidden="true" />
           <Box
             className="layout-note"

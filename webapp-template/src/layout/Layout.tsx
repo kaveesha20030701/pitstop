@@ -59,7 +59,6 @@ export default function Layout() {
   const theme = useTheme();
   const userInfo = useSelector(selectUserInfo);
 
-  //----------------TO:DO-------------------------------------------//
   const [userConsent, setUserConsent] = useState<boolean>(true);
 
   const getAppBarTitle = (): string => {

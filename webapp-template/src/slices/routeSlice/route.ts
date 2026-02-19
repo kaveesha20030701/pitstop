@@ -13,23 +13,24 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import { AppConfig } from "@config/config";
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
+import { getPageData } from "@slices/pageSlice/page";
 import { ApiService } from "@utils/apiService";
+
 import {
-  RoutePayload,
-  UpdateRoutePayload,
-  RouteResponse,
+  PageData,
   ReorderRoutesPayload,
   RouteContentItem,
   RouteContentPayload,
+  RoutePayload,
+  RouteResponse,
   UpdateRouteContentPayload,
+  UpdateRoutePayload,
   reparentRoutesPayload,
-  PageData,
 } from "../../types/types";
-import { getPageData } from "@slices/pageSlice/page";
-import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
 
 const initialState: RouteState = {
   stateMessage: null,
@@ -43,7 +44,7 @@ const initialState: RouteState = {
   routeContents: [],
   pageData: undefined,
   isRouteVisible: 1,
-  reparentingState: "idle", 
+  reparentingState: "idle",
 };
 
 interface RouteState {
@@ -58,7 +59,7 @@ interface RouteState {
   routeContents: RouteContentItem[];
   pageData?: PageData;
   isRouteVisible: number;
-  reparentingState: 'idle' | 'loading' | 'success'; 
+  reparentingState: "idle" | "loading" | "success";
 }
 
 export const RouteSlice = createSlice({
@@ -72,7 +73,7 @@ export const RouteSlice = createSlice({
         currentPath: string;
         label: string;
         children: RouteResponse[];
-      }>
+      }>,
     ) => {
       state.routeId = action.payload.routeId;
       state.currentPath = action.payload.currentPath;
@@ -122,7 +123,7 @@ export const RouteSlice = createSlice({
             routeId: -5,
             routeOrder: 1000,
             isRouteVisible: true,
-          }
+          },
         ];
         state.state = "success";
       })
@@ -161,19 +162,16 @@ export const RouteSlice = createSlice({
         const { parentId, reorderRoutes } = action.meta.arg;
 
         const orderMap = new Map<number, number>(
-          reorderRoutes.map((r) => [r.routeId, r.routeOrder])
+          reorderRoutes.map((r) => [r.routeId, r.routeOrder]),
         );
 
         const sortByOrderMap = (routes: RouteResponse[]) =>
           [...routes].sort(
             (a, b) =>
-              (orderMap.get(a.routeId) ?? a.routeOrder) -
-              (orderMap.get(b.routeId) ?? b.routeOrder)
+              (orderMap.get(a.routeId) ?? a.routeOrder) - (orderMap.get(b.routeId) ?? b.routeOrder),
           );
 
-        const updateChildrenRecursively = (
-          routes: RouteResponse[]
-        ): RouteResponse[] =>
+        const updateChildrenRecursively = (routes: RouteResponse[]): RouteResponse[] =>
           routes.map((route) => {
             if (route.routeId === parentId) {
               return {
@@ -246,9 +244,7 @@ export const RouteSlice = createSlice({
       })
       .addCase(deleteRouteContent.fulfilled, (state, action) => {
         const { contentId } = action.meta.arg;
-        state.routeContents = state.routeContents.filter(
-          (c) => c.contentId !== contentId
-        );
+        state.routeContents = state.routeContents.filter((c) => c.contentId !== contentId);
       })
       .addCase(deleteRouteContent.rejected, (state) => {
         state.state = "failed";
@@ -276,7 +272,7 @@ export const RouteSlice = createSlice({
   },
 });
 
-//-------------------------Get new route paths---------------------------//
+//Get new route paths
 export const getRoutesInfo = createAsyncThunk(
   "pitstop/getRoutesInfo",
   async (routePath: string, { dispatch }) => {
@@ -284,7 +280,7 @@ export const getRoutesInfo = createAsyncThunk(
       routesInfo: RouteResponse[];
     }>((resolve, reject) => {
       ApiService.getInstance()
-        .get(AppConfig.serviceUrls.createRouterPath) 
+        .get(AppConfig.serviceUrls.createRouterPath)
         .then((resp) => {
           if (resp.status === 200) {
             dispatch(getPageData(routePath)).then(() => {
@@ -303,23 +299,18 @@ export const getRoutesInfo = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            })
+            }),
           );
           reject(error);
         });
     });
-  }
+  },
 );
-//--------------------------------------------------------------------------//
 
-//-------------------------Create a new route path--------------------------//
-
+//Create a new route path
 export const createNewRoute = createAsyncThunk(
   "pitstop/createRouterPath",
-  async (
-    payload: { newContent: RoutePayload; routePath: string },
-    { dispatch }
-  ) => {
+  async (payload: { newContent: RoutePayload; routePath: string }, { dispatch }) => {
     return new Promise<unknown>((resolve, reject) => {
       ApiService.getInstance()
         .post(AppConfig.serviceUrls.createRouterPath, payload.newContent)
@@ -333,7 +324,7 @@ export const createNewRoute = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            })
+            }),
           );
         })
         .catch((resp) => {
@@ -345,7 +336,7 @@ export const createNewRoute = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            })
+            }),
           );
           reject(resp);
         })
@@ -353,13 +344,10 @@ export const createNewRoute = createAsyncThunk(
           dispatch(getRoutesInfo(payload.routePath));
         });
     });
-  }
+  },
 );
 
-//---------------------------------------------------------------------------//
-
-//-------------------------Delete a particular route path--------------------------//
-
+//Delete a particular route path
 export const deleteRoute = createAsyncThunk(
   "pitstop/deleteRouterPath",
   async (payload: { routeId: number; routePath: string }, { dispatch }) => {
@@ -375,7 +363,7 @@ export const deleteRoute = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            })
+            }),
           );
         })
         .catch((resp) => {
@@ -387,7 +375,7 @@ export const deleteRoute = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            })
+            }),
           );
           reject(resp);
         })
@@ -395,19 +383,13 @@ export const deleteRoute = createAsyncThunk(
           dispatch(getRoutesInfo(payload.routePath));
         });
     });
-  }
+  },
 );
 
-//---------------------------------------------------------------------------//
-
-//---------------------Update a particular route path-----------------------//
-
+//Update a particular route path
 export const updateRoute = createAsyncThunk(
   "pitstop/updatePage",
-  async (
-    payload: { page: UpdateRoutePayload; routePath: string },
-    { dispatch }
-  ) => {
+  async (payload: { page: UpdateRoutePayload; routePath: string }, { dispatch }) => {
     return new Promise<unknown>((resolve, reject) => {
       ApiService.getInstance()
         .patch(AppConfig.serviceUrls.updateRouterPath, payload.page)
@@ -421,7 +403,7 @@ export const updateRoute = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            })
+            }),
           );
         })
         .catch((resp) => {
@@ -433,7 +415,7 @@ export const updateRoute = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            })
+            }),
           );
           reject(resp);
         })
@@ -441,12 +423,10 @@ export const updateRoute = createAsyncThunk(
           dispatch(getRoutesInfo(payload.routePath));
         });
     });
-  }
+  },
 );
 
-//---------------------------------------------------------------------------//
-
-//--------------------------Reordering the routes---------------------------//
+//Reordering the routes
 export const reorderRoutes = createAsyncThunk(
   "pitstop/reorderRoutes",
   async (payload: ReorderRoutesPayload, { dispatch }) => {
@@ -462,16 +442,15 @@ export const reorderRoutes = createAsyncThunk(
               message: "Something went wrong while reordering the routes :(",
               type: "error",
               anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            })
+            }),
           );
           reject(resp);
         });
     });
-  }
+  },
 );
-//---------------------------------------------------------------------------//
 
-//-----------------------------Get Route Contents---------------------------//
+//Get Route Contents
 export const getRouteContents = createAsyncThunk(
   "routeContent/getRouteContents",
   async (_: void, { dispatch }) => {
@@ -489,22 +468,18 @@ export const getRouteContents = createAsyncThunk(
               message: "Error while fetching Button :(",
               type: "error",
               anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            })
+            }),
           );
           reject(error);
         });
     });
-  }
+  },
 );
-//---------------------------------------------------------------------------//
 
-//---------------------------Create Route Content---------------------------//
+//Create Route Content
 export const createRouteContent = createAsyncThunk(
   "routeContent/createRouteContent",
-  async (
-    payload: { content: RouteContentPayload; routeId: number },
-    { dispatch }
-  ) => {
+  async (payload: { content: RouteContentPayload; routeId: number }, { dispatch }) => {
     return new Promise<void>((resolve, reject) => {
       ApiService.getInstance()
         .post(AppConfig.serviceUrls.routeContents, payload.content)
@@ -515,7 +490,7 @@ export const createRouteContent = createAsyncThunk(
                 message: "Button created successfully",
                 type: "success",
                 anchorOrigin: { vertical: "bottom", horizontal: "right" },
-              })
+              }),
             );
             resolve();
             dispatch(getRouteContents());
@@ -527,22 +502,18 @@ export const createRouteContent = createAsyncThunk(
               message: "Error while creating Button :(",
               type: "error",
               anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            })
+            }),
           );
           reject(error);
         });
     });
-  }
+  },
 );
-//---------------------------------------------------------------------------//
 
-//---------------------------Update Route Content---------------------------//
+//Update Route Content
 export const updateRouteContent = createAsyncThunk(
   "routeContent/updateRouteContent",
-  async (
-    payload: { content: UpdateRouteContentPayload; routeId: number },
-    { dispatch }
-  ) => {
+  async (payload: { content: UpdateRouteContentPayload; routeId: number }, { dispatch }) => {
     return new Promise<void>((resolve, reject) => {
       ApiService.getInstance()
         .patch(AppConfig.serviceUrls.routeContents, payload.content)
@@ -553,7 +524,7 @@ export const updateRouteContent = createAsyncThunk(
                 message: "Button updated successfully",
                 type: "success",
                 anchorOrigin: { vertical: "bottom", horizontal: "right" },
-              })
+              }),
             );
             resolve();
             dispatch(getRouteContents());
@@ -565,16 +536,15 @@ export const updateRouteContent = createAsyncThunk(
               message: "Error while updating Button :(",
               type: "error",
               anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            })
+            }),
           );
           reject(error);
         });
     });
-  }
+  },
 );
-//-----------------------------------------------------------------------------------//
 
-//------------------------------Delete Route Content---------------------------------//
+//Delete Route Content
 export const deleteRouteContent = createAsyncThunk(
   "routeContent/deleteRouteContent",
   async (payload: { contentId: number; routeId: number }, { dispatch }) => {
@@ -588,7 +558,7 @@ export const deleteRouteContent = createAsyncThunk(
                 message: "Button deleted successfully",
                 type: "success",
                 anchorOrigin: { vertical: "bottom", horizontal: "right" },
-              })
+              }),
             );
             resolve();
             dispatch(getRouteContents());
@@ -600,16 +570,15 @@ export const deleteRouteContent = createAsyncThunk(
               message: "Error while deleting Button :(",
               type: "error",
               anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            })
+            }),
           );
           reject(error);
         });
     });
-  }
+  },
 );
-//-----------------------------------------------------------------------------------//
 
-//------------------------------Reparent Routes---------------------------------//
+//Reparent Routes
 export const reparentRoutes = createAsyncThunk(
   "pitstop/reparentRoutes",
   async (payload: reparentRoutesPayload, { dispatch }) => {
@@ -623,7 +592,7 @@ export const reparentRoutes = createAsyncThunk(
                 message: "Pages reparented successfully",
                 type: "success",
                 anchorOrigin: { vertical: "bottom", horizontal: "right" },
-              })
+              }),
             );
             resolve();
             dispatch(getRoutesInfo("/"));
@@ -635,20 +604,19 @@ export const reparentRoutes = createAsyncThunk(
               message: "Error while reparenting pages :(",
               type: "error",
               anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            })
+            }),
           );
           reject(error);
         });
     });
-  }
+  },
 );
-
 
 export const toggleRouteVisibility = createAsyncThunk(
   "pitstop/toggleRouteVisibility",
   async (
     payload: { routeId: number; isRouteVisible: number; currentRoutePath: string },
-    { dispatch }
+    { dispatch },
   ) => {
     return new Promise<void>((resolve, reject) => {
       ApiService.getInstance()
@@ -663,11 +631,11 @@ export const toggleRouteVisibility = createAsyncThunk(
                 message: "Route visibility updated successfully.",
                 type: "success",
                 anchorOrigin: { vertical: "bottom", horizontal: "right" },
-              })
+              }),
             );
-            
+
             dispatch(getRoutesInfo(payload.currentRoutePath));
-            
+
             window.location.href = "/";
             resolve();
           }
@@ -678,12 +646,12 @@ export const toggleRouteVisibility = createAsyncThunk(
               message: "Error while updating route visibility ",
               type: "error",
               anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            })
+            }),
           );
           reject(error);
         });
     });
-  }
+  },
 );
 
 export const { updateRouterPath, updateRouteId } = RouteSlice.actions;

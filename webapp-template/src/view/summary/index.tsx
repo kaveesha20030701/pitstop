@@ -260,8 +260,7 @@ export default function Summary() {
           />
         )}
       </Box>
-
-      {/* ---------------------------------------------------------------------- */}
+      
       <Box
         className="layout-note"
         component="footer"
