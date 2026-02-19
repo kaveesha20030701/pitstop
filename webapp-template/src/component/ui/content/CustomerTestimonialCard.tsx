@@ -329,7 +329,7 @@ const CustomerTestimonialCard: React.FC<CustomerTestimonialCardProps> = ({
                 cursor: "pointer",
                 transition: "all 0.2s ease",
                 "&:hover": {
-                  color: theme.palette.orange[100],
+                  color: theme.palette.primary.light,
                 },
               }}
               aria-label={testimonial.linkLabel || "Visit website"}

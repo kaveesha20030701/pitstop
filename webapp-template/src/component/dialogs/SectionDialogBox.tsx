@@ -70,8 +70,6 @@ const SectionDialogBox = ({
   const tagData = useAppSelector((state: RootState) => state.page.tagData);
   
   const theme = useTheme();
-  const orange100 = (theme.palette as any).orange?.[100] ?? theme.palette.secondary.main;
-
   const normalizeQuillHtml = (html: string) => {
     const v = (html ?? "").trim();
 
@@ -256,7 +254,7 @@ const SectionDialogBox = ({
     >
       <DialogTitle
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${orange100} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
           color: theme.palette.common.white,
           py: 2.5,
           pb: 3,

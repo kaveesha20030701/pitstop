@@ -106,6 +106,7 @@ const Section = ({
   >([]);
   const dispatch = useAppDispatch();
   const location = useLocation();
+  const isPitstopApp = window.config?.IS_PITSTOP_APP ?? false;
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -300,8 +301,10 @@ const Section = ({
           background: (theme) =>
             theme.palette.mode === "dark"
               ? " #000000 0%"
-              : "linear-gradient(135deg, #FFE4CC 0%, #FFEEDD 30%, #FFF5E8 60%, #FFFAF2 100%)",
-        }}
+              : isPitstopApp
+                ? "linear-gradient(135deg, #FFE4CC 0%, #FFEEDD 30%, #FFF5E8 60%, #FFFAF2 100%)"
+                : "linear-gradient(135deg, #eefaff 0%, #f5ffff 30%, #ffffff 60%, #ffffff 100%)",
+                  }}
       >
         <CarouselSection
           description={description}
@@ -321,7 +324,7 @@ const Section = ({
   return (
     <Box
       sx={{
-        bgcolor: theme.palette.mode === "dark" ? "#000000" : "#ffffff",
+        bgcolor: theme.palette.mode === "dark" ? theme.palette.common.black : theme.palette.common.white,
         py: 2,
         ...(sectionId === -2 && {
           backgroundImage: `url(${theme.palette.mode === "dark" ? "/Myboard_dark.jpg" : "/Myboard.jpg"})`,

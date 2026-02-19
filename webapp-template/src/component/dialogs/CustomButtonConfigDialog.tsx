@@ -190,7 +190,7 @@ const CustomButtonConfigDialog: React.FC<CustomButtonConfigDialogProps> = ({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="md"
+      maxWidth="sm"
       fullWidth
       PaperProps={{
         sx: {
@@ -200,7 +200,7 @@ const CustomButtonConfigDialog: React.FC<CustomButtonConfigDialogProps> = ({
     >
       <DialogTitle
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.orange[100]} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
           color: "white",
           py: 2.5,
           pb: 3,
@@ -242,9 +242,9 @@ const CustomButtonConfigDialog: React.FC<CustomButtonConfigDialogProps> = ({
               textTransform: "none",
               px: 3,
               color: "white",
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.orange[100]} 100%)`,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
               "&:hover": {
-                background: `linear-gradient(135deg, ${theme.palette.orange[200]} 0%, ${theme.palette.orange[300]} 100%)`,
+                background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
               },
               "&:disabled": {
                 background: theme.palette.grey[300],
@@ -540,7 +540,7 @@ const CustomButtonConfigDialog: React.FC<CustomButtonConfigDialogProps> = ({
                         },
                         "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
                           {
-                            backgroundColor: theme.palette.orange[100],
+                            backgroundColor: theme.palette.primary.light,
                           },
                       }}
                     />
@@ -579,7 +579,7 @@ const CustomButtonConfigDialog: React.FC<CustomButtonConfigDialogProps> = ({
             borderRadius: 2,
             textTransform: "none",
             px: 3,
-            backgroundColor: theme.palette.orange[300],
+            backgroundColor: theme.palette.primary.main,
             color: theme.palette.common.white,
             "&:disabled": {
               backgroundColor: theme.palette.grey[300],

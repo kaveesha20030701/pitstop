@@ -51,10 +51,7 @@ const CarouselSection: React.FC<CarouselSectionProps> = ({ contentData }) => {
     if (trendingState === CONTENT_STATE_LOADING) {
       return <CircularProgress />;
     }
-    if (
-      trendingState === CONTENT_STATE_FAILED ||
-      trendingContents.length === 0
-    ) {
+    if (trendingState === CONTENT_STATE_FAILED || trendingContents.length === 0) {
       return <Typography>No trending contents available</Typography>;
     }
     return (
@@ -67,6 +64,17 @@ const CarouselSection: React.FC<CarouselSectionProps> = ({ contentData }) => {
     );
   };
 
+  const titleSx = {
+    mb: 8,
+    textAlign: "center",
+    fontSize: { xs: 24, sm: 28, md: 32 },
+    lineHeight: 1.1,
+    background: (theme: any) =>
+      `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+  };
+
   return (
     <Box ref={ref} sx={{ pt: 2 }}>
       <Stack
@@ -76,21 +84,7 @@ const CarouselSection: React.FC<CarouselSectionProps> = ({ contentData }) => {
         justifyContent="center"
       >
         <Box sx={{ flex: 1, display: "grid", placeItems: "center", width: "100%" }}>
-          <Typography
-            component="h3"
-            sx={{
-              mb: 8,
-              textAlign: "center",
-              fontSize: { xs: 24, sm: 28, md: 32 },
-              lineHeight: 1.1,
-              background: (theme) =>
-                theme.palette.mode === "dark"
-                  ? "linear-gradient(135deg, #ff9944 0%, #ffbb77 100%)"
-                  : "linear-gradient(135deg, #ff7300 0%, #ff9944 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
+          <Typography component="h3" sx={titleSx}>
             What's New
           </Typography>
           <Carousel
@@ -102,21 +96,7 @@ const CarouselSection: React.FC<CarouselSectionProps> = ({ contentData }) => {
         </Box>
 
         <Box sx={{ flex: 1, display: "grid", placeItems: "center", width: "100%" }}>
-          <Typography
-            component="h3"
-            sx={{
-              mb: 8,
-              textAlign: "center",
-              fontSize: { xs: 24, sm: 28, md: 32 },
-              lineHeight: 1.1,
-              background: (theme) =>
-                theme.palette.mode === "dark"
-                  ? "linear-gradient(135deg, #ff9944 0%, #ffbb77 100%)"
-                  : "linear-gradient(135deg, #ff7300 0%, #ff9944 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
+          <Typography component="h3" sx={titleSx}>
             What's Trending
           </Typography>
           {renderTrendingCarousel()}

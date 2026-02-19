@@ -72,7 +72,6 @@ const PageDialogBox = ({
   const dialogBoxType = () => (type === "add" ? "Add New Page" : "Update Page");
   const dialogSubtitle = () =>
     type === "add" ? "Create a new page for sales pitstop" : "Update page details";
-  const orange100 = (theme.palette as any).orange?.[100] ?? theme.palette.secondary.main;
 
   const handleAddPage = (values: typeof formik.values) => {
     dispatch(
@@ -152,7 +151,7 @@ const PageDialogBox = ({
     >
       <DialogTitle
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${orange100} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
           color: theme.palette.common.white,
           py: 2.5,
           pb: 3,

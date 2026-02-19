@@ -222,7 +222,7 @@ const ContentDialogBox = ({
     <Dialog open={isOpen} onClose={handleDialogClose} maxWidth="sm" fullWidth>
       <DialogTitle
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.orange[100]} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
           color: theme.palette.common.white,
           py: 2.5,
           pb: 3,
@@ -618,9 +618,9 @@ const ContentDialogBox = ({
             textTransform: "none",
             px: 3,
             color: theme.palette.common.white,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.orange[100]} 100%)`,
+            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
             "&:hover": {
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.orange[200]} 100%)`,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
             },
           }}
         >

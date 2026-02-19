@@ -111,7 +111,7 @@ const RouteContentDialogBox = ({
     >
       <DialogTitle
         sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.orange[100]} 100%)`,
+          background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
           color: theme.palette.common.white,
           py: 2.5,
           pb: 3,

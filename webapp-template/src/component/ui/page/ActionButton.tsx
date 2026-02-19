@@ -121,7 +121,7 @@ const ActionButton: React.FC<ActionButtonProps> = () => {
               height: 40,
               borderRadius: 6,
               bgcolor: "transparent",
-              color: theme.palette.mode === "dark" ? "#cc5800" : "#ff7300",
+              color: theme.palette.mode === "dark" ? theme.palette.primary.light : theme.palette.primary.main,
               "& svg": {
                 fontSize: 22,
               },

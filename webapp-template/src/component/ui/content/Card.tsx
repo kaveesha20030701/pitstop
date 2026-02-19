@@ -740,7 +740,7 @@ const ComponentCard = ({
                 <Typography
                   variant="caption"
                   sx={{
-                    color: theme.palette.primary.main,
+                    color: theme.palette.common.white,
                     textAlign: "center",
                     fontSize: 18,
                     fontWeight: 600,
@@ -751,7 +751,7 @@ const ComponentCard = ({
                       : {}),
                   }}
                 >
-                  Sales Pitstop
+                  {window.config?.IS_PITSTOP_APP ? "Sales Pitstop" : "SE-WIKI"}
                 </Typography>
               </Box>
             ) : shouldShowIframe() ? (
@@ -1120,12 +1120,12 @@ const ComponentCard = ({
                                 flex: 1,
                                 minWidth: 0,
                                 borderRadius: 8,
-                                borderColor: "#ff7300",
-                                color: "#ff7300",
+                                borderColor: theme.palette.primary.main,
+                                color: theme.palette.primary.main,
                                 backgroundColor: "transparent",
                                 "&:hover": {
                                   color: "white",
-                                  borderColor: "orange",
+                                  borderColor: theme.palette.primary.main,
                                 },
                                 "& .MuiButton-startIcon": {
                                   marginRight: "4px",

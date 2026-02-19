@@ -25,6 +25,11 @@ import "swiper/css";
 import "swiper/css/effect-coverflow";
 import { useInViewport } from "@utils/utils";
 import suggestedSection from "@assets/images/suggestedSection.jpg";
+import sewikiSuggestedSection from "@assets/images/suggestedSection_blue.png";
+
+const isPitstopApp = window.config?.IS_PITSTOP_APP ?? true;
+
+const backgroundImage = isPitstopApp ? suggestedSection : sewikiSuggestedSection;
 
 interface SuggestedCarouselProps {
   items: ContentResponse[];
@@ -65,7 +70,7 @@ const SuggestedCarousel: React.FC<SuggestedCarouselProps> = ({ items }) => {
           content: '""',
           position: "absolute",
           inset: 0,
-          backgroundImage: `url(${suggestedSection})`,
+          backgroundImage: `url(${backgroundImage})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
@@ -105,7 +110,7 @@ const SuggestedCarousel: React.FC<SuggestedCarouselProps> = ({ items }) => {
                 fontFamily: '"Inter", sans-serif',
                 fontWeight: 400,
                 fontSize: { xs: "1rem", md: "2.5rem" },
-                background: " #ff6a00ff ",
+                background: theme.palette.primary.dark,
                 backgroundClip: "text",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
