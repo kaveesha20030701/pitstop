@@ -5,7 +5,4 @@ window.config = {
   ASGARDEO_BASE_URL: "",
   AUTH_SIGN_IN_REDIRECT_URL: "",
   AUTH_SIGN_OUT_REDIRECT_URL: "",
-  IS_PITSTOP_APP: true,
-  SALES_PITSTOP_URL: "https://pitstop.wso2.com",
-  SE_WIKI_URL: "https://se-wiki.wso2.com",
 };
