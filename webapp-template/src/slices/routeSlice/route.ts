@@ -27,6 +27,7 @@ import {
   RouteContentPayload,
   RoutePayload,
   RouteResponse,
+  RouteStatuses,
   UpdateRouteContentPayload,
   UpdateRoutePayload,
   reparentRoutesPayload,
@@ -48,8 +49,8 @@ const initialState: RouteState = {
 };
 
 interface RouteState {
-  state?: "failed" | "success" | "loading" | "idle";
-  pageDataState?: "failed" | "success" | "loading" | "idle";
+  state?: RouteStatuses;
+  pageDataState?: RouteStatuses;
   currentPath: string;
   label: string;
   routeId: number;
@@ -59,7 +60,7 @@ interface RouteState {
   routeContents: RouteContentItem[];
   pageData?: PageData;
   isRouteVisible: number;
-  reparentingState: "idle" | "loading" | "success";
+  reparentingState: RouteStatuses;
 }
 
 export const RouteSlice = createSlice({

@@ -17,8 +17,8 @@
 import IframeViewerDialogBox from "@component/dialogs/IframeViewerDialogBox";
 import UpdateContentDialogBox from "@component/dialogs/ContentDialogBox";
 import DeleteContentDialogBox from "@component/dialogs/DeleteDialogBox";
-import ComponentCard from "./Card";
-import CommentCard from "../CommentCard";
+import ComponentCard from "@component/ui/content/Card";
+import CommentCard from "@component/ui/CommentCard";
 import React, { useState } from "react";
 import {
   Dialog,

@@ -835,6 +835,7 @@ export const getContentsInfo = createAsyncThunk(
     });
   }
 );
+
 //Get Trending Contents 
 export const getTrendingContents = createAsyncThunk(
   "pitstop/getTrendingContents",
@@ -902,7 +903,6 @@ export const getPageData = createAsyncThunk(
 );
 
 //Create a new Content to a particular section
-
 export const createNewContent = createAsyncThunk(
   "pitstop/createNewContent",
   async (
@@ -986,7 +986,6 @@ export const updateContent = createAsyncThunk(
 );
 
 //Delete a particular content
-
 export const deleteContent = createAsyncThunk(
   "pitstop/deleteContent",
   async (
@@ -1027,7 +1026,6 @@ export const deleteContent = createAsyncThunk(
 );
 
 //Fetch the content for my board page
-
 export const fetchMyBoardSection = createAsyncThunk(
   "pitstop/fetchMyBoardSection",
   async (
@@ -1073,7 +1071,6 @@ export const fetchMyBoardSection = createAsyncThunk(
 );
 
 //Add a like to a content
-
 export const likeContent = createAsyncThunk(
   "pitstop/likeContent",
   async (payload: { contentId: number }, { dispatch }) => {
@@ -1101,7 +1098,6 @@ export const likeContent = createAsyncThunk(
 );
 
 //Pin a content
-
 export const pinContent = createAsyncThunk(
   "pitstop/pinContent",
   async (payload: { contentId: number }, { dispatch}) => {
@@ -1145,7 +1141,6 @@ export const pinContent = createAsyncThunk(
 );
 
 //Unpin a content
-
 export const unpinContent = createAsyncThunk(
   "pitstop/unpinContent",
   async (payload: { contentId: number }, { dispatch }) => {
@@ -1189,7 +1184,6 @@ export const unpinContent = createAsyncThunk(
 );
 
 //Get pinned content IDs
-
 export const getPinnedContentIds = createAsyncThunk(
   "pitstop/getPinnedContentIds",
   async () => {
@@ -1218,7 +1212,6 @@ export const getPinnedContentIds = createAsyncThunk(
 );
 
 //Add a comment to a content
-
 export const addComment = createAsyncThunk(
   "pitstop/commentContent",
   async (payload: { contentId: number; comment: string }, { dispatch }) => {
@@ -1237,7 +1230,6 @@ export const addComment = createAsyncThunk(
 );
 
 //Get all comments of a particular content
-
 export const getAllComments = createAsyncThunk(
   "pitstop/fetchComments",
   async (payload: { contentId: number }, { dispatch }) => {
@@ -1272,8 +1264,7 @@ export const getAllComments = createAsyncThunk(
   }
 );
 
-//-Search content by text
-
+//Search content by text
 export const searchContent = createAsyncThunk(
   "pitstop/searchContent",
   async (payload: { userInput: string }, { dispatch }) => {
@@ -1307,7 +1298,6 @@ export const searchContent = createAsyncThunk(
 );
 
 //Filter content by tags
-
 export const filterContent = createAsyncThunk(
   "pitstop/filterContent",
   async (payload: { inputTags: string[] }, { dispatch }) => {
@@ -1462,7 +1452,6 @@ export const reorderSections = createAsyncThunk(
 );
 
 //Get content details for report
-
 export const getContentReport = createAsyncThunk(
   "pitstop/contentReport",
   async (_, { dispatch }) => {
@@ -1493,7 +1482,6 @@ export const getContentReport = createAsyncThunk(
 );
 
 //Get all existing tags
-
 export const getAllTags = createAsyncThunk(
   "pitstop/fetchTags",
   async (_, { dispatch }) => {
@@ -1523,7 +1511,6 @@ export const getAllTags = createAsyncThunk(
 );
 
 //Get blocked iframe Urls
-
 export const getBlockedIframeUrls = createAsyncThunk(
   "pitstop/fetchBlockedIframeUrls",
   async (_, { dispatch }) => {
@@ -1588,6 +1575,7 @@ export const createTag = createAsyncThunk(
     });
   }
 );
+
 //Delete a tag
 export const deleteTag = createAsyncThunk(
   "pitstop/deleteTag",

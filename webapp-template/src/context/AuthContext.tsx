@@ -90,6 +90,7 @@ const AppAuthProvider = (props: { children: React.ReactNode }) => {
       localStorage.setItem("signInInitiated", "true");
       signIn();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.isAuthenticated]);
 
   useEffect(() => {
@@ -104,6 +105,7 @@ const AppAuthProvider = (props: { children: React.ReactNode }) => {
         signIn();
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auth.userInfo]);
 
   const refreshToken = () => {

@@ -28,7 +28,7 @@ import { matchRoutes, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectUserInfo } from "@slices/authSlice";
 import { CustomBox } from "@component/common/Common";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import ComponentCard from "@component/ui/content/Card";
 import { SkeletonCard } from "@component/ui/content/SkeletonCard";
 import { filterContent } from "@slices/pageSlice/page";
@@ -44,9 +44,8 @@ export default function VerticalTemplate() {
   const location = useLocation();
   const theme = useTheme();
   const matches = matchRoutes(routes, location.pathname);
-  const [, setInputTags] = useState<string[]>([]);
 
-  const getTag = (): { title: string; tags: string[] } => {
+  const { title, tags } = useMemo((): { title: string; tags: string[] } => {
     const pathSegments = location.pathname.split("/").filter(Boolean);
     const title = pathSegments[1] ? decodeURIComponent(pathSegments[1]) : "";
     const tags = pathSegments[2]
@@ -54,16 +53,11 @@ export default function VerticalTemplate() {
       : [];
 
     return { title, tags };
-  };
-
-  const { title } = getTag();
+  }, [location.pathname]);
 
   useEffect(() => {
-    const { tags } = getTag();
-    setInputTags(tags);
     dispatch(filterContent({ inputTags: tags }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, location.pathname]);
+  }, [dispatch, tags]);
 
   const getAppBarTitle = (): string => {
     let title: string = "";

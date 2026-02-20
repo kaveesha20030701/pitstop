@@ -62,7 +62,7 @@ const ViewContent: React.FC<ContentsProps> = ({
   const [orderSections, setOrderSections] = useState<Section[]>(
     sections.sectionData
   );
-  const [tempOrderSections, setTempOrderSections] = useState<
+  const [, setTempOrderSections] = useState<
     {
       sectionId: number;
       sectionOrder: number;
@@ -159,6 +159,7 @@ const ViewContent: React.FC<ContentsProps> = ({
           );
         });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sections.sectionState, sections.sectionOffset, dispatch]);
 
   return (

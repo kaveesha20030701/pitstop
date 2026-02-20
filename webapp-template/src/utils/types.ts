@@ -15,6 +15,7 @@
 // under the License.
 
 import { BasicUserInfo, DecodedIDTokenPayload } from "@asgardeo/auth-spa";
+import { RouteStatuses } from "../types/types";
 
 export enum Role {
   SALES_ADMIN = "SALES_ADMIN",
@@ -44,7 +45,7 @@ export type AuthFlowState =
   | "end";
 
 export interface AuthState {
-  status: "failed" | "loading" | "idle" | "success";
+  status: RouteStatuses;
   mode: "active" | "maintenance";
   statusMessage: string | null;
   isAuthenticated: boolean;

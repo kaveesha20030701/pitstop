@@ -40,7 +40,7 @@ function PanelHeader(props: { refresh?: () => void; header?: React.ReactNode }) 
             <IconButton
               size="small"
               onClick={() => {
-                props.refresh && props.refresh();
+                props.refresh?.();
               }}
             >
               <Cached />

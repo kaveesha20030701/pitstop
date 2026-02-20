@@ -19,7 +19,7 @@ import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
 import SectionDialogBox from "@component/dialogs/SectionDialogBox";
 import ComponentCard from "@component/ui/content/Card";
 import { Role } from "@utils/types";
-import { Action, ContentResponse, CustomTheme } from "../../../types/types";
+import { Action, ContentResponse, CustomTheme, RouteStatuses } from "../../../types/types";
 import { IconButton } from "@component/common/Common";
 import ImageSection from "./ImageSection";
 import {
@@ -51,13 +51,13 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import LinkIcon from "@mui/icons-material/Link";
-import AddContentDialogBox from "../../dialogs/ContentDialogBox";
+import AddContentDialogBox from "@component/dialogs/ContentDialogBox";
 import DeleteDialogBox from "../../dialogs/DeleteDialogBox";
 import { getContentsInfo, reorderContents } from "@slices/pageSlice/page";
-import GridSortableItem from "../../common/GridSortableItem";
+import GridSortableItem from "@component/common/VerticalSortableItem";
 import { useLocation } from "react-router-dom";
-import CarouselSection from "./CarouselSection";
-import SuggestedCarousel from "./SuggestedCarousel";
+import CarouselSection from "@component/ui/section/CarouselSection";
+import SuggestedCarousel from "@component/ui/section/SuggestedCarousel";
 import { SkeletonCard } from "@component/ui/content/SkeletonCard";
 import { safeParseHtml } from "@utils/safeHtml";
 import { CONTENTS_PER_SECTION } from "@config/constant";
@@ -70,7 +70,7 @@ interface SectionProps {
   imageUrl?: string;
   redirectUrl?: string;
   contentData: ContentResponse[];
-  contentState: "failed" | "loading" | "idle" | "success";
+  contentState: RouteStatuses;
   contentOffset: number;
   customSectionTheme?: CustomTheme;
   sectionOrder: number;
@@ -101,7 +101,7 @@ const Section = ({
   );
   const [orderContents, setOrderContents] =
     useState<ContentResponse[]>(contentData);
-  const [tempOrderContents, setTempOrderContents] = useState<
+  const [, setTempOrderContents] = useState<
     { contentId: number; contentOrder: number }[]
   >([]);
   const dispatch = useAppDispatch();
@@ -257,7 +257,7 @@ const Section = ({
     }
   }, [sectionId, orderContents.length, contentState]);
 
-  // ————— Section -1: Twin stacked carousels —————
+  //Section 1: Twin stacked carousels
   if (sectionId === -1 && sectionType !== "image") {
     if (
       (contentState === "loading" && orderContents.length === 0) ||

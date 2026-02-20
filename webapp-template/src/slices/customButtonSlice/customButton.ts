@@ -17,15 +17,37 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AppConfig } from "@config/config";
 import { ApiService } from "@utils/apiService";
-import { CustomButton, CreateCustomButton } from "../../types/types";
+import { CustomButton, CreateCustomButton, RouteStatuses } from "../../types/types";
 import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
 
 interface CustomButtonState {
   buttonsByContentId: Record<string, CustomButton[]>;
-  state: "idle" | "loading" | "success" | "failed";
+  state: RouteStatuses;
   stateMessage: string | null;
   errorMessage: string | null;
 }
+
+interface ApiErrorData {
+  message?: string;
+}
+
+interface ApiErrorResponse {
+  data?: ApiErrorData;
+}
+
+interface ApiError {
+  response?: ApiErrorResponse;
+  message?: string;
+}
+
+const getApiErrorMessage = (error: unknown): string => {
+  if (typeof error !== "object" || error === null) {
+    return "Something went wrong";
+  }
+
+  const apiError = error as ApiError;
+  return apiError.response?.data?.message || apiError.message || "Something went wrong";
+};
 
 const initialState: CustomButtonState = {
   buttonsByContentId: {},
@@ -270,7 +292,8 @@ export const deleteCustomButton = createAsyncThunk(
         })
       );
 
-      return rejectWithValue((error as unknown as { response?: { data?: { message?: string } } }).response?.data?.message || (error as unknown as { message: string }).message);
+      return rejectWithValue(getApiErrorMessage(error));
+
     }
   }
 );

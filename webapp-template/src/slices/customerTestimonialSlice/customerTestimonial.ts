@@ -13,17 +13,23 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { CustomerTestimonial, CustomerTestimonialCreatePayload, CustomerTestimonialUpdatePayload } from "../../types/types";
+
 import { AppConfig } from "@config/config";
-import { ApiService } from "@utils/apiService";
 import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
+import { ApiService } from "@utils/apiService";
+
+import {
+  CustomerTestimonial,
+  CustomerTestimonialCreatePayload,
+  CustomerTestimonialUpdatePayload,
+  RouteStatuses,
+} from "../../types/types";
 
 interface CustomerTestimonialState {
   items: CustomerTestimonial[];
-  state: "idle" | "loading" | "success" | "failed";
-  mutationState: "idle" | "loading" | "success" | "failed";
+  state: RouteStatuses;
+  mutationState: RouteStatuses;
   stateMessage: string | null;
   errorMessage: string | null;
 }
@@ -54,12 +60,12 @@ export const fetchCustomerTestimonials = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            })
+            }),
           );
           reject(error);
         });
     });
-  }
+  },
 );
 
 export const createCustomerTestimonial = createAsyncThunk(
@@ -69,7 +75,7 @@ export const createCustomerTestimonial = createAsyncThunk(
       payload,
       showNotification = true,
     }: { payload: CustomerTestimonialCreatePayload; showNotification?: boolean },
-    { dispatch }
+    { dispatch },
   ) => {
     if (!payload.name || !payload.logoUrl || !payload.websiteUrl) {
       const errorMessage = "Missing required fields: name, logoUrl, and websiteUrl are required";
@@ -81,7 +87,7 @@ export const createCustomerTestimonial = createAsyncThunk(
             vertical: "bottom",
             horizontal: "right",
           },
-        })
+        }),
       );
       throw new Error(errorMessage);
     }
@@ -99,7 +105,7 @@ export const createCustomerTestimonial = createAsyncThunk(
                   vertical: "bottom",
                   horizontal: "right",
                 },
-              })
+              }),
             );
           }
           resolve(resp.data);
@@ -119,12 +125,12 @@ export const createCustomerTestimonial = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            })
+            }),
           );
           reject(error);
         });
     });
-  }
+  },
 );
 
 export const updateCustomerTestimonial = createAsyncThunk(
@@ -135,7 +141,7 @@ export const updateCustomerTestimonial = createAsyncThunk(
       payload,
       showNotification = true,
     }: { id: number; payload: CustomerTestimonialUpdatePayload; showNotification?: boolean },
-    { dispatch }
+    { dispatch },
   ) => {
     return new Promise<{ id: number; data: CustomerTestimonial }>((resolve, reject) => {
       ApiService.getInstance()
@@ -150,7 +156,7 @@ export const updateCustomerTestimonial = createAsyncThunk(
                   vertical: "bottom",
                   horizontal: "right",
                 },
-              })
+              }),
             );
           }
           resolve({ id, data: resp.data });
@@ -166,22 +172,19 @@ export const updateCustomerTestimonial = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            })
+            }),
           );
           reject(error);
         });
     });
-  }
+  },
 );
 
 export const deleteCustomerTestimonial = createAsyncThunk(
   "customerTestimonials/delete",
   async (
-    {
-      id,
-      showNotification = true,
-    }: { id: number; showNotification?: boolean },
-    { dispatch, rejectWithValue }
+    { id, showNotification = true }: { id: number; showNotification?: boolean },
+    { dispatch, rejectWithValue },
   ) => {
     if (!id || id <= 0) {
       const errorMessage = `Invalid testimonial ID provided for deletion: ${id}`;
@@ -191,7 +194,7 @@ export const deleteCustomerTestimonial = createAsyncThunk(
           message: errorMessage,
           type: "error",
           anchorOrigin: { vertical: "bottom", horizontal: "right" },
-        })
+        }),
       );
       return rejectWithValue(errorMessage);
     }
@@ -205,7 +208,7 @@ export const deleteCustomerTestimonial = createAsyncThunk(
             message: "Customer testimonial deleted successfully",
             type: "success",
             anchorOrigin: { vertical: "bottom", horizontal: "right" },
-          })
+          }),
         );
       }
 
@@ -216,12 +219,15 @@ export const deleteCustomerTestimonial = createAsyncThunk(
           message: "Failed to delete testimonial",
           type: "error",
           anchorOrigin: { vertical: "bottom", horizontal: "right" },
-        })
+        }),
       );
 
-      return rejectWithValue((error as unknown as { response?: { data?: { message?: string } } }).response?.data?.message || (error as unknown as { message: string }).message);
+      return rejectWithValue(
+        (error as unknown as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || (error as unknown as { message: string }).message,
+      );
     }
-  }
+  },
 );
 
 const customerTestimonialSlice = createSlice({
@@ -271,7 +277,7 @@ const customerTestimonialSlice = createSlice({
       })
       .addCase(updateCustomerTestimonial.fulfilled, (state, action) => {
         state.mutationState = "success";
-        const index = state.items.findIndex(item => item.id === action.payload.id);
+        const index = state.items.findIndex((item) => item.id === action.payload.id);
         if (index !== -1) {
           state.items[index] = action.payload.data;
         }
@@ -288,7 +294,7 @@ const customerTestimonialSlice = createSlice({
       })
       .addCase(deleteCustomerTestimonial.fulfilled, (state, action) => {
         state.mutationState = "success";
-        state.items = state.items.filter(item => item.id !== action.payload);
+        state.items = state.items.filter((item) => item.id !== action.payload);
         state.stateMessage = "Testimonial deleted successfully";
       })
       .addCase(deleteCustomerTestimonial.rejected, (state) => {
@@ -301,16 +307,20 @@ const customerTestimonialSlice = createSlice({
 export const { resetMutationState } = customerTestimonialSlice.actions;
 
 // Selectors
-export const selectCustomerTestimonials = (state: { customerTestimonials: CustomerTestimonialState }) =>
-  [...state.customerTestimonials.items].sort((a, b) => a.id - b.id);
+export const selectCustomerTestimonials = (state: {
+  customerTestimonials: CustomerTestimonialState;
+}) => [...state.customerTestimonials.items].sort((a, b) => a.id - b.id);
 
-export const selectCustomerTestimonialState = (state: { customerTestimonials: CustomerTestimonialState }) =>
-  state.customerTestimonials.state;
+export const selectCustomerTestimonialState = (state: {
+  customerTestimonials: CustomerTestimonialState;
+}) => state.customerTestimonials.state;
 
-export const selectCustomerTestimonialMutationState = (state: { customerTestimonials: CustomerTestimonialState }) =>
-  state.customerTestimonials.mutationState;
+export const selectCustomerTestimonialMutationState = (state: {
+  customerTestimonials: CustomerTestimonialState;
+}) => state.customerTestimonials.mutationState;
 
-export const selectCustomerTestimonialError = (state: { customerTestimonials: CustomerTestimonialState }) =>
-  state.customerTestimonials.errorMessage;
+export const selectCustomerTestimonialError = (state: {
+  customerTestimonials: CustomerTestimonialState;
+}) => state.customerTestimonials.errorMessage;
 
 export default customerTestimonialSlice.reducer;

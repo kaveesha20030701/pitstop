@@ -164,7 +164,7 @@ const ContentDialogBox = ({
       sectionId: initialValues?.sectionId ? initialValues.sectionId : 0,
       contentLink: initialValues?.contentLink ? initialValues.contentLink : "",
       contentType: initialValues?.contentType ? initialValues.contentType : "",
-      contentSubtype: (initialValues as any)?.contentSubtype || CONTENT_SUBTYPE.Generic,
+      contentSubtype: initialValues?.contentSubtype || CONTENT_SUBTYPE.Generic,
       description: initialValues?.description ? initialValues.description : "",
       thumbnail: initialValues?.thumbnail ? initialValues.thumbnail : "",
       note: initialValues?.note ? initialValues.note : "",
@@ -612,7 +612,7 @@ const ContentDialogBox = ({
 
         <Button
           variant="contained"
-          onClick={(e: React.MouseEvent<HTMLButtonElement>) => formik.handleSubmit(e as any)}
+          onClick={(e: React.MouseEvent<HTMLButtonElement>) => formik.handleSubmit(e as never)}
           disabled={!formik.isValid}
           sx={{
             textTransform: "none",

@@ -13,43 +13,40 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
-import React, { useState } from "react";
-import { RootState, useAppSelector, useAppDispatch } from "@slices/store";
-import Typography from "@mui/material/Typography";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
+import FolderIcon from "@mui/icons-material/Folder";
+import LinkIcon from "@mui/icons-material/Link";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import {
   Box,
-  Grow,
-  useTheme,
   Card,
-  CardContent,
   CardActionArea,
+  CardContent,
+  Grow,
   IconButton,
   Menu,
   MenuItem,
   Stack,
+  useTheme,
 } from "@mui/material";
+import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
-import ErrorHandler from "@component/common/ErrorHandler";
-import ActionButton from "@component/ui/page/ActionButton";
 import { useNavigate } from "react-router-dom";
-import {
-  updateRouterPath,
-  updateRouteContent,
-  createRouteContent,
-} from "@slices/routeSlice/route";
-import { getPageData } from "@slices/pageSlice/page";
-import { RouteResponse, RouteContentItem } from "src/types/types";
-import { Role } from "@utils/types";
-import RouteContentDialogBox from "@component/dialogs/RouteContentDialogBox";
+import { RouteContentItem, RouteResponse } from "src/types/types";
+
+import React, { useState } from "react";
+
+import ErrorHandler from "@component/common/ErrorHandler";
 import DeleteContentDialogBox from "@component/dialogs/DeleteDialogBox";
+import RouteContentDialogBox from "@component/dialogs/RouteContentDialogBox";
+import ActionButton from "@component/ui/page/ActionButton";
 import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import FolderIcon from "@mui/icons-material/Folder";
-import LinkIcon from "@mui/icons-material/Link";
+import { getPageData } from "@slices/pageSlice/page";
+import { createRouteContent, updateRouteContent, updateRouterPath } from "@slices/routeSlice/route";
+import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
+import { Role } from "@utils/types";
 
 export default function ActionAreaCard() {
   const page = useAppSelector((state: RootState) => state.page);
@@ -59,24 +56,18 @@ export default function ActionAreaCard() {
     routeId: currentRouteId,
     currentPath,
   } = useAppSelector((state: RootState) => state.route);
-  const authorizedRoles = useAppSelector(
-    (state: RootState) => state.auth.roles
-  );
+  const authorizedRoles = useAppSelector((state: RootState) => state.auth.roles);
   const theme = useTheme();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedContent, setSelectedContent] =
-    useState<RouteContentItem | null>(null);
+  const [selectedContent, setSelectedContent] = useState<RouteContentItem | null>(null);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const handleMenuOpen = (
-    event: React.MouseEvent<HTMLElement>,
-    content: RouteContentItem
-  ) => {
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, content: RouteContentItem) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
     setSelectedContent(content);
@@ -96,7 +87,7 @@ export default function ActionAreaCard() {
           message: "This page is currently hidden.",
           type: "warning",
           anchorOrigin: { vertical: "bottom", horizontal: "right" },
-        })
+        }),
       );
       return;
     }
@@ -107,7 +98,7 @@ export default function ActionAreaCard() {
         currentPath: route.path,
         label: route.menuItem,
         children: route.children ?? [],
-      })
+      }),
     );
     dispatch(getPageData(route.path));
   };
@@ -200,24 +191,24 @@ export default function ActionAreaCard() {
                   alignItems="stretch"
                   sx={{
                     gap: 2,
-                    '& > *': {
+                    "& > *": {
                       flexBasis: {
-                        xs: '100%',
-                        sm: 'calc(50% - 8px)',
-                        md: 'calc(33.333% - 10.667px)',
-                        lg: 'calc(16.666% - 13.333px)',
+                        xs: "100%",
+                        sm: "calc(50% - 8px)",
+                        md: "calc(33.333% - 10.667px)",
+                        lg: "calc(16.666% - 13.333px)",
                       },
                       minWidth: {
-                        xs: '100%',
-                        sm: 'min(calc(50% - 8px), 280px)',
-                        md: 'min(calc(33.333% - 10.667px), 240px)',
-                        lg: 'min(calc(16.666% - 13.333px), 200px)',
+                        xs: "100%",
+                        sm: "min(calc(50% - 8px), 280px)",
+                        md: "min(calc(33.333% - 10.667px), 240px)",
+                        lg: "min(calc(16.666% - 13.333px), 200px)",
                       },
                       maxWidth: {
-                        xs: '100%',
-                        sm: '300px',
-                        md: '280px',
-                        lg: '220px',
+                        xs: "100%",
+                        sm: "300px",
+                        md: "280px",
+                        lg: "220px",
                       },
                     },
                   }}
@@ -225,11 +216,8 @@ export default function ActionAreaCard() {
                   {combinedItems.map((item, index) => {
                     const isContent = item.type === "content";
                     const label =
-                      "menuItem" in item
-                        ? item.menuItem
-                        : item.description ?? "Unnamed";
-                    const isActive =
-                      !isContent && "path" in item && item.path === currentPath;
+                      "menuItem" in item ? item.menuItem : (item.description ?? "Unnamed");
+                    const isActive = !isContent && "path" in item && item.path === currentPath;
 
                     return (
                       <Box key={index}>
@@ -239,18 +227,12 @@ export default function ActionAreaCard() {
                               t.palette.mode === "dark"
                                 ? `linear-gradient(135deg, ${alpha(
                                     t.palette.primary.main,
-                                    0.15
-                                  )} 0%, ${alpha(
-                                    t.palette.warning.main,
-                                    0.08
-                                  )} 100%)`
+                                    0.15,
+                                  )} 0%, ${alpha(t.palette.warning.main, 0.08)} 100%)`
                                 : `linear-gradient(135deg, ${alpha(
                                     t.palette.primary.main,
-                                    0.08
-                                  )} 0%, ${alpha(
-                                    t.palette.warning.main,
-                                    0.05
-                                  )} 100%)`,
+                                    0.08,
+                                  )} 0%, ${alpha(t.palette.warning.main, 0.05)} 100%)`,
                             backdropFilter: "blur(16px) saturate(150%)",
                             WebkitBackdropFilter: "blur(16px) saturate(150%)",
                             borderRadius: 6,
@@ -258,7 +240,7 @@ export default function ActionAreaCard() {
                               t.palette.mode === "dark"
                                 ? t.palette.primary.light
                                 : t.palette.primary.main,
-                              t.palette.mode === "dark" ? 0.2 : 0.15
+                              t.palette.mode === "dark" ? 0.2 : 0.15,
                             )}`,
                             boxShadow:
                               t.palette.mode === "dark"
@@ -268,38 +250,24 @@ export default function ActionAreaCard() {
                             position: "relative",
                             transition:
                               "transform .3s ease, box-shadow .3s ease, border-color .3s ease, background .3s ease",
-                            borderColor: isActive
-                              ? t.palette.primary.main
-                              : undefined,
+                            borderColor: isActive ? t.palette.primary.main : undefined,
                             "&:hover": {
                               transform: "translateY(-4px) scale(1.02)",
                               boxShadow:
                                 t.palette.mode === "dark"
-                                  ? `0 16px 40px ${alpha(
-                                      t.palette.primary.main,
-                                      0.3
-                                    )}`
-                                  : `0 16px 32px ${alpha(
-                                      t.palette.primary.main,
-                                      0.2
-                                    )}`,
+                                  ? `0 16px 40px ${alpha(t.palette.primary.main, 0.3)}`
+                                  : `0 16px 32px ${alpha(t.palette.primary.main, 0.2)}`,
                               borderColor: t.palette.primary.main,
                               background:
                                 t.palette.mode === "dark"
                                   ? `linear-gradient(135deg, ${alpha(
                                       t.palette.primary.main,
-                                      0.25
-                                    )} 0%, ${alpha(
-                                      t.palette.warning.main,
-                                      0.15
-                                    )} 100%)`
+                                      0.25,
+                                    )} 0%, ${alpha(t.palette.warning.main, 0.15)} 100%)`
                                   : `linear-gradient(135deg, ${alpha(
                                       t.palette.primary.main,
-                                      0.15
-                                    )} 0%, ${alpha(
-                                      t.palette.warning.main,
-                                      0.1
-                                    )} 100%)`,
+                                      0.15,
+                                    )} 0%, ${alpha(t.palette.warning.main, 0.1)} 100%)`,
                             },
                           })}
                         >
@@ -331,17 +299,14 @@ export default function ActionAreaCard() {
                                   backgroundColor: isActive
                                     ? t.palette.primary.main
                                     : t.palette.mode === "dark"
-                                    ? alpha(t.palette.primary.light, 0.3)
-                                    : alpha(t.palette.primary.main, 0.15),
+                                      ? alpha(t.palette.primary.light, 0.3)
+                                      : alpha(t.palette.primary.main, 0.15),
                                   display: "flex",
                                   alignItems: "center",
                                   justifyContent: "center",
                                   transition: "all .3s ease",
                                   boxShadow: isActive
-                                    ? `0 4px 12px ${alpha(
-                                        t.palette.primary.main,
-                                        0.4
-                                      )}`
+                                    ? `0 4px 12px ${alpha(t.palette.primary.main, 0.4)}`
                                     : "none",
                                 })}
                               >
@@ -384,26 +349,23 @@ export default function ActionAreaCard() {
                           </CardActionArea>
 
                           {/* Menu Button for Content */}
-                          {isContent &&
-                            authorizedRoles.includes(Role.SALES_ADMIN) && (
-                              <IconButton
-                                size="small"
-                                onClick={(e) =>
-                                  handleMenuOpen(e, item as RouteContentItem)
-                                }
-                                sx={{
-                                  position: "absolute",
-                                  top: 6,
-                                  right: 6,
-                                  backgroundColor: "rgba(0,0,0,0.04)",
-                                  "&:hover": {
-                                    backgroundColor: "rgba(0,0,0,0.08)",
-                                  },
-                                }}
-                              >
-                                <MoreVertIcon fontSize="small" />
-                              </IconButton>
-                            )}
+                          {isContent && authorizedRoles.includes(Role.SALES_ADMIN) && (
+                            <IconButton
+                              size="small"
+                              onClick={(e) => handleMenuOpen(e, item as RouteContentItem)}
+                              sx={{
+                                position: "absolute",
+                                top: 6,
+                                right: 6,
+                                backgroundColor: "rgba(0,0,0,0.04)",
+                                "&:hover": {
+                                  backgroundColor: "rgba(0,0,0,0.08)",
+                                },
+                              }}
+                            >
+                              <MoreVertIcon fontSize="small" />
+                            </IconButton>
+                          )}
                         </Card>
                       </Box>
                     );
@@ -418,18 +380,12 @@ export default function ActionAreaCard() {
                             t.palette.mode === "dark"
                               ? `linear-gradient(135deg, ${alpha(
                                   t.palette.primary.main,
-                                  0.15
-                                )} 0%, ${alpha(
-                                  t.palette.warning.main,
-                                  0.08
-                                )} 100%)`
+                                  0.15,
+                                )} 0%, ${alpha(t.palette.warning.main, 0.08)} 100%)`
                               : `linear-gradient(135deg, ${alpha(
                                   t.palette.primary.main,
-                                  0.08
-                                )} 0%, ${alpha(
-                                  t.palette.warning.main,
-                                  0.05
-                                )} 100%)`,
+                                  0.08,
+                                )} 0%, ${alpha(t.palette.warning.main, 0.05)} 100%)`,
                           backdropFilter: "blur(16px) saturate(150%)",
                           WebkitBackdropFilter: "blur(16px) saturate(150%)",
                           borderRadius: 6,
@@ -437,7 +393,7 @@ export default function ActionAreaCard() {
                             t.palette.mode === "dark"
                               ? t.palette.primary.light
                               : t.palette.primary.main,
-                            t.palette.mode === "dark" ? 0.2 : 0.15
+                            t.palette.mode === "dark" ? 0.2 : 0.15,
                           )}`,
                           boxShadow:
                             t.palette.mode === "dark"
@@ -449,31 +405,19 @@ export default function ActionAreaCard() {
                             transform: "translateY(-4px) scale(1.02)",
                             boxShadow:
                               t.palette.mode === "dark"
-                                ? `0 16px 40px ${alpha(
-                                    t.palette.primary.main,
-                                    0.3
-                                  )}`
-                                : `0 16px 32px ${alpha(
-                                    t.palette.primary.main,
-                                    0.2
-                                  )}`,
+                                ? `0 16px 40px ${alpha(t.palette.primary.main, 0.3)}`
+                                : `0 16px 32px ${alpha(t.palette.primary.main, 0.2)}`,
                             borderColor: t.palette.primary.main,
                             background:
                               t.palette.mode === "dark"
                                 ? `linear-gradient(135deg, ${alpha(
                                     t.palette.primary.main,
-                                    0.25
-                                  )} 0%, ${alpha(
-                                    t.palette.warning.main,
-                                    0.15
-                                  )} 100%)`
+                                    0.25,
+                                  )} 0%, ${alpha(t.palette.warning.main, 0.15)} 100%)`
                                 : `linear-gradient(135deg, ${alpha(
                                     t.palette.primary.main,
-                                    0.15
-                                  )} 0%, ${alpha(
-                                    t.palette.warning.main,
-                                    0.1
-                                  )} 100%)`,
+                                    0.15,
+                                  )} 0%, ${alpha(t.palette.warning.main, 0.1)} 100%)`,
                           },
                         })}
                       >
@@ -496,13 +440,10 @@ export default function ActionAreaCard() {
                               sx={{
                                 fontSize: 40,
                                 opacity: 0.9,
-                                color: theme.palette.primary.main
+                                color: theme.palette.primary.main,
                               }}
                             />
-                            <Typography
-                              variant="subtitle2"
-                              sx={{ fontWeight: 600 }}
-                            >
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                               Add Content
                             </Typography>
                           </CardContent>
@@ -558,9 +499,7 @@ export default function ActionAreaCard() {
           description={selectedContent.description}
           contentLink={selectedContent.contentLink}
           onUpdate={(payload) =>
-            dispatch(
-              updateRouteContent({ content: payload, routeId: currentRouteId })
-            )
+            dispatch(updateRouteContent({ content: payload, routeId: currentRouteId }))
           }
         />
       )}
@@ -571,9 +510,7 @@ export default function ActionAreaCard() {
         mode="create"
         routeId={currentRouteId}
         onCreate={(payload) =>
-          dispatch(
-            createRouteContent({ content: payload, routeId: payload.routeId })
-          )
+          dispatch(createRouteContent({ content: payload, routeId: payload.routeId }))
         }
       />
 

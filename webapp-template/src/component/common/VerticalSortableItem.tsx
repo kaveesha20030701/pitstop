@@ -50,7 +50,7 @@ const VerticalSortableItem = ({
       : undefined;
 
   const isHandleHidden =
-    numericId !== undefined && (numericId === -1 || numericId === -2 || numericId === -3);
+    numericId !== undefined && [-1, -2, -3].includes(numericId) // The array can be updated without overly bloating the logic
 
   return (
     <Box

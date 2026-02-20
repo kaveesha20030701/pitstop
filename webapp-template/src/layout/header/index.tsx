@@ -14,61 +14,58 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { RootState, useAppSelector } from "@slices/store";
-import { useAppAuthContext } from "@context/AuthContext";
-import ListLinkItem from "@component/layout/LinkItem";
-import AdminPanelSideBar from "@component/adminPanel/AdminDrawer";
-import Sidebar from "../sidebar";
-import { selectUserInfo } from "@slices/authSlice";
-import { Role } from "@utils/types";
-import { ColorModeContext } from "../../App";
-import {
-  ROUTE_ID_HOME,
-  ROUTE_ID_MY_BOARD,
-  ROUTE_ID_MORE,
-  ROUTE_ID_ADMIN_PANEL,
-  ROUTE_ID_ADMIN_EDIT_MENU,
-  ROUTE_ID_ADMIN_REPORT,
-} from "@config/constant";
-import wso2Logo from "@assets/images/wso2-logo.svg";
-import MenuIcon from "@mui/icons-material/Menu";
-import SearchIcon from "@mui/icons-material/Search";
-import IconButton from "@mui/material/IconButton";
-import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import LightModeIcon from "@mui/icons-material/LightMode";
+import LogoutOutlined from "@mui/icons-material/LogoutOutlined";
+import MenuIcon from "@mui/icons-material/Menu";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import Fab from "@mui/material/Fab";
+import SearchIcon from "@mui/icons-material/Search";
 import {
+  Avatar,
   Box,
+  Button,
   CssBaseline,
   List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
   Menu,
   MenuItem,
-  Tooltip,
-  Toolbar,
-  Typography,
-  Avatar,
   Stack,
-  ListItemIcon,
-  ListItemButton,
-  ListItemText,
-  Button
+  Toolbar,
+  Tooltip,
+  Typography,
 } from "@mui/material";
-import { alpha, styled, Theme, useTheme } from "@mui/material/styles";
 import MuiAppBar, { AppBarProps as MuiAppBarProps } from "@mui/material/AppBar";
-import React, {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useCallback,
-} from "react";
+import Fab from "@mui/material/Fab";
+import IconButton from "@mui/material/IconButton";
+import { Theme, alpha, styled, useTheme } from "@mui/material/styles";
 import { useSelector } from "react-redux";
-import { useLocation, matchPath, useNavigate } from "react-router-dom";
+import { matchPath, useLocation, useNavigate } from "react-router-dom";
+
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import wso2Logo from "@assets/images/wso2-logo.svg";
+import AdminPanelSideBar from "@component/adminPanel/AdminDrawer";
+import ListLinkItem from "@component/layout/LinkItem";
+import {
+  ROUTE_ID_ADMIN_EDIT_MENU,
+  ROUTE_ID_ADMIN_PANEL,
+  ROUTE_ID_ADMIN_REPORT,
+  ROUTE_ID_HOME,
+  ROUTE_ID_MORE,
+  ROUTE_ID_MY_BOARD,
+} from "@config/constant";
+import { useAppAuthContext } from "@context/AuthContext";
+import { selectUserInfo } from "@slices/authSlice";
+import { RootState, useAppSelector } from "@slices/store";
+import { Role } from "@utils/types";
+
+import { ColorModeContext } from "../../App";
 import { RouteResponse } from "../../types/types";
-import LogoutOutlined from "@mui/icons-material/LogoutOutlined";
+import Sidebar from "../sidebar";
 
 const StyledAppBar = styled(MuiAppBar)<MuiAppBarProps>(({ theme }) => ({
   position: "fixed",
@@ -77,18 +74,13 @@ const StyledAppBar = styled(MuiAppBar)<MuiAppBarProps>(({ theme }) => ({
   right: "16px",
   width: "calc(100% - 32px)",
   zIndex: theme.zIndex.drawer + 1,
-  background:
-    theme.palette.mode === "dark"
-      ? "rgba(18, 18, 18, 0.7)"
-      : "rgba(255, 255, 255, 0.7)",
+  background: theme.palette.mode === "dark" ? "rgba(18, 18, 18, 0.7)" : "rgba(255, 255, 255, 0.7)",
 
   backdropFilter: "blur(30px) saturate(180%)",
   WebkitBackdropFilter: "blur(30px) saturate(180%)",
 
   border: `1px solid ${
-    theme.palette.mode === "dark"
-      ? "rgba(255, 255, 255, 0.15)"
-      : "rgba(255, 255, 255, 0.8)"
+    theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.15)" : "rgba(255, 255, 255, 0.8)"
   }`,
 
   borderRadius: "50px",
@@ -102,20 +94,16 @@ const StyledAppBar = styled(MuiAppBar)<MuiAppBarProps>(({ theme }) => ({
     ["background-color", "transform", "backdrop-filter", "box-shadow"],
     {
       duration: theme.transitions.duration.standard,
-    }
+    },
   ),
 }));
 
-const filterPubliclyVisibleRoutes = (
-  routes: RouteResponse[]
-): RouteResponse[] => {
+const filterPubliclyVisibleRoutes = (routes: RouteResponse[]): RouteResponse[] => {
   const visibleRoutes: RouteResponse[] = [];
 
   for (const route of routes) {
     if (route.isRouteVisible === true) {
-      const children = route.children
-        ? filterPubliclyVisibleRoutes(route.children)
-        : [];
+      const children = route.children ? filterPubliclyVisibleRoutes(route.children) : [];
       visibleRoutes.push({
         ...route,
         children: children,
@@ -138,23 +126,14 @@ const Header = (props: HeaderProps) => {
   const navigate = useNavigate();
   const theme = useTheme();
   const routes = useAppSelector((state: RootState) => state.route.routes);
-  const authorizedRoles: Role[] = useAppSelector(
-    (state: RootState) => state.auth.roles
-  );
-  const user = useAppSelector(
-    (state: RootState) => state.employee.employeeInfo
-  );
+  const authorizedRoles: Role[] = useAppSelector((state: RootState) => state.auth.roles);
+  const user = useAppSelector((state: RootState) => state.employee.employeeInfo);
 
   const scrollButtonRef = useRef<HTMLButtonElement>(null);
-  const publiclyVisibleRoutes = useMemo(
-    () => filterPubliclyVisibleRoutes(routes),
-    [routes]
-  );
+  const publiclyVisibleRoutes = useMemo(() => filterPubliclyVisibleRoutes(routes), [routes]);
 
   const newRoutes = useMemo(() => {
-    const homeItem = publiclyVisibleRoutes.find(
-      (r) => r.routeId === ROUTE_ID_HOME,
-    );
+    const homeItem = publiclyVisibleRoutes.find((r) => r.routeId === ROUTE_ID_HOME);
     const otherRoutes = publiclyVisibleRoutes.filter(
       (r) => r.routeId !== ROUTE_ID_HOME && r.routeId !== ROUTE_ID_MY_BOARD,
     );
@@ -217,9 +196,7 @@ const Header = (props: HeaderProps) => {
         isRouteVisible: true,
       };
 
-      const moreIndex = finalRoutes.findIndex(
-        (r) => r.menuItem?.toLowerCase() === "more"
-      );
+      const moreIndex = finalRoutes.findIndex((r) => r.menuItem?.toLowerCase() === "more");
       if (moreIndex >= 0) {
         finalRoutes.splice(moreIndex + 1, 0, adminPanelItem);
       } else {
@@ -254,7 +231,7 @@ const Header = (props: HeaderProps) => {
   const handleOpenSideBar = useCallback(() => setMobileOpen(true), []);
 
   const adminPanelDrawerToggle = useCallback(() => {
-    setAdminPanelOpen((prevState: any) => !prevState);
+    setAdminPanelOpen((prevState: unknown) => !prevState);
   }, []);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) =>
@@ -307,34 +284,97 @@ const Header = (props: HeaderProps) => {
               >
                 <MenuIcon />
               </IconButton>
-              <img
-                alt="wso2"
-                onClick={() => navigate("/")}
-                style={{
-                  marginRight: "8px",
-                  marginLeft: "0px",
-                  height: "40px",
-                  maxWidth: "100px",
-                  cursor: "pointer",
-                }}
-                src={wso2Logo}
-              ></img>
-              <Typography
-                variant="h5"
-                noWrap
-                component="div"
-                sx={{
-                  flexGrow: 1,
-                  fontWeight: 500,
-                  color: theme.palette.primary.contrastText,
-                  cursor: "pointer",
-                }}
-                onClick={() => navigate("/")}
-              >
-                {window.config?.APP_NAME ?? "Sales Pitstop"}
-              </Typography>
 
-              {/*Desktop View*/}
+              {/* Brand area */}
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ flexGrow: 1 }}>
+                <img
+                  alt="wso2"
+                  onClick={() => navigate("/")}
+                  style={{
+                    marginRight: "8px",
+                    height: "40px",
+                    maxWidth: "100px",
+                    cursor: "pointer",
+                  }}
+                  src={wso2Logo}
+                />
+
+                <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+                  <Typography
+                    variant="h5"
+                    noWrap
+                    component="div"
+                    sx={{
+                      fontWeight: 500,
+                      color: theme.palette.primary.contrastText,
+                      cursor: "pointer",
+                    }}
+                    onClick={() => navigate("/")}
+                  >
+                    {window.config?.APP_NAME ?? "Sales Pitstop"}
+                  </Typography>
+
+                  {window.config?.IS_PITSTOP_APP !== undefined && (
+                    <Tooltip
+                      title={`Switch to ${
+                        window.config.IS_PITSTOP_APP ? "SE Wiki" : "Sales Pitstop"
+                      }`}
+                    >
+                      <Box
+                        component="a"
+                        href={
+                          window.config.IS_PITSTOP_APP
+                            ? window.config.SE_WIKI_URL
+                            : window.config.SALES_PITSTOP_URL
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                          px: 1.5,
+                          py: 0.5,
+                          fontWeight: 500,
+                          borderRadius: "8px",
+                          textDecoration: "none",
+                          fontSize: "0.9rem",
+                          letterSpacing: "0.01em",
+                          color: theme.palette.primary.main,
+                          background:
+                            theme.palette.mode === "dark"
+                              ? `linear-gradient(135deg, ${alpha(
+                                  theme.palette.primary.main,
+                                  0.15,
+                                )} 0%, ${alpha(theme.palette.warning.main, 0.08)} 100%)`
+                              : `linear-gradient(135deg, ${alpha(
+                                  theme.palette.primary.main,
+                                  0.08,
+                                )} 0%, ${alpha(theme.palette.warning.main, 0.05)} 100%)`,
+                          transition: "all 0.2s ease",
+                          "&:hover": {
+                            background:
+                              theme.palette.mode === "dark"
+                                ? `linear-gradient(135deg, ${alpha(
+                                    theme.palette.primary.main,
+                                    0.25,
+                                  )} 0%, ${alpha(theme.palette.warning.main, 0.15)} 100%)`
+                                : `linear-gradient(135deg, ${alpha(
+                                    theme.palette.primary.main,
+                                    0.15,
+                                  )} 0%, ${alpha(theme.palette.warning.main, 0.1)} 100%)`,
+                          },
+                        }}
+                      >
+                        {window.config.IS_PITSTOP_APP ? "SE Wiki" : "Sales Pitstop"}
+                        <OpenInNewIcon sx={{ fontSize: "0.9rem" }} />
+                      </Box>
+                    </Tooltip>
+                  )}
+                </Box>
+              </Stack>
+
+              {/*Desktop Nav Links*/}
               <List
                 sx={{
                   display: {
@@ -420,76 +460,9 @@ const Header = (props: HeaderProps) => {
                 })}
               </List>
 
-              <Stack
-                flexDirection="row"
-                gap={2}
-                sx={{ marginLeft: theme.spacing(2) }}
-              >
-{window.config?.IS_PITSTOP_APP !== undefined && (
-  <Tooltip title={`Switch to ${window.config.IS_PITSTOP_APP ? "SE Wiki" : "Sales Pitstop"}`}>
-    <Box
-      component="a"
-      href={window.config.IS_PITSTOP_APP ? window.config.SE_WIKI_URL : window.config.SALES_PITSTOP_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 0.5,
-        px: 1.5,
-        py: 0.5,
-        borderRadius: "8px",
-        textDecoration: "none",
-        fontSize: "0.85rem",
-        letterSpacing: "0.01em",
-        color: theme.palette.primary.main,
-        background:
-          theme.palette.mode === "dark"
-            ? `linear-gradient(135deg, ${alpha(
-                theme.palette.primary.main,
-                0.15
-              )} 0%, ${alpha(
-                theme.palette.warning.main,
-                0.08
-              )} 100%)`
-            : `linear-gradient(135deg, ${alpha(
-                theme.palette.primary.main,
-                0.08
-              )} 0%, ${alpha(
-                theme.palette.warning.main,
-                0.05
-              )} 100%)`,
-        transition: "all 0.2s ease",
-        "&:hover": {
-          background:
-            theme.palette.mode === "dark"
-              ? `linear-gradient(135deg, ${alpha(
-                  theme.palette.primary.main,
-                  0.25
-                )} 0%, ${alpha(
-                  theme.palette.warning.main,
-                  0.15
-                )} 100%)`
-              : `linear-gradient(135deg, ${alpha(
-                  theme.palette.primary.main,
-                  0.15
-                )} 0%, ${alpha(
-                  theme.palette.warning.main,
-                  0.1
-                )} 100%)`,
-        },
-      }}
-    >
-      {window.config.IS_PITSTOP_APP ? "SE Wiki" : "Sales Pitstop"}
-      <OpenInNewIcon sx={{ fontSize: "0.8rem" }} />
-    </Box>
-  </Tooltip>
-)}
-                <Tooltip
-                  title={
-                    theme.palette.mode === "light" ? "Dark mode" : "Light mode"
-                  }
-                >
+              {/* Right-side utility icons */}
+              <Stack flexDirection="row" gap={2} sx={{ marginLeft: theme.spacing(2) }}>
+                <Tooltip title={theme.palette.mode === "light" ? "Dark mode" : "Light mode"}>
                   <IconButton
                     aria-label="toggle theme mode"
                     edge="start"
@@ -509,11 +482,7 @@ const Header = (props: HeaderProps) => {
                       },
                     }}
                   >
-                    {theme.palette.mode === "light" ? (
-                      <DarkModeIcon />
-                    ) : (
-                      <LightModeIcon />
-                    )}
+                    {theme.palette.mode === "light" ? <DarkModeIcon /> : <LightModeIcon />}
                   </IconButton>
                 </Tooltip>
                 <Tooltip title="Browse Pages">
@@ -559,7 +528,7 @@ const Header = (props: HeaderProps) => {
 
                     {/*DropDown When User clicks on user thumbnail*/}
                     <Menu
-                      sx={{ mt: "45px"}}
+                      sx={{ mt: "45px" }}
                       anchorEl={anchorElUser}
                       MenuListProps={{
                         "aria-labelledby": "long-button",
@@ -577,11 +546,7 @@ const Header = (props: HeaderProps) => {
                       onClose={handleCloseUserMenu}
                     >
                       <Box sx={{ px: 2, py: 1.5 }}>
-                        <Stack
-                          direction="row"
-                          spacing={1.5}
-                          alignItems="center"
-                        >
+                        <Stack direction="row" spacing={1.5} alignItems="center">
                           <Avatar
                             sx={{
                               width: 36,
@@ -611,9 +576,7 @@ const Header = (props: HeaderProps) => {
                           authContext.appSignOut();
                         }}
                       >
-                        <ListItemIcon
-                          sx={{ color: "primary.main", minWidth: 32 }}
-                        >
+                        <ListItemIcon sx={{ color: "primary.main", minWidth: 32 }}>
                           <LogoutOutlined fontSize="small" />
                         </ListItemIcon>
                         <Typography textAlign="center">Logout</Typography>
@@ -626,11 +589,7 @@ const Header = (props: HeaderProps) => {
           </StyledAppBar>
 
           <nav>
-            <Sidebar
-              theme={theme}
-              open={mobileOpen}
-              handleDrawer={handleCloseSideBar}
-            />
+            <Sidebar theme={theme} open={mobileOpen} handleDrawer={handleCloseSideBar} />
             <AdminPanelSideBar
               theme={theme}
               open={adminPanelOpen}
@@ -642,12 +601,12 @@ const Header = (props: HeaderProps) => {
               aria-label="scroll to top"
               onClick={scrollToTop}
               sx={{
-              position: "fixed",
-              bottom: theme.spacing(2),
-              right: theme.spacing(2),
-              zIndex: theme.zIndex.modal + 1,
-              display: "none",
-              color: theme.palette.common.white,
+                position: "fixed",
+                bottom: theme.spacing(2),
+                right: theme.spacing(2),
+                zIndex: theme.zIndex.modal + 1,
+                display: "none",
+                color: theme.palette.common.white,
               }}
             >
               <KeyboardArrowUpIcon sx={{ fontSize: 28 }} />

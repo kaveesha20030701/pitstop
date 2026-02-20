@@ -14,50 +14,50 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  reorderRoutes,
-  reparentRoutes,
-  updateRouterPath,
-  toggleRouteVisibility,
-} from "@slices/routeSlice/route";
-import { useAppDispatch, useAppSelector } from "@slices/store";
-import AddRouteDialogBox from "@component/dialogs/PageDialogBox";
-import DeleteDialogBox from "@component/dialogs/DeleteDialogBox";
-import { ListItemLinkProps, RouteResponse } from "src/types/types";
-import SortableChildItem from "../common/ChildSidebarSortableItem";
-import { useLocation } from "react-router-dom";
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import AddIcon from "@mui/icons-material/Add";
+import AltRouteIcon from "@mui/icons-material/AltRoute";
+import DeleteIcon from "@mui/icons-material/Delete";
+import HomeIcon from "@mui/icons-material/Home";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import {
   Box,
-  Collapse,
   Checkbox,
+  CircularProgress,
+  Collapse,
   IconButton,
   ListItem,
   Stack,
   Tooltip,
   Typography,
-  CircularProgress,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import AltRouteIcon from "@mui/icons-material/AltRoute";
-import HomeIcon from "@mui/icons-material/Home";
+import { useLocation } from "react-router-dom";
+import { ListItemLinkProps, RouteResponse } from "src/types/types";
+
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+
+import DeleteDialogBox from "@component/dialogs/DeleteDialogBox";
+import AddRouteDialogBox from "@component/dialogs/PageDialogBox";
 import {
-  DndContext,
-  closestCenter,
-  useSensor,
-  useSensors,
-  PointerSensor,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+  reorderRoutes,
+  reparentRoutes,
+  toggleRouteVisibility,
+  updateRouterPath,
+} from "@slices/routeSlice/route";
+import { useAppDispatch, useAppSelector } from "@slices/store";
 import { RootState } from "@slices/store";
+
+import SortableChildItem from "../common/ChildSidebarSortableItem";
 
 interface ExtendedListItemLinkProps extends ListItemLinkProps {
   dragHandle?: React.ReactNode;
@@ -109,15 +109,11 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
   const { pathname: locationPathname } = useLocation();
   const pathname = propPathname || locationPathname;
 
-  const reparentingState = useAppSelector(
-    (state: RootState) => state.route.reparentingState
-  );
+  const reparentingState = useAppSelector((state: RootState) => state.route.reparentingState);
   const isReparenting = reparentingState === "loading";
 
   const sensors = useSensors(useSensor(PointerSensor));
-  const [childrenOrderRoutes, setChildrenOrderRoutes] = useState<
-    RouteResponse[]
-  >([]);
+  const [childrenOrderRoutes, setChildrenOrderRoutes] = useState<RouteResponse[]>([]);
 
   useEffect(() => {
     if (children && children.length) {
@@ -131,9 +127,7 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
-    const oldIdx = childrenOrderRoutes.findIndex(
-      (r) => r.routeId === active.id
-    );
+    const oldIdx = childrenOrderRoutes.findIndex((r) => r.routeId === active.id);
     const newIdx = childrenOrderRoutes.findIndex((r) => r.routeId === over.id);
     if (oldIdx < 0 || newIdx < 0) return;
     const newOrder = [...childrenOrderRoutes];
@@ -148,7 +142,7 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
           routeOrder: i + 1,
           isRouteVisible: Number(r.isRouteVisible),
         })),
-      })
+      }),
     );
   };
 
@@ -163,17 +157,14 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
 
   const isChecked =
     selectedRouteIds.has(routeId) ||
-    getAllChildIds({ routeId, children } as RouteResponse).some((id) =>
-      selectedRouteIds.has(id)
-    );
+    getAllChildIds({ routeId, children } as RouteResponse).some((id) => selectedRouteIds.has(id));
 
   const descendantIds = useMemo(
     () => getAllChildIds({ routeId, children } as RouteResponse),
-    [routeId, children]
+    [getAllChildIds, routeId, children],
   );
-  const checkedDescCount = descendantIds.filter((id) =>
-    selectedRouteIds.has(id)
-  ).length;
+  const checkedDescCount = descendantIds.filter((id) => selectedRouteIds.has(id)).length;
+
   const isIndeterminate =
     children && children.length > 0
       ? checkedDescCount > 0 && checkedDescCount < descendantIds.length
@@ -187,9 +178,7 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
       setOpen((o) => {
         const next = !o;
         if (next) {
-          dispatch(
-            updateRouterPath({ routeId, currentPath: to, label, children })
-          );
+          dispatch(updateRouterPath({ routeId, currentPath: to, label, children }));
         }
         return next;
       });
@@ -229,25 +218,23 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
           background: isDragging
             ? theme.palette.action.hover
             : isHovered
-            ? theme.palette.mode === "dark"
-              ? "rgba(255, 255, 255, 0.12)"
-              : "rgba(255, 255, 255, 0.9)"
-            : theme.palette.mode === "dark"
-            ? "rgba(255, 255, 255, 0.08)"
-            : "rgba(255, 255, 255, 0.6)",
-          border: `2px solid ${
-            isChecked ? theme.palette.primary.main : "transparent"
-          }`,
+              ? theme.palette.mode === "dark"
+                ? "rgba(255, 255, 255, 0.12)"
+                : "rgba(255, 255, 255, 0.9)"
+              : theme.palette.mode === "dark"
+                ? "rgba(255, 255, 255, 0.08)"
+                : "rgba(255, 255, 255, 0.6)",
+          border: `2px solid ${isChecked ? theme.palette.primary.main : "transparent"}`,
           width: "100%",
           boxShadow: isDragging
             ? "0 8px 16px rgba(0,0,0,0.15)"
             : isHovered
-            ? theme.palette.mode === "dark"
-              ? "0 4px 12px rgba(0,0,0,0.4)"
-              : "0 4px 12px rgba(0,0,0,0.08)"
-            : theme.palette.mode === "dark"
-            ? "0 2px 4px rgba(0,0,0,0.3)"
-            : "0 2px 4px rgba(0,0,0,0.04)",
+              ? theme.palette.mode === "dark"
+                ? "0 4px 12px rgba(0,0,0,0.4)"
+                : "0 4px 12px rgba(0,0,0,0.08)"
+              : theme.palette.mode === "dark"
+                ? "0 2px 4px rgba(0,0,0,0.3)"
+                : "0 2px 4px rgba(0,0,0,0.04)",
           opacity: isReparenting ? 0.7 : 1,
           transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
           "&:hover": {
@@ -255,11 +242,7 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
           },
         }}
       >
-        <Stack
-          direction="row"
-          alignItems="center"
-          sx={{ width: "100%", position: "relative" }}
-        >
+        <Stack direction="row" alignItems="center" sx={{ width: "100%", position: "relative" }}>
           {/* Checkbox or Home Icon */}
           {!isHome ? (
             <Checkbox
@@ -340,10 +323,9 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
                     effectiveIsRouteVisible === 0
                       ? theme.palette.text.disabled
                       : theme.palette.mode === "dark"
-                      ? "#FFFFFF"
-                      : "#000000",
-                  fontStyle:
-                    effectiveIsRouteVisible === 0 ? "italic" : "normal",
+                        ? "#FFFFFF"
+                        : "#000000",
+                  fontStyle: effectiveIsRouteVisible === 0 ? "italic" : "normal",
                 }}
               >
                 {primary}
@@ -403,11 +385,7 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
                   }}
                   disabled={isHome}
                 >
-                  <DeleteIcon
-                    fontSize="small"
-                    color="error"
-                    sx={{ fontSize: 16 }}
-                  />
+                  <DeleteIcon fontSize="small" color="error" sx={{ fontSize: 16 }} />
                 </IconButton>
               </span>
             </Tooltip>
@@ -441,22 +419,14 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
                         routeId: routeId,
                         isRouteVisible: isRouteVisible === 1 ? 0 : 1,
                         currentRoutePath: pathname,
-                      })
+                      }),
                     );
                   }}
                 >
                   {isRouteVisible === 1 ? (
-                    <VisibilityIcon
-                      fontSize="small"
-                      color="warning"
-                      sx={{ fontSize: 16 }}
-                    />
+                    <VisibilityIcon fontSize="small" color="warning" sx={{ fontSize: 16 }} />
                   ) : (
-                    <VisibilityOffIcon
-                      fontSize="small"
-                      color="warning"
-                      sx={{ fontSize: 16 }}
-                    />
+                    <VisibilityOffIcon fontSize="small" color="warning" sx={{ fontSize: 16 }} />
                   )}
                 </IconButton>
               </span>
@@ -493,10 +463,7 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
                   }}
                 >
                   {isReparenting ? (
-                    <CircularProgress
-                      size={16}
-                      sx={{ color: theme.palette.grey[400] }}
-                    />
+                    <CircularProgress size={16} sx={{ color: theme.palette.grey[400] }} />
                   ) : (
                     <AltRouteIcon
                       fontSize="small"
@@ -538,11 +505,7 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
                     handleOpenAddDialogBox();
                   }}
                 >
-                  <AddIcon
-                    fontSize="small"
-                    color="success"
-                    sx={{ fontSize: 16 }}
-                  />
+                  <AddIcon fontSize="small" color="success" sx={{ fontSize: 16 }} />
                 </IconButton>
               </span>
             </Tooltip>
@@ -551,11 +514,7 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
       </ListItem>
 
       {children && children.length > 0 && (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext
             items={childrenOrderRoutes.map((c) => c.routeId)}
             strategy={verticalListSortingStrategy}

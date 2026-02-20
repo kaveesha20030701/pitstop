@@ -18,6 +18,7 @@ import { ApiService } from "@utils/apiService";
 import { AppConfig } from "@config/config";
 import { UIMessages } from "@config/constant";
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { RouteStatuses } from "@root/src/types/types";
 
 const initialState: EmployeeState = {
   state: "idle",
@@ -29,7 +30,7 @@ const initialState: EmployeeState = {
 };
 
 interface EmployeeState {
-  state: "failed" | "success" | "loading" | "idle";
+  state: RouteStatuses;
   stateMessage: string | null;
   errorMessage: string | null;
   employeeInfo: EmployeeInfoInterface | null;

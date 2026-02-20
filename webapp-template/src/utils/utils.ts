@@ -14,29 +14,30 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { GOOGLE_DRIVE_DOMAIN, GOOGLE_DOCS_DOMAIN } from "@config/constant";
-import { FILETYPE, CONTENT_SUBTYPE } from "@utils/types";
 import { useEffect, useRef, useState } from "react";
+
+import { GOOGLE_DOCS_DOMAIN, GOOGLE_DRIVE_DOMAIN } from "@config/constant";
+import { CONTENT_SUBTYPE, FILETYPE } from "@utils/types";
 
 export const getGoogleDocsDownloadUrl = (url: string): string => {
   const fileId = extractFileIdFromURL(url);
   if (!fileId) return url;
 
-  const cleanFileId = fileId.split('/')[0];
+  const cleanFileId = fileId.split("/")[0];
 
-  if (url.includes('drive.google.com/file')) {
+  if (url.includes("drive.google.com/file")) {
     return `https://drive.google.com/uc?export=download&id=${cleanFileId}`;
   }
-  if (url.includes('docs.google.com/document')) {
+  if (url.includes("docs.google.com/document")) {
     return `https://docs.google.com/document/d/${cleanFileId}/export?format=pdf`;
   }
-  if (url.includes('docs.google.com/spreadsheets')) {
+  if (url.includes("docs.google.com/spreadsheets")) {
     return `https://docs.google.com/spreadsheets/d/${cleanFileId}/export?format=xlsx`;
   }
-  if (url.includes('docs.google.com/presentation')) {
+  if (url.includes("docs.google.com/presentation")) {
     return `https://docs.google.com/presentation/d/${cleanFileId}/export?format=pdf`;
   }
-  if (url.includes('drive.google.com')) {
+  if (url.includes("drive.google.com")) {
     return `https://drive.google.com/uc?export=download&id=${cleanFileId}`;
   }
   return url;
@@ -65,7 +66,7 @@ export const isGoogleDriveFolderLink = (url: string): boolean => {
 
 export const extractVideoIdFromURL = (link: string): string | null => {
   const regex =
-    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
   const match = link.match(regex);
   if (match && match[1]) {
     return match[1];
@@ -87,7 +88,7 @@ export const extractPlaylistIdFromURL = (link: string): string | null => {
 export const getEmbedUrl = (
   type: FILETYPE,
   link: string,
-  contentSubtype?: CONTENT_SUBTYPE
+  contentSubtype?: CONTENT_SUBTYPE,
 ): string => {
   let updatedLink = link;
   const fileId = extractFileIdFromURL(link);
@@ -137,9 +138,7 @@ export const extractFileId = (type: string, link: string) => {
   return getEmbedUrl(type as FILETYPE, link);
 };
 
-export function useInViewport<T extends HTMLElement>(
-  options?: IntersectionObserverInit
-) {
+export function useInViewport<T extends HTMLElement>(options?: IntersectionObserverInit) {
   const ref = useRef<T | null>(null);
   const [isInViewport, setIsInViewport] = useState(false);
 
@@ -151,9 +150,9 @@ export function useInViewport<T extends HTMLElement>(
         setIsInViewport(entry.isIntersecting);
       },
       {
-        threshold: 0.2, 
+        threshold: 0.2,
         ...options,
-      }
+      },
     );
 
     observer.observe(ref.current);

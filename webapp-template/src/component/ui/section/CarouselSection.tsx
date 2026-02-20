@@ -15,7 +15,7 @@
 // under the License.
 
 import React, { useEffect } from "react";
-import { Box, Stack, CircularProgress, Typography } from "@mui/material";
+import { Box, Stack, CircularProgress, Typography, Theme } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import Carousel from "../content/Carousel";
 import { ContentResponse, CustomTheme } from "../../../types/types";
@@ -69,7 +69,7 @@ const CarouselSection: React.FC<CarouselSectionProps> = ({ contentData }) => {
     textAlign: "center",
     fontSize: { xs: 24, sm: 28, md: 32 },
     lineHeight: 1.1,
-    background: (theme: any) =>
+    background: (theme: Theme) =>
       `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",

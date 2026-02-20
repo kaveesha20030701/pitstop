@@ -434,7 +434,7 @@ export interface Section {
   sectionType: string;
   imageUrl?: string;
   redirectUrl?: string;
-  contentState: "failed" | "loading" | "idle" | "success";
+  contentState: RouteStatuses;
   sectionOrder: number;
   contentData: ContentResponse[];
   contentOffset: number;
@@ -445,21 +445,21 @@ export interface Section {
 }
 
 export interface PageState {
-  state: "failed" | "loading" | "idle" | "success";
+  state: RouteStatuses;
   stateMessage: string | null;
   pageData: PageData;
-  likeState: "failed" | "loading" | "idle" | "success";
-  pinState: "failed" | "loading" | "idle" | "success";
-  commentState: "failed" | "loading" | "idle" | "success";
-  searchState: "failed" | "loading" | "idle" | "success";
-  sectionState: "failed" | "loading" | "idle" | "success";
-  verticalState: "failed" | "loading" | "idle" | "success";
-  pageDataState: "failed" | "loading" | "idle" | "success";
-  swapContentsState: "failed" | "loading" | "idle" | "success";
-  swapSectionsState: "failed" | "loading" | "idle" | "success";
-  contentReportState: "failed" | "loading" | "idle" | "success";
-  tagState: "failed" | "loading" | "idle" | "success";
-  blockedUrlsState: "failed" | "loading" | "idle" | "success";
+  likeState: RouteStatuses;
+  pinState: RouteStatuses;
+  commentState: RouteStatuses;
+  searchState: RouteStatuses;
+  sectionState: RouteStatuses;
+  verticalState: RouteStatuses;
+  pageDataState: RouteStatuses;
+  swapContentsState: RouteStatuses;
+  swapSectionsState: RouteStatuses;
+  contentReportState: RouteStatuses;
+  tagState: RouteStatuses;
+  blockedUrlsState: RouteStatuses;
   sectionData: Section[];
   verticalData: Section[];
   comments: CommentsResponse[];
@@ -577,6 +577,8 @@ export interface CustomButton {
   order: number;
 }
 export type CreateCustomButton = Omit<CustomButton, 'id'>;
+
+export type RouteStatuses = "failed" | "success" | "loading" | "idle"
 
 export interface CustomerTestimonial {
   id: number;

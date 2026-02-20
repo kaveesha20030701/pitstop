@@ -44,7 +44,7 @@ export const authSlice = createSlice({
         state.status = "loading";
       })
       .addCase(loadPrivileges.fulfilled, (state, action) => {
-        state.userPrivileges = action.payload;
+        state.userPrivileges = action.payload.map(String);
         const roles = [];
         // appending UI roles based on user privileges
         if (action.payload.includes(EMPLOYEE_PRIVILEGE_ID)) {

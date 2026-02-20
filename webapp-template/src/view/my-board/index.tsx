@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
   Typography,
@@ -128,9 +128,12 @@ const MyBoard: React.FC = () => {
     return title || "My Board";
   };
 
-  const refreshSection = (PanelTypes: MyBoardPanelTypes) => {
-    dispatch(fetchMyBoardSection({ PanelTypes, offset: 0 }));
-  };
+  const refreshSection = useCallback(
+    (PanelTypes: MyBoardPanelTypes) => {
+      dispatch(fetchMyBoardSection({ PanelTypes, offset: 0 }));
+    },
+    [dispatch]
+  );
 
   const seeMoreSection = (
     PanelTypes: MyBoardPanelTypes,
@@ -174,12 +177,8 @@ const MyBoard: React.FC = () => {
     ) {
       refreshSection(MyBoardPanelTypes.ESSENTIAL);
     }
-  }, [expandedAccordion, pinned.status, essential.status, dispatch]);
+  }, [expandedAccordion, pinned.status, essential.status, refreshSection]);
 
-  const mutationKey = useMemo(
-    () => `${pageMutationState ?? ""}__${routeMutationState ?? ""}`,
-    [pageMutationState, routeMutationState]
-  );
   const refetchDebounceRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -206,7 +205,12 @@ const MyBoard: React.FC = () => {
         refetchDebounceRef.current = null;
       }
     };
-  }, [mutationKey, expandedAccordion]);
+  }, [
+    expandedAccordion,
+    pageMutationState,
+    refreshSection,
+    routeMutationState,
+  ]);
 
   const renderLoadingScreen = (label: string) => (
     <Box

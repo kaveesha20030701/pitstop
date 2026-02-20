@@ -33,7 +33,7 @@ const Link = React.forwardRef<HTMLAnchorElement, RouterLinkProps>((itemProps, re
 const ListItemLink = (props: ListItemLinkProps) => {
   const [open, setOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
-  const { primary, to, theme, isActive, children, routeId, level, label, handleSideBar, isRouteVisible } = props;
+  const { primary, to, theme, isActive, children, routeId, level, label, handleSideBar} = props;
   const { pathname } = useLocation();
   const dispatch = useAppDispatch();
 

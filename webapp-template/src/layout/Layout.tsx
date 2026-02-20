@@ -14,22 +14,25 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import { Typography } from "@mui/material";
+import Box from "@mui/material/Box";
+import CssBaseline from "@mui/material/CssBaseline";
+import { useTheme } from "@mui/material/styles";
+import { useSnackbar } from "notistack";
+import { useSelector } from "react-redux";
+import { Outlet, matchRoutes, useLocation, useNavigate } from "react-router-dom";
+
+import { Suspense, useEffect, useState } from "react";
+
+import ConsentHandler from "@component/common/ConsentHandler";
 import { CURRENT_YEAR } from "@config/constant";
-import Header from "./header";
 import ConfirmationModalContextProvider from "@context/DialogContext";
 import { selectUserInfo } from "@slices/authSlice";
-import pJson from "../../package.json";
 import { RootState, useAppSelector } from "@slices/store";
-import { Suspense, useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import Box from "@mui/material/Box";
-import { useTheme } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-import { Typography } from "@mui/material";
-import { Outlet, useLocation, useNavigate, matchRoutes } from "react-router-dom";
-import { useSnackbar } from "notistack";
-import ConsentHandler from "@component/common/ConsentHandler";
+
+import pJson from "../../package.json";
 import MatomoTracker from "../analytics/MatomoTracker";
+import Header from "./header";
 
 export default function Layout() {
   const navigate = useNavigate();
@@ -44,14 +47,14 @@ export default function Layout() {
         anchorOrigin: common.anchorOrigin,
       });
     }
-  }, [common.timestamp]);
+  }, [common.anchorOrigin, common.message, common.timestamp, common.type, enqueueSnackbar]);
 
   useEffect(() => {
     if (localStorage.getItem("hris-app-redirect-url")) {
       navigate(localStorage.getItem("hris-app-redirect-url") as string);
       localStorage.removeItem("hris-app-redirect-url");
     }
-  }, []);
+  }, [navigate]);
 
   const route = useAppSelector((state: RootState) => state.route);
   const location = useLocation();
@@ -79,7 +82,12 @@ export default function Layout() {
         {userConsent ? (
           <>
             <MatomoTracker />
-            <Header theme={theme} title={getAppBarTitle()} currentPath={location.pathname} email={userInfo?.email} />
+            <Header
+              theme={theme}
+              title={getAppBarTitle()}
+              currentPath={location.pathname}
+              email={userInfo?.email}
+            />
             <Box component="main" sx={{ flexGrow: 1, p: 0, mt: 6, overflowX: "hidden" }}>
               <Suspense fallback={<div>Loading...</div>}>
                 <Outlet />

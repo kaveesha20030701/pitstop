@@ -75,7 +75,7 @@ export default function Layout() {
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentPageData = searchData.slice(startIndex, endIndex);
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, page: number) => {
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 400, behavior: 'smooth' });
   };

@@ -14,12 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { AppConfig } from "@config/config";
-import { createAsyncThunk, createSlice} from "@reduxjs/toolkit";
-import { ApiService } from "@utils/apiService";
-import { SectionPayload, UpdateSectionPayload } from "../../types/types";
-import { getPageData } from "@slices/pageSlice/page";
 import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
+import { getPageData } from "@slices/pageSlice/page";
+import { ApiService } from "@utils/apiService";
+
+import { RouteStatuses, SectionPayload, UpdateSectionPayload } from "../../types/types";
 
 const initialState: SectionState = {
   stateMessage: null,
@@ -28,7 +29,7 @@ const initialState: SectionState = {
 };
 
 interface SectionState {
-  state?: "failed" | "success" | "loading" | "idle";
+  state?: RouteStatuses;
   sectionId: number;
   stateMessage: string | null;
 }
@@ -44,7 +45,7 @@ export const SectionSlice = createSlice({
         state.state = "loading";
       })
       .addCase(createNewSection.fulfilled, (state) => {
-        state.stateMessage = "You have successfully created a page";
+        state.stateMessage = "You have successfully created a section";
         state.state = "success";
       })
       .addCase(createNewSection.rejected, (state) => {
@@ -58,7 +59,7 @@ export const SectionSlice = createSlice({
       })
       .addCase(updateSection.fulfilled, (state) => {
         state.state = "success";
-        state.stateMessage = "You have successfully updated the page";
+        state.stateMessage = "You have successfully updated the section";
       })
       .addCase(updateSection.rejected, (state) => {
         state.state = "failed";
@@ -71,7 +72,7 @@ export const SectionSlice = createSlice({
       })
       .addCase(deleteSection.fulfilled, (state) => {
         state.state = "success";
-        state.stateMessage = "You have successfully deleted the page";
+        state.stateMessage = "You have successfully deleted the section";
       })
       .addCase(deleteSection.rejected, (state) => {
         state.state = "failed";
@@ -98,7 +99,7 @@ export const createNewSection = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            })
+            }),
           );
         })
         .catch((resp) => {
@@ -110,19 +111,19 @@ export const createNewSection = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            })
+            }),
           );
           reject(resp);
         });
     });
-  }
+  },
 );
 
 //Delete a section
 export const deleteSection = createAsyncThunk(
   "pitstop/deleteSection",
   async (payload: { routeId: number; sectionId: number; routePath: string }, { dispatch }) => {
-    return new Promise<unknown>(( reject) => {
+    return new Promise<unknown>((reject) => {
       ApiService.getInstance()
         .delete(AppConfig.serviceUrls.deleteSection + payload.sectionId)
         .then((resp) => {
@@ -130,13 +131,13 @@ export const deleteSection = createAsyncThunk(
             dispatch(getPageData(payload.routePath));
             dispatch(
               enqueueSnackbarMessage({
-                message: "You have successfully delete the section.",
+                message: "You have successfully deleted the section.",
                 type: "success",
                 anchorOrigin: {
                   vertical: "bottom",
                   horizontal: "right",
                 },
-              })
+              }),
             );
           }
         })
@@ -149,12 +150,12 @@ export const deleteSection = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            })
+            }),
           );
           reject(resp);
         });
     });
-  }
+  },
 );
 
 //Update a section
@@ -175,7 +176,7 @@ export const updateSection = createAsyncThunk(
                   vertical: "bottom",
                   horizontal: "right",
                 },
-              })
+              }),
             );
             resolve({ requestResponse: resp.data });
           }
@@ -189,12 +190,12 @@ export const updateSection = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            })
+            }),
           );
           reject(resp);
         });
     });
-  }
+  },
 );
 
 export default SectionSlice.reducer;

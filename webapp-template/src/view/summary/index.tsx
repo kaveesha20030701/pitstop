@@ -31,6 +31,7 @@ import {
 import { useEffect } from "react";
 import { getContentReport } from "@slices/pageSlice/page";
 import ErrorHandler from "@component/common/ErrorHandler";
+import { ContentReportResponse } from "@root/src/types/types";
 
 export default function Summary() {
   const routes = useAppSelector((state: RootState) => state.route.routes);
@@ -48,7 +49,7 @@ export default function Summary() {
   const theme = useTheme();
 
   const getAppBarTitle = (): string => {
-    var title: string = "";
+    let title: string = "";
     matches?.forEach((obj) => {
       if (location.pathname === obj.pathname) {
         title = obj.route.menuItem;
@@ -62,7 +63,7 @@ export default function Summary() {
     dispatch(getContentReport());
   }, [dispatch]);
 
-  const rowData = contentReportData.map((item: any, index: number) => ({
+  const rowData = contentReportData.map((item: ContentReportResponse, index: number) => ({
     id: index + 1,
     ...item,
   }));
