@@ -113,10 +113,10 @@ const PageDialogBox = ({
 
   const formik = useFormik({
     initialValues: {
-      routeId: initialValues?.routeId ? initialValues.routeId : 0,
-      label: initialValues?.label ? initialValues.label : "",
-      title: initialValues?.title ? initialValues.title : "",
-      description: initialValues?.description ? initialValues.description : "",
+      routeId: initialValues?.routeId ?? 0,
+      label: initialValues?.label ?? "",
+      title: initialValues?.title ?? "",
+      description: initialValues?.description ?? "",
       isVisible: !!initialValues?.isVisible,
     },
     validationSchema: validationPageSchema,

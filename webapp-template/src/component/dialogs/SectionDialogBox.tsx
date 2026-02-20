@@ -194,12 +194,12 @@ const SectionDialogBox = ({
 
   const formik = useFormik({
     initialValues: {
-      title: initialValues?.title ? initialValues.title : "",
-      description: initialValues?.description ? initialValues.description : "",
-      sectionType: initialValues?.sectionType ? initialValues.sectionType : "",
-      imageUrl: initialValues?.imageUrl ? initialValues.imageUrl : undefined,
-      redirectUrl: initialValues?.redirectUrl ? initialValues.redirectUrl : undefined,
-      tags: initialValues?.tags ? initialValues.tags : "",
+      title: initialValues?.title ?? "",
+      description: initialValues?.description ?? "",
+      sectionType: initialValues?.sectionType ?? "",
+      imageUrl: initialValues?.imageUrl ?? undefined,
+      redirectUrl: initialValues?.redirectUrl ?? undefined,
+      tags: initialValues?.tags ?? "",
     },
     enableReinitialize: true,
     validationSchema: validationSectionSchema,
