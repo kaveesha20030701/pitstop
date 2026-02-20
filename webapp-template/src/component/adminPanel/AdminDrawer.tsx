@@ -262,7 +262,7 @@ const AdminPanelSideBar = (props: SidebarProps) => {
                 primary={homeRoute.menuItem}
                 to={homeRoute.path}
                 children={homeRoute.children}
-                isActive={matchPath(pathname, homeRoute.path) !== null}
+                isActive={matchPath(homeRoute.path, pathname) !== null}
                 isDragging={isAnyItemDragging}
                 sidebarWidth={sidebarWidth}
                 selectedRouteIds={selectedRouteIds}
@@ -294,7 +294,7 @@ const AdminPanelSideBar = (props: SidebarProps) => {
                   primary={route.menuItem}
                   to={route.path}
                   children={route.children}
-                  isActive={matchPath(pathname, route.path) !== null}
+                  isActive={matchPath(route.path, pathname) !== null}
                   isDragging={isAnyItemDragging}
                   sidebarWidth={sidebarWidth}
                   selectedRouteIds={selectedRouteIds}

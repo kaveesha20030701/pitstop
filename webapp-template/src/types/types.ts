@@ -403,7 +403,6 @@ export interface RouteResponse extends NonIndexRouteObject {
    isRouteVisible: boolean;
   element?: React.ReactNode | null;
   children?: RouteResponse[];
- 
 }
 
 export interface ContentResponse {

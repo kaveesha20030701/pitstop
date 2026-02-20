@@ -31,7 +31,7 @@ import React, { useState } from "react";
 
 import StylePicker from "@component/common/StylePicker";
 import { createNewRoute, updateRoute } from "@slices/routeSlice/route";
-import { useAppDispatch} from "@slices/store";
+import { useAppDispatch } from "@slices/store";
 
 import { CustomStylingInfo, PageDialogBoxProps, validationPageSchema } from "../../types/types";
 
@@ -119,6 +119,7 @@ const PageDialogBox = ({
       description: initialValues?.description ?? "",
       isVisible: !!initialValues?.isVisible,
     },
+    enableReinitialize: true,
     validationSchema: validationPageSchema,
     onSubmit: (values) => {
       if (type === "add") {

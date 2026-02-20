@@ -25,11 +25,11 @@ import "swiper/css";
 import "swiper/css/effect-coverflow";
 import { useInViewport } from "@utils/utils";
 import suggestedSection from "@assets/images/suggestedSection.jpg";
-import sewikiSuggestedSection from "@assets/images/suggestedSection_blue.png";
+import seWikiSuggestedSection from "@assets/images/suggestedSection_blue.png";
 
 const isPitstopApp = window.config?.IS_PITSTOP_APP ?? true;
 
-const backgroundImage = isPitstopApp ? suggestedSection : sewikiSuggestedSection;
+const backgroundImage = isPitstopApp ? suggestedSection : seWikiSuggestedSection;
 
 interface SuggestedCarouselProps {
   items: ContentResponse[];
