@@ -33,7 +33,6 @@ const Component: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-
   // Handle redirect for invisible routes
   useEffect(() => {
     if (route.pageData?.shouldRedirect) {
