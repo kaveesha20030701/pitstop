@@ -14,11 +14,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Box } from "@mui/material";
-import { SideBarSortableItemProps } from "../../types/types"
+import React from "react";
+import { SideBarSortableItemProps } from "../../types/types";
 
 const SidebarSortableItem = ({
   id,
@@ -27,20 +27,17 @@ const SidebarSortableItem = ({
   dragHandle,
   children,
 }: SideBarSortableItemProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
     disabled,
   });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: isDragging
+      ? transform
+        ? `${CSS.Transform.toString(transform)} scale(1.05)`
+        : "scale(1.05)"
+      : CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 1000 : "auto",
     opacity: isDragging ? 0.8 : 1,
@@ -53,7 +50,6 @@ const SidebarSortableItem = ({
       style={style}
       {...attributes}
       sx={{
-        transform: isDragging ? "scale(1.05)" : "none",
         boxShadow: isDragging ? 3 : "none",
         transition: "transform 0.2s ease",
         cursor: disabled ? "default" : "grab",
@@ -64,13 +60,16 @@ const SidebarSortableItem = ({
         alignItems: "center",
       }}
     >
-      {React.cloneElement(children as React.ReactElement<{
-        dragHandle?: React.ReactNode;
-        dragListeners?: Record<string, unknown>;
-      }>, {
-        dragHandle,
-        dragListeners: listeners,
-      })}
+      {React.cloneElement(
+        children as React.ReactElement<{
+          dragHandle?: React.ReactNode;
+          dragListeners?: Record<string, unknown>;
+        }>,
+        {
+          dragHandle,
+          dragListeners: listeners,
+        },
+      )}
     </Box>
   );
 };

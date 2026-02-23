@@ -53,12 +53,15 @@ public isolated function processTrendingContents() returns string[]|error {
 # + return - Visit summary or error
 public isolated function processRecentActivityForUser(string email) returns VisitSummary|error {
     Visit[] visits = check getRecentActivityForUser(email);
-    int i = 0;
+    int processedActivitiesCount = 0;
     string[] searchedKeywords = [];
     string[] viewedContentNames = [];
     foreach Visit visit in visits {
+        if processedActivitiesCount >= topActivitiesCount {
+            break;
+        }
         foreach ActionDetail actionDetail in visit.actionDetails {
-            if i > topActivitiesCount {
+            if processedActivitiesCount >= topActivitiesCount {
                 break;
             }
             match actionDetail.'type {
@@ -67,19 +70,19 @@ public isolated function processRecentActivityForUser(string email) returns Visi
                     if actionDetail.subtitle != "" &&
                         searchedKeywords.indexOf(actionDetail.subtitle.toLowerAscii()) is () {
                         searchedKeywords.push(actionDetail.subtitle.toLowerAscii());
-                        i += 1;
+                        processedActivitiesCount += 1;
                     }
                 }
                 EVENT => {
                     string? contentName = actionDetail.eventName;
                     // Check if content name is not null, not empty and not already in the array
-                    if contentName is string && getContentName(contentName) != "" &&
-                        viewedContentNames.indexOf(getContentName(contentName)) is () {
-                        viewedContentNames.push(getContentName(contentName));
-                        i += 1;
+                    if contentName is string {
+                        string extracted = getContentName(contentName);
+                        if extracted != "" && viewedContentNames.indexOf(extracted) is () {
+                            viewedContentNames.push(extracted);
+                            processedActivitiesCount += 1;
+                        }
                     }
-                }
-                _ => {
                 }
             }
         }

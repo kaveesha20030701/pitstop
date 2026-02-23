@@ -43,8 +43,7 @@ import DeleteContentDialogBox from "@component/dialogs/DeleteDialogBox";
 import RouteContentDialogBox from "@component/dialogs/RouteContentDialogBox";
 import ActionButton from "@component/ui/page/ActionButton";
 import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
-import { getPageData } from "@slices/pageSlice/page";
-import { createRouteContent, updateRouteContent, updateRouterPath } from "@slices/routeSlice/route";
+import { createRouteContent, updateRouteContent } from "@slices/routeSlice/route";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
 import { Role } from "@utils/types";
 
@@ -91,16 +90,11 @@ export default function ActionAreaCard() {
       );
       return;
     }
+    if (route.path === currentPath) {
+      return;
+    }
+
     navigate(route.path);
-    dispatch(
-      updateRouterPath({
-        routeId: route.routeId,
-        currentPath: route.path,
-        label: route.menuItem,
-        children: route.children ?? [],
-      }),
-    );
-    dispatch(getPageData(route.path));
   };
 
   const openContent = (content: RouteContentItem) => {

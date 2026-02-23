@@ -132,12 +132,7 @@ function Home() {
             setHeroReady(true);
           }
         }
-        
-        if (isMounted) {
-          await Promise.all([
-            dispatch(getAllTags()).unwrap(),
-          ]);
-        }
+
       } catch (error) {
         if (isMounted) {
           console.error("Error fetching home page data:", error);
@@ -161,6 +156,11 @@ function Home() {
       }
     };
   }, [location.pathname, dispatch]);
+
+  // Fetch tags only once on mount
+  useEffect(() => {
+    dispatch(getAllTags());
+  }, [dispatch]);
 
   // Track if sections have content
   useEffect(() => {
