@@ -160,7 +160,7 @@ export default function Layout() {
                   mx: "auto",
                 }}
               >
-                {window.config?.IS_PITSTOP_APP ?
+                {window.config?.IS_PITSTOP_APP !== undefined && window.config.IS_PITSTOP_APP ?
                 "Search across all sales resources with keywords or tags. Use the unified search bar to find exactly what you need."
                 : "Search across all sales engineering resources with keywords or tags. Use the unified search bar to find exactly what you need."
                 }
