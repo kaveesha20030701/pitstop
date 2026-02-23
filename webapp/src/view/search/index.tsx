@@ -160,8 +160,10 @@ export default function Layout() {
                   mx: "auto",
                 }}
               >
-                Search across all sales resources and analytics with keywords or tags.
-                Use the unified search bar to find exactly what you need.
+                {window.config?.IS_PITSTOP_APP !== undefined && window.config.IS_PITSTOP_APP ?
+                "Search across all sales resources with keywords or tags. Use the unified search bar to find exactly what you need."
+                : "Search across all sales engineering resources with keywords or tags. Use the unified search bar to find exactly what you need."
+                }
               </Typography>
             </Box>
 
@@ -246,16 +248,15 @@ export default function Layout() {
 
               {/*Empty state*/}
               {searchState === "success" && searchData.length === 0 && (
-                <Grid item xs={12}>
-                  <Box
-                    sx={{
-                      width: "100%",
-                      py: 8,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      textAlign: "center",
+                <Box
+                  sx={{
+                    width: "100%",
+                    py: 8,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
                       "@keyframes float": {
                         "0%": { transform: "translateY(0px)" },
                         "50%": { transform: "translateY(-10px)" },
@@ -287,7 +288,6 @@ export default function Layout() {
                       again.
                     </Typography>
                   </Box>
-                </Grid>
               )}
               {/*END Empty state*/}
             </Grid>
