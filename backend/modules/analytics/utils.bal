@@ -57,8 +57,11 @@ public isolated function processRecentActivityForUser(string email) returns Visi
     string[] searchedKeywords = [];
     string[] viewedContentNames = [];
     foreach Visit visit in visits {
+        if i >= topActivitiesCount {
+            break;
+        }
         foreach ActionDetail actionDetail in visit.actionDetails {
-            if i > topActivitiesCount {
+            if i >= topActivitiesCount {
                 break;
             }
             match actionDetail.'type {
@@ -73,13 +76,13 @@ public isolated function processRecentActivityForUser(string email) returns Visi
                 EVENT => {
                     string? contentName = actionDetail.eventName;
                     // Check if content name is not null, not empty and not already in the array
-                    if contentName is string && getContentName(contentName) != "" &&
-                        viewedContentNames.indexOf(getContentName(contentName)) is () {
-                        viewedContentNames.push(getContentName(contentName));
-                        i += 1;
+                    if contentName is string {
+                        string extracted = getContentName(contentName);
+                        if extracted != "" && viewedContentNames.indexOf(extracted) is () {
+                            viewedContentNames.push(extracted);
+                            i += 1;
+                        }
                     }
-                }
-                _ => {
                 }
             }
         }

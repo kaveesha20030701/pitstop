@@ -1395,7 +1395,6 @@ public final string commentNotificationTemplate = string `
                                     valign="top"
                                   >
                                     ©
-                                    <?= employee.year ?>
                                     WSO2, Inc. All Rights Reserved
                                   </td>
                                 </tr>

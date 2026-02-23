@@ -1015,8 +1015,8 @@ public isolated function updateRouteVisibilityQuery(int routeId, types:Routes pa
     SET 
         isRouteVisible = ${payload.isRouteVisible} 
     WHERE 
-        route_id = ${routeId} 
-        OR parent_id = ${routeId}
+        (route_id = ${routeId} 
+        OR parent_id = ${routeId})
         AND is_deleted = false
 `;
 
