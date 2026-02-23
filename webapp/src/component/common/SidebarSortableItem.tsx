@@ -13,21 +13,12 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Box } from "@mui/material";
-
-
-
 import React from "react";
-
-
-
 import { SideBarSortableItemProps } from "../../types/types";
-
-
-
-
 
 const SidebarSortableItem = ({
   id,
@@ -43,7 +34,9 @@ const SidebarSortableItem = ({
 
   const style = {
     transform: isDragging
-      ? `${CSS.Transform.toString(transform)} scale(1.05)`
+      ? transform
+        ? `${CSS.Transform.toString(transform)} scale(1.05)`
+        : "scale(1.05)"
       : CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 1000 : "auto",
@@ -67,13 +60,16 @@ const SidebarSortableItem = ({
         alignItems: "center",
       }}
     >
-      {React.cloneElement(children as React.ReactElement<{
-        dragHandle?: React.ReactNode;
-        dragListeners?: Record<string, unknown>;
-      }>, {
-        dragHandle,
-        dragListeners: listeners,
-      })}
+      {React.cloneElement(
+        children as React.ReactElement<{
+          dragHandle?: React.ReactNode;
+          dragListeners?: Record<string, unknown>;
+        }>,
+        {
+          dragHandle,
+          dragListeners: listeners,
+        },
+      )}
     </Box>
   );
 };
