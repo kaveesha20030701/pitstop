@@ -82,7 +82,6 @@ export class ApiService {
     ApiService._instance.interceptors.request.use(
       (config) => {
         config.headers.set("Authorization", "Bearer " + ApiService._idToken);
-        config.headers.set("x-jwt-assertion", ApiService._idToken);
 
         const endpoint = config.url || "";
 
