@@ -94,9 +94,8 @@ const CarouselSection: React.FC<CarouselSectionProps> = ({ contentData }) => {
             autoScrollInterval={5000}
           />
         </Box>
-
-        <Box sx={{ flex: 1, display: "grid", placeItems: "center", width: "100%" }}>
-          <Typography component="h3" sx={titleSx}>
+        <Box sx={{ flex: 1, display: "grid", placeItems: "center", width: "100%", alignSelf: "flex-start" }}>
+          <Typography component="h3" sx={{ ...titleSx, mb: 8, minHeight: 60 }}>
             What's Trending
           </Typography>
           {renderTrendingCarousel()}
