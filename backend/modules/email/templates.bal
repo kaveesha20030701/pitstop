@@ -1395,7 +1395,7 @@ public final string commentNotificationTemplate = string `
                                     valign="top"
                                   >
                                     ©
-                                    WSO2, Inc. All Rights Reserved
+                                    WSO2, LLC. All Rights Reserved
                                   </td>
                                 </tr>
                                 <tr>

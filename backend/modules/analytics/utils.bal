@@ -53,15 +53,15 @@ public isolated function processTrendingContents() returns string[]|error {
 # + return - Visit summary or error
 public isolated function processRecentActivityForUser(string email) returns VisitSummary|error {
     Visit[] visits = check getRecentActivityForUser(email);
-    int i = 0;
+    int processedActivitiesCount = 0;
     string[] searchedKeywords = [];
     string[] viewedContentNames = [];
     foreach Visit visit in visits {
-        if i >= topActivitiesCount {
+        if processedActivitiesCount >= topActivitiesCount {
             break;
         }
         foreach ActionDetail actionDetail in visit.actionDetails {
-            if i >= topActivitiesCount {
+            if processedActivitiesCount >= topActivitiesCount {
                 break;
             }
             match actionDetail.'type {
@@ -70,7 +70,7 @@ public isolated function processRecentActivityForUser(string email) returns Visi
                     if actionDetail.subtitle != "" &&
                         searchedKeywords.indexOf(actionDetail.subtitle.toLowerAscii()) is () {
                         searchedKeywords.push(actionDetail.subtitle.toLowerAscii());
-                        i += 1;
+                        processedActivitiesCount += 1;
                     }
                 }
                 EVENT => {
@@ -80,7 +80,7 @@ public isolated function processRecentActivityForUser(string email) returns Visi
                         string extracted = getContentName(contentName);
                         if extracted != "" && viewedContentNames.indexOf(extracted) is () {
                             viewedContentNames.push(extracted);
-                            i += 1;
+                            processedActivitiesCount += 1;
                         }
                     }
                 }
