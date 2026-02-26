@@ -70,8 +70,9 @@ const PageDialogBox = ({
   >(initialValues?.customPageTheme?.description);
 
   const dialogBoxType = () => (type === "add" ? "Add New Page" : "Update Page");
+  const appName = window.config?.APP_DETAILS?.NAME;
   const dialogSubtitle = () =>
-    type === "add" ? `Create a new page for ${window.config?.APP_DETAILS?.NAME}` : "Update page details";
+    type === "add" ? `Create a new page for ${appName}` : "Update page details";
 
   const handleAddPage = (values: typeof formik.values) => {
     dispatch(

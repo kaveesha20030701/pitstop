@@ -23,7 +23,7 @@ import pitstop.types;
 isolated function replaceSpacesWithHyphens(string input) returns string =>
     re `\s+(?:-\s+)*`.replaceAll(input.trim().toLowerAscii(), "-");
 
-#Replace the {{appName}} placeholder in the email template with the actual app name.
+# Replace the {{appName}} placeholder in the email template with the actual app name.
 # 
 # + template - email template containing the {{appName}} placeholder
 # + appName - actual application name to replace the placeholder with
