@@ -16,12 +16,18 @@
 
 
 import { BaseURLAuthClientConfig } from "@asgardeo/auth-react";
-export const APP_NAME: string = "Sales Pitstop";
 
 declare global {
   interface Window {
     config: {
-      APP_NAME: string;
+      APP_DETAILS: {
+        name: string;
+        description: string;
+      }; 
+      APP_NAMES: {
+        pitstop: string;
+        paddock: string;
+      }; 
       APP_SUB_LINE: string;
       ASGARDEO_BASE_URL: string;
       ASGARDEO_CLIENT_ID: string;

@@ -34,6 +34,8 @@ configurable string salesAdmin = ?;
 
 configurable string frontendBaseUrl = ?;
 
+configurable string appName = ?;
+
 configurable types:AppInfo appInfo = {
     blockedIframeUrls: []
 };
@@ -304,17 +306,22 @@ service http:InterceptableService / on new http:Listener(9090) {
                 }
             };
         }
-        string emailSubject = string `[Sales-pitstop][${contentResponse.description}] Comment Activity`;
+        
+        string emailSubject = string `[${appName}][${contentResponse.description}] Comment Activity`;
 
-        string|error content = email:bindKeyValues(email:commentNotificationTemplate,
+        string renderedTemplate = renderAppName(email:commentNotificationTemplate, appName);
+
+        string|error content = email:bindKeyValues(renderedTemplate,
             {
-            "EMAIL_BODY": "A new comment has been <b>added</b> to a content on the Sales pitstop application.",
-            "COMMENT": commentPayload.comment,
-            "USER_EMAIL": userEmail,
-            "CONTENT_NAME": contentResponse.description,
-            "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?contentId=${
-                commentPayload.contentId}&sectionId=${contentResponse.sectionId}`
-        });
+                "EMAIL_BODY": string `A new comment has been <b>added</b> to a content on the ${appName} application.`,
+                "COMMENT": commentPayload.comment,
+                "USER_EMAIL": userEmail,
+                "CONTENT_NAME": contentResponse.description,
+                "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?contentId=${
+                    commentPayload.contentId}&sectionId=${contentResponse.sectionId}`
+            }
+        );
+
         if content is error {
             string customError = "Error with email template!";
             log:printError(customError, content);
@@ -1519,20 +1526,22 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string emailSubject = string `[Sales-pitstop][${contentResponse.description}] Comment Activity`;
+        string emailSubject = string `[${appName}][${contentResponse.description}] Comment Activity`;
 
-        string|error content = email:bindKeyValues(
-            email:commentNotificationTemplate,
+        string renderedTemplate = renderAppName(email:commentNotificationTemplate, appName);
+
+        string|error content = email:bindKeyValues(renderedTemplate,
             {
-            "EMAIL_BODY"
-                : "An <b>update</b> has been made to a comment for a content within the Sales pitstop application.",
-            "COMMENT": commentPayload.comment,
-            "USER_EMAIL": userEmail,
-            "CONTENT_NAME": contentResponse.description,
-            "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?contentId=${
-                commentPayload.contentId}&sectionId=${contentResponse.sectionId}`
-        }
+                "EMAIL_BODY": string `An <b>update</b> has been made to a comment for a content within the 
+                    ${appName} application.`,
+                "COMMENT": commentPayload.comment,
+                "USER_EMAIL": userEmail,
+                "CONTENT_NAME": contentResponse.description,
+                "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?contentId=${
+                    commentPayload.contentId}&sectionId=${contentResponse.sectionId}`
+            }
         );
+
         string customContentError = "Error with email template!";
         if content is error {
             log:printError(customContentError, content);
@@ -1649,17 +1658,22 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string emailSubject = string `[Sales-pitstop][${contentResponse.description}] Comment Activity`;
+        string emailSubject = string `[$appName][${contentResponse.description}] Comment Activity`;
 
-        string|error content = email:bindKeyValues(email:commentNotificationTemplate,
+        string renderedTemplate = renderAppName(email:commentNotificationTemplate, appName);
+
+        string|error content = email:bindKeyValues(renderedTemplate,
             {
-            "EMAIL_BODY": "This comment has been <b>deleted</b> from a content in the Sales pitstop application.",
-            "COMMENT": commentPayload.comment,
-            "USER_EMAIL": userEmail,
-            "CONTENT_NAME": contentResponse.description,
-            "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?contentId=${
-                commentPayload.contentId}&sectionId=${contentResponse.sectionId}`
-        });
+                "EMAIL_BODY": string `This comment has been <b>deleted</b> from a content in the 
+                    ${appName} application.`,
+                "COMMENT": commentPayload.comment,
+                "USER_EMAIL": userEmail,
+                "CONTENT_NAME": contentResponse.description,
+                "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?contentId=${
+                    commentPayload.contentId}&sectionId=${contentResponse.sectionId}`
+            }
+        );
+
         if content is error {
             string customError = "Error with email template!";
             log:printError(customError, content);

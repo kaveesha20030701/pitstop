@@ -751,7 +751,7 @@ const ComponentCard = ({
                       : {}),
                   }}
                 >
-                  {window.config?.IS_PITSTOP_APP ? "Sales Pitstop" : "SE Paddock"}
+                  {window.config?.APP_DETAILS?.name}
                 </Typography>
               </Box>
             ) : shouldShowIframe() ? (

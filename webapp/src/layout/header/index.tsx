@@ -311,13 +311,14 @@ const Header = (props: HeaderProps) => {
                     }}
                     onClick={() => navigate("/")}
                   >
-                    {window.config?.APP_NAME ?? "Sales Pitstop"}
+                    {window.config?.APP_DETAILS?.name || ""}
                   </Typography>
 
                   {window.config?.IS_PITSTOP_APP !== undefined && (
                     <Tooltip
                       title={`Switch to ${
-                        window.config.IS_PITSTOP_APP ? "SE Paddock" : "Sales Pitstop"
+                        window.config.IS_PITSTOP_APP ? 
+                          window.config.APP_NAMES.paddock :  window.config.APP_NAMES.pitstop
                       }`}
                     >
                       <Box
@@ -366,7 +367,8 @@ const Header = (props: HeaderProps) => {
                           },
                         }}
                       >
-                        {window.config.IS_PITSTOP_APP ? "SE Paddock" : "Sales Pitstop"}
+                        {window.config.IS_PITSTOP_APP ? 
+                          window.config.APP_NAMES.paddock : window.config.APP_NAMES.pitstop}
                         <OpenInNewIcon sx={{ fontSize: "0.9rem" }} />
                       </Box>
                     </Tooltip>
