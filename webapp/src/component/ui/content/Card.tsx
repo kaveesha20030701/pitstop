@@ -751,7 +751,7 @@ const ComponentCard = ({
                       : {}),
                   }}
                 >
-                  {window.config?.APP_DETAILS?.name}
+                  {window.config?.APP_DETAILS?.NAME}
                 </Typography>
               </Box>
             ) : shouldShowIframe() ? (

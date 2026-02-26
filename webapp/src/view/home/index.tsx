@@ -356,7 +356,7 @@ function Home() {
                     fontFamily: customPageTheme?.title?.fontFamily,
                   }}
                 >
-                  {window.config?.APP_DETAILS?.description}
+                    {window.config?.APP_DETAILS?.DESCRIPTION?.toUpperCase()}
                 </Typography>
 
                 <Typography

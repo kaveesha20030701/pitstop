@@ -21,13 +21,10 @@ declare global {
   interface Window {
     config: {
       APP_DETAILS: {
-        name: string;
-        description: string;
+        NAME: string;
+        DESCRIPTION: string;
       }; 
-      APP_NAMES: {
-        pitstop: string;
-        paddock: string;
-      }; 
+      REDIRECT_APP_NAME: string;
       APP_SUB_LINE: string;
       ASGARDEO_BASE_URL: string;
       ASGARDEO_CLIENT_ID: string;
