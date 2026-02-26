@@ -16,7 +16,7 @@
 
 import { SIDEBAR_WIDTH } from "@config/constant";
 import { RootState, useAppSelector } from "@slices/store";
-import ListLinkItem from "@components/layout/LinkItem";
+import ListItemLink from "@components/layout/LinkItem";
 import { SidebarProps } from "@/types/types";
 import { styled } from "@mui/material/styles";
 import { MUIStyledCommonProps } from "@mui/system";
@@ -34,7 +34,7 @@ const Sidebar = (props: SidebarProps) => {
     <>
       <List sx={{ mt: 10 }}>
         {routes.map((r, idx) => (
-          <ListLinkItem
+          <ListItemLink
             key={idx}
             theme={props.theme}
             to={r.path}

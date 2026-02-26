@@ -49,7 +49,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 import wso2Logo from "@assets/images/wso2-logo.svg";
 import AdminPanelSideBar from "@components/adminPanel/AdminDrawer";
-import ListLinkItem from "@components/layout/LinkItem";
+import ListItemLink from "@components/layout/LinkItem";
 import {
   ROUTE_ID_ADMIN_EDIT_MENU,
   ROUTE_ID_ADMIN_PANEL,
@@ -443,7 +443,7 @@ const Header = (props: HeaderProps) => {
                   }
 
                   return (
-                    <ListLinkItem
+                    <ListItemLink
                       key={idx}
                       theme={props.theme}
                       to={r.path}
