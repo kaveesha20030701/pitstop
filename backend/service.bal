@@ -1658,7 +1658,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string emailSubject = string `[$appName][${contentResponse.description}] Comment Activity`;
+        string emailSubject = string `[${appName}][${contentResponse.description}] Comment Activity`;
 
         string renderedTemplate = renderAppName(email:commentNotificationTemplate, appName);
 
