@@ -18,7 +18,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
 import { RouteResponse, SidebarProps } from "src/types/types";
 import ListLinkItem from "./AdminListItem";
-import SidebarSortableItem from "@component/common/SidebarSortableItem";
+import SidebarSortableItem from "@components/common/SidebarSortableItem";
 import { useLocation, matchPath } from "react-router-dom";
 import { styled } from "@mui/material/styles";
 import {

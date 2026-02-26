@@ -14,10 +14,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import Contents from "@component/ui/section/Contents";
+import Contents from "@components/ui/section/Contents";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
-import PreLoader from "@component/common/PreLoader";
-import ActionButton from "@component/ui/page/ActionButton";
+import PreLoader from "@components/common/PreLoader";
+import ActionButton from "@components/ui/page/ActionButton";
 import {
   Box,
   styled,
@@ -40,7 +40,7 @@ import { PINNED_CONTENT_SECTION_ID, SUGGESTED_CONTENT_SECTION_ID } from "@config
 import SearchIcon from "@mui/icons-material/Search";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { useNavigate, useLocation } from "react-router-dom";
-import CustomerTestimonialSection from "@component/ui/section/CustomerTestimonialSection";
+import CustomerTestimonialSection from "@components/ui/section/CustomerTestimonialSection";
 import { Role } from "@utils/types";
 import raceVideo from "@assets/images/race.mp4";
 

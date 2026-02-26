@@ -14,10 +14,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import Contents from "@component/ui/section/Contents";
+import Contents from "@components/ui/section/Contents";
 import Template from "@layout/pages/Template";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
-import PreLoader from "@component/common/PreLoader";
+import PreLoader from "@components/common/PreLoader";
 import { useEffect } from "react";
 import { getPageData, resetPageData } from "@slices/pageSlice/page";
 import { updateRouterPath } from "@slices/routeSlice/route";

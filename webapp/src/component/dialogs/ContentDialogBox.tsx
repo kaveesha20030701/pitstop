@@ -47,7 +47,7 @@ import { useFormik } from "formik";
 
 import React, { useEffect, useRef, useState } from "react";
 
-import RichTextEditor from "@component/common/RichTextEditor";
+import RichTextEditor from "@components/common/RichTextEditor";
 import {
   createNewContent,
   createTag,

@@ -21,7 +21,7 @@ import React, {
   ReactNode,
 } from "react";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
-import SectionCard from "@component/ui/section/Section";
+import SectionCard from "@components/ui/section/Section";
 import {
   getContentsInfo,
   reorderSections,
@@ -44,7 +44,7 @@ import {
   arrayMove,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import VerticalSortableItem from "@component/common/VerticalSortableItem";
+import VerticalSortableItem from "@components/common/VerticalSortableItem";
 
 interface ContentsProps {
   afterSectionId?: number;

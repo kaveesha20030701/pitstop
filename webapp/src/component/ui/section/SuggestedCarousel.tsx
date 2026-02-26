@@ -16,7 +16,7 @@
 
 import React, { useMemo, useRef } from "react";
 import { Box, useTheme, Typography } from "@mui/material";
-import ComponentCard from "@component/ui/content/Card";
+import ComponentCard from "@components/ui/content/Card";
 import { ContentResponse } from "@/types/types";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, EffectCoverflow } from "swiper/modules";

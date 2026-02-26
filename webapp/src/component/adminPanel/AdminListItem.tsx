@@ -46,8 +46,8 @@ import { ListItemLinkProps, RouteResponse } from "src/types/types";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-import DeleteDialogBox from "@component/dialogs/DeleteDialogBox";
-import AddRouteDialogBox from "@component/dialogs/PageDialogBox";
+import DeleteDialogBox from "@components/dialogs/DeleteDialogBox";
+import AddRouteDialogBox from "@components/dialogs/PageDialogBox";
 import {
   reorderRoutes,
   reparentRoutes,

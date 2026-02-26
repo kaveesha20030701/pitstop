@@ -24,7 +24,7 @@ import { Outlet, matchRoutes, useLocation, useNavigate } from "react-router-dom"
 
 import { Suspense, useEffect, useState } from "react";
 
-import ConsentHandler from "@component/common/ConsentHandler";
+import ConsentHandler from "@components/common/ConsentHandler";
 import { CURRENT_YEAR } from "@config/constant";
 import ConfirmationModalContextProvider from "@context/DialogContext";
 import { selectUserInfo } from "@slices/authSlice";

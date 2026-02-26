@@ -16,7 +16,7 @@
 
 import { useEffect, useState } from "react";
 import { Role } from "@utils/types";
-import { IconButton } from "@component/common/Common";
+import { IconButton } from "@components/common/Common";
 import { Typography, Box, Tooltip, Stack } from "@mui/material";
 import { ImageSectionProps } from "@/types/types";
 import getCroppedImg from "@utils/imageCrop";

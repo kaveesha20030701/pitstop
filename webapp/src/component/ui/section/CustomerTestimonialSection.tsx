@@ -33,9 +33,9 @@ import {
   selectCustomerTestimonialState,
 } from "@slices/customerTestimonialSlice/customerTestimonial";
 import { CustomerTestimonial } from "@/types/types";
-import CustomerTestimonialCard from "@component/ui/content/CustomerTestimonialCard";
-import CustomerTestimonialDialogBox from "@component/dialogs/CustomerTestimonialDialogBox";
-import DeleteDialogBox from "@component/dialogs/DeleteDialogBox";
+import CustomerTestimonialCard from "@components/ui/content/CustomerTestimonialCard";
+import CustomerTestimonialDialogBox from "@components/dialogs/CustomerTestimonialDialogBox";
+import DeleteDialogBox from "@components/dialogs/DeleteDialogBox";
 import { useInViewport } from "@utils/utils";  
 
 const CustomerTestimonialSection: React.FC = () => {

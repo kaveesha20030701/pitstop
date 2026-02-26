@@ -37,10 +37,10 @@ import { selectUserInfo } from "@slices/authSlice";
 import { RootState, useAppSelector, useAppDispatch } from "@slices/store";
 import { useSelector } from "react-redux";
 import { useLocation, matchRoutes } from "react-router-dom";
-import ComponentCard from "@component/ui/content/Card";
-import ErrorHandler from "@component/common/ErrorHandler";
+import ComponentCard from "@components/ui/content/Card";
+import ErrorHandler from "@components/common/ErrorHandler";
 import { ContentResponse } from "src/types/types";
-import ContentDialogBox from "@component/dialogs/ContentDialogBox";
+import ContentDialogBox from "@components/dialogs/ContentDialogBox";
 import { Role } from "@utils/types";
 import {
   getPinnedContentIds,

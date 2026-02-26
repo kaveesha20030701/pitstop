@@ -29,7 +29,7 @@ import { useFormik } from "formik";
 
 import React, { useState } from "react";
 
-import StylePicker from "@component/common/StylePicker";
+import StylePicker from "@components/common/StylePicker";
 import { createNewRoute, updateRoute } from "@slices/routeSlice/route";
 import { useAppDispatch } from "@slices/store";
 

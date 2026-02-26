@@ -30,7 +30,7 @@ import {
 } from "@mui/x-data-grid";
 import { useEffect } from "react";
 import { getContentReport } from "@slices/pageSlice/page";
-import ErrorHandler from "@component/common/ErrorHandler";
+import ErrorHandler from "@components/common/ErrorHandler";
 import { ContentReportResponse } from "@root/src/types/types";
 
 export default function Summary() {

@@ -43,8 +43,8 @@ import Cropper, { Area, Point } from "react-easy-crop";
 
 import { useEffect,useRef, useState } from "react";
 
-import RichTextEditor from "@component/common/RichTextEditor";
-import { SkeletonCard } from "@component/ui/content/SkeletonCard";
+import RichTextEditor from "@components/common/RichTextEditor";
+import { SkeletonCard } from "@components/ui/content/SkeletonCard";
 import { getAllTags } from "@slices/pageSlice/page";
 import { createNewSection, updateSection } from "@slices/sectionSlice/section";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
