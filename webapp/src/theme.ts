@@ -86,11 +86,11 @@ export const tokens = (mode: PaletteMode) => ({
           200: "#e56700",
           300: "#ff7300", // primary main
         },
-        // Brand blue scale for SE Wiki
+        // Brand blue scale for SE Paddock
         blue: {
           100: "#3b82f6",
-          200: "#2563eb",
-          300: "#1d4ed8", // primary main for SE Wiki
+          200: "#2564ebc5",
+          300: "#5a74ba", // primary main for SE Wiki
         },
         // Error/red accent
         redAccent: {
@@ -115,11 +115,11 @@ export const tokens = (mode: PaletteMode) => ({
           200: "#ff811a",
           300: "#ff7300", // primary main
         },
-        // Brand blue scale for SE Wiki
+        // Brand blue scale for SE Paddock
         blue: {
           100: "#60a5fa",
-          200: "#3b82f6",
-          300: "#2563eb", // primary main for SE Wiki
+          200: "#224d93",
+          300: "#2b406c", // primary main for SE Wiki
         },
         // Error/red accent
         redAccent: {

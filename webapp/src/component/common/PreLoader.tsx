@@ -20,11 +20,20 @@ import { Box, Container, Stack } from "@mui/material";
 import LinearProgress from "@mui/material/LinearProgress";
 import { useEffect, useState } from "react";
 import wso2Logo from "@assets/images/wso2-logo.svg";
+import { useTheme } from "@mui/material/styles";
 
 function CustomLinearProgress() {
+  const theme = useTheme();
   return (
     <Box sx={{ width: 200 }}>
-      <LinearProgress />
+      <LinearProgress
+        sx={{
+          "& .MuiLinearProgress-bar": {
+            backgroundColor: theme.palette.orange[300],
+          },
+          backgroundColor: theme.palette.common.black,
+        }}
+      />
     </Box>
   );
 }
@@ -90,7 +99,7 @@ const PreLoader = (props: PreLoaderProps) => {
                   fontWeight: 300,
                 }}
               >
-                {props.message || (window.config?.IS_PITSTOP_APP ? "SALES PITSTOP" : "SE-WIKI")}
+                {props.message || (window.config?.IS_PITSTOP_APP ? "SALES PITSTOP" : "SE Paddock")}
               </Typography>
             </Box>
             <Box>

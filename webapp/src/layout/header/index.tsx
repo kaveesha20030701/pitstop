@@ -317,7 +317,7 @@ const Header = (props: HeaderProps) => {
                   {window.config?.IS_PITSTOP_APP !== undefined && (
                     <Tooltip
                       title={`Switch to ${
-                        window.config.IS_PITSTOP_APP ? "SE Wiki" : "Sales Pitstop"
+                        window.config.IS_PITSTOP_APP ? "SE Paddock" : "Sales Pitstop"
                       }`}
                     >
                       <Box
@@ -366,7 +366,7 @@ const Header = (props: HeaderProps) => {
                           },
                         }}
                       >
-                        {window.config.IS_PITSTOP_APP ? "SE Wiki" : "Sales Pitstop"}
+                        {window.config.IS_PITSTOP_APP ? "SE Paddock" : "Sales Pitstop"}
                         <OpenInNewIcon sx={{ fontSize: "0.9rem" }} />
                       </Box>
                     </Tooltip>

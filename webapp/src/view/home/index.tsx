@@ -356,7 +356,7 @@ function Home() {
                     fontFamily: customPageTheme?.title?.fontFamily,
                   }}
                 >
-                  {window.config?.IS_PITSTOP_APP ? "SALES PITSTOP" : "SALES ENGINEERING WIKI"}
+                  {window.config?.IS_PITSTOP_APP ? "SALES PITSTOP" : "SALES ENGINEERING Paddock"}
                 </Typography>
 
                 <Typography
