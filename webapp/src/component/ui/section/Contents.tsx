@@ -27,7 +27,7 @@ import {
   reorderSections,
 } from "@slices/pageSlice/page";
 import { Box } from "@mui/material";
-import { Section } from "../../../types/types";
+import { Section } from "@/types/types";
 import { Role } from "@utils/types";
 import {
   DndContext,

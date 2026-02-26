@@ -33,7 +33,7 @@ import StylePicker from "@component/common/StylePicker";
 import { createNewRoute, updateRoute } from "@slices/routeSlice/route";
 import { useAppDispatch } from "@slices/store";
 
-import { CustomStylingInfo, PageDialogBoxProps, validationPageSchema } from "../../types/types";
+import { CustomStylingInfo, PageDialogBoxProps, validationPageSchema } from "@/types/types";
 
 const toValidCssStyle = (config?: CustomStylingInfo): React.CSSProperties => {
   if (!config) return {};

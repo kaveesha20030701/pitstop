@@ -55,7 +55,7 @@ import {
   CustomStylingInfo,
   SectionDialogBoxProps,
   validationSectionSchema,
-} from "../../types/types";
+} from "@/types/types";
 
 const SectionDialogBox = ({
   type,

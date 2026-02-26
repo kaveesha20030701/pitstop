@@ -17,7 +17,7 @@
 import { SIDEBAR_WIDTH } from "@config/constant";
 import { RootState, useAppSelector } from "@slices/store";
 import ListLinkItem from "@component/layout/LinkItem";
-import { SidebarProps } from "../../types/types";
+import { SidebarProps } from "@/types/types";
 import { styled } from "@mui/material/styles";
 import { MUIStyledCommonProps } from "@mui/system";
 import { useLocation, matchPath } from "react-router-dom";

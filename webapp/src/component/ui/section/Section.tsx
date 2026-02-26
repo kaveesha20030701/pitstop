@@ -19,7 +19,7 @@ import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
 import SectionDialogBox from "@component/dialogs/SectionDialogBox";
 import ComponentCard from "@component/ui/content/Card";
 import { Role } from "@utils/types";
-import { Action, ContentResponse, CustomTheme, RouteStatuses } from "../../../types/types";
+import { Action, ContentResponse, CustomTheme, RouteStatuses } from "@/types/types";
 import { IconButton } from "@component/common/Common";
 import ImageSection from "./ImageSection";
 import {
@@ -52,7 +52,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import LinkIcon from "@mui/icons-material/Link";
 import AddContentDialogBox from "@component/dialogs/ContentDialogBox";
-import DeleteDialogBox from "../../dialogs/DeleteDialogBox";
+import DeleteDialogBox from "@component/dialogs/DeleteDialogBox";
 import { getContentsInfo, reorderContents } from "@slices/pageSlice/page";
 import GridSortableItem from "@component/common/GridSortableItem";
 import { useLocation } from "react-router-dom";
