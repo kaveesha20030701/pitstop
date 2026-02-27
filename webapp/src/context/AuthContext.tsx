@@ -16,8 +16,8 @@
 
 import { setUserAuthData, loadPrivileges } from "@slices/authSlice";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
-import StatusWithAction from "@component/ui/StatusWithAction";
-import PreLoader from "@component/common/PreLoader";
+import StatusWithAction from "@components/ui/StatusWithAction";
+import PreLoader from "@components/common/PreLoader";
 import { getEmployeeInfo } from "@slices/employeeSlice/employee";
 import { getRoutesInfo, getRouteContents } from "@slices/routeSlice/route";
 import React, { useContext, useEffect, useState } from "react";

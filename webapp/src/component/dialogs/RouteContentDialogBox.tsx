@@ -31,7 +31,7 @@ import { useState } from "react";
 import {
   RouteContentPayload,
   UpdateRouteContentPayload,
-} from "../../types/types";
+} from "@/types/types";
 import CloseIcon from "@mui/icons-material/Close";
 import DescriptionIcon from "@mui/icons-material/Description";
 import LinkIcon from "@mui/icons-material/Link";

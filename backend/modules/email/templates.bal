@@ -777,7 +777,7 @@ public final string commentNotificationTemplate = string `
                                                         font-weight: 500;
                                                       "
                                                     >
-                                                    Sales pitstop Notification
+                                                    {{appName}} Notification
                                                     </p>
                                                     <p
                                                       style="
@@ -1077,7 +1077,7 @@ public final string commentNotificationTemplate = string `
                               "
                             >
                               Best regards,<br />
-                              Sales pitstop App Team
+                              {{appName}} App Team
                             </p>
                           </td>
                         </tr>

@@ -29,11 +29,11 @@ import { useFormik } from "formik";
 
 import React, { useState } from "react";
 
-import StylePicker from "@component/common/StylePicker";
+import StylePicker from "@components/common/StylePicker";
 import { createNewRoute, updateRoute } from "@slices/routeSlice/route";
 import { useAppDispatch } from "@slices/store";
 
-import { CustomStylingInfo, PageDialogBoxProps, validationPageSchema } from "../../types/types";
+import { CustomStylingInfo, PageDialogBoxProps, validationPageSchema } from "@/types/types";
 
 const toValidCssStyle = (config?: CustomStylingInfo): React.CSSProperties => {
   if (!config) return {};
@@ -70,8 +70,9 @@ const PageDialogBox = ({
   >(initialValues?.customPageTheme?.description);
 
   const dialogBoxType = () => (type === "add" ? "Add New Page" : "Update Page");
+  const appName = window.config?.APP_DETAILS?.NAME;
   const dialogSubtitle = () =>
-    type === "add" ? "Create a new page for sales pitstop" : "Update page details";
+    type === "add" ? `Create a new page for ${appName}` : "Update page details";
 
   const handleAddPage = (values: typeof formik.values) => {
     dispatch(

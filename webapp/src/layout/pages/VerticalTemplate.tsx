@@ -27,10 +27,10 @@ import Header from "../header/index";
 import { matchRoutes, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { selectUserInfo } from "@slices/authSlice";
-import { CustomBox } from "@component/common/Common";
+import { CustomBox } from "@components/common/Common";
 import { useEffect, useMemo } from "react";
-import ComponentCard from "@component/ui/content/Card";
-import { SkeletonCard } from "@component/ui/content/SkeletonCard";
+import ComponentCard from "@components/ui/content/Card";
+import { SkeletonCard } from "@components/ui/content/SkeletonCard";
 import { filterContent } from "@slices/pageSlice/page";
 
 export default function VerticalTemplate() {

@@ -21,8 +21,8 @@ import { selectUserInfo } from "@slices/authSlice";
 import pJson from "../../../package.json";
 import { RootState, useAppSelector, useAppDispatch } from "@slices/store";
 import { Outlet, useLocation, matchRoutes } from "react-router-dom";
-import Search from "@component/ui/Search";
-import ComponentCard from "@component/ui/content/Card";
+import Search from "@components/ui/Search";
+import ComponentCard from "@components/ui/content/Card";
 import { Suspense, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import Box from "@mui/material/Box";
@@ -35,7 +35,7 @@ import {
   Box as MuiBox,
   Pagination,
 } from "@mui/material";
-import { SkeletonCard } from "../../component/ui/content/SkeletonCard";
+import { SkeletonCard } from "@components/ui/content/SkeletonCard";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { clearSearchResults } from "@slices/pageSlice/page";
 import searchImage from "@assets/images/search.png";

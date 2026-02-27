@@ -38,10 +38,10 @@ import { RouteContentItem, RouteResponse } from "src/types/types";
 
 import React, { useState } from "react";
 
-import ErrorHandler from "@component/common/ErrorHandler";
-import DeleteContentDialogBox from "@component/dialogs/DeleteDialogBox";
-import RouteContentDialogBox from "@component/dialogs/RouteContentDialogBox";
-import ActionButton from "@component/ui/page/ActionButton";
+import ErrorHandler from "@components/common/ErrorHandler";
+import DeleteContentDialogBox from "@components/dialogs/DeleteDialogBox";
+import RouteContentDialogBox from "@components/dialogs/RouteContentDialogBox";
+import ActionButton from "@components/ui/page/ActionButton";
 import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
 import { createRouteContent, updateRouteContent } from "@slices/routeSlice/route";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";

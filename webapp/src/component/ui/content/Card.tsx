@@ -62,26 +62,26 @@ import { GOOGLE_DOCS_DOMAIN, GOOGLE_DRIVE_DOMAIN } from "@config/constant";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
 import { safeParseHtml } from "@utils/safeHtml";
 
-import DeleteDialogBox from "../../../component/dialogs/DeleteDialogBox";
-import IframeViewerDialogBox from "../../../component/dialogs/IframeViewerDialogBox";
-import { enqueueSnackbarMessage } from "../../../slices/commonSlice/common";
+import DeleteDialogBox from "@components/dialogs/DeleteDialogBox";
+import IframeViewerDialogBox from "@components/dialogs/IframeViewerDialogBox";
+import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
 import {
   createCustomButton,
   deleteCustomButton,
   getCustomButtons,
   updateCustomButton,
-} from "../../../slices/customButtonSlice/customButton";
+} from "@slices/customButtonSlice/customButton";
 import {
   getAllComments,
   likeContent,
   pinContent,
   unpinContent,
   updateContent,
-} from "../../../slices/pageSlice/page";
-import { CONTENT_SUBTYPE, FILETYPE, Role } from "../../../utils/types";
-import { getEmbedUrl, getGoogleDocsDownloadUrl } from "../../../utils/utils";
-import UpdateContentDialogBox from "../../dialogs/ContentDialogBox";
-import CustomButtonConfigDialog from "../../dialogs/CustomButtonConfigDialog";
+} from "@slices/pageSlice/page";
+import { CONTENT_SUBTYPE, FILETYPE, Role } from "@utils/types";
+import { getEmbedUrl, getGoogleDocsDownloadUrl } from "@utils/utils";
+import UpdateContentDialogBox from "@components/dialogs/ContentDialogBox";
+import CustomButtonConfigDialog from "@components/dialogs/CustomButtonConfigDialog";
 import ExpandedContentCard from "./ExpandedContent";
 
 interface ComponentCardProps {
@@ -751,7 +751,7 @@ const ComponentCard = ({
                       : {}),
                   }}
                 >
-                  {window.config?.IS_PITSTOP_APP ? "Sales Pitstop" : "SE-WIKI"}
+                  {window.config?.APP_DETAILS?.NAME}
                 </Typography>
               </Box>
             ) : shouldShowIframe() ? (

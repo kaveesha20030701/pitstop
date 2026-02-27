@@ -14,8 +14,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import SectionDialogBox from "@component/dialogs/SectionDialogBox";
-import UpdatePageDialogBox from "@component/dialogs/PageDialogBox";
+import SectionDialogBox from "@components/dialogs/SectionDialogBox";
+import UpdatePageDialogBox from "@components/dialogs/PageDialogBox";
 import { RootState, useAppSelector } from "@slices/store";
 import { Role } from "@utils/types";
 import { ActionButtonProps } from "src/types/types";

@@ -16,8 +16,7 @@
 
 import { useAppDispatch } from "@slices/store";
 import { updateRouteId, updateRouterPath } from "@slices/routeSlice/route";
-import { RouteResponse } from "../../types/types";
-import ListLinkItem from "@component/layout/LinkItem";
+import { RouteResponse } from "@/types/types";
 import React, { useEffect, useRef, useState } from "react";
 import { Theme } from "@mui/material/styles";
 import ListItem from "@mui/material/ListItem";
@@ -173,7 +172,7 @@ const ListItemLink = (props: ListItemLinkProps) => {
                 cursor: "pointer",
               }}
             >
-              <ListLinkItem
+              <ListItemLink
                 routeId={component.routeId}
                 theme={props.theme}
                 to={component.path}

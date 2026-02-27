@@ -48,8 +48,8 @@ import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import wso2Logo from "@assets/images/wso2-logo.svg";
-import AdminPanelSideBar from "@component/adminPanel/AdminDrawer";
-import ListLinkItem from "@component/layout/LinkItem";
+import AdminPanelSideBar from "@components/adminPanel/AdminDrawer";
+import ListItemLink from "@components/layout/LinkItem";
 import {
   ROUTE_ID_ADMIN_EDIT_MENU,
   ROUTE_ID_ADMIN_PANEL,
@@ -311,13 +311,13 @@ const Header = (props: HeaderProps) => {
                     }}
                     onClick={() => navigate("/")}
                   >
-                    {window.config?.APP_NAME ?? "Sales Pitstop"}
+                    {window.config?.APP_DETAILS?.NAME || ""}
                   </Typography>
 
                   {window.config?.IS_PITSTOP_APP !== undefined && (
                     <Tooltip
                       title={`Switch to ${
-                        window.config.IS_PITSTOP_APP ? "SE Wiki" : "Sales Pitstop"
+                        window.config.REDIRECT_APP_NAME 
                       }`}
                     >
                       <Box
@@ -366,7 +366,7 @@ const Header = (props: HeaderProps) => {
                           },
                         }}
                       >
-                        {window.config.IS_PITSTOP_APP ? "SE Wiki" : "Sales Pitstop"}
+                        {window.config.REDIRECT_APP_NAME}
                         <OpenInNewIcon sx={{ fontSize: "0.9rem" }} />
                       </Box>
                     </Tooltip>
@@ -443,7 +443,7 @@ const Header = (props: HeaderProps) => {
                   }
 
                   return (
-                    <ListLinkItem
+                    <ListItemLink
                       key={idx}
                       theme={props.theme}
                       to={r.path}

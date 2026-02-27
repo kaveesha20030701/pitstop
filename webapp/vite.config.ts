@@ -15,29 +15,30 @@
 // under the License.
 
 import react from "@vitejs/plugin-react";
-import { resolve } from "path";
+import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3000, // Change this to your desired port number
+    port: 3000,
   },
   resolve: {
     alias: {
-      "@root": resolve(__dirname, "."),
-      "@src": resolve(__dirname, "src"),
-      "@app": resolve(__dirname, "src/app"),
-      "@assets": resolve(__dirname, "src/assets"),
-      "@component": resolve(__dirname, "src/component"),
-      "@config": resolve(__dirname, "src/config"),
-      "@context": resolve(__dirname, "src/context"),
-      "@layout": resolve(__dirname, "src/layout"),
-      "@slices": resolve(__dirname, "src/slices"),
-      "@view": resolve(__dirname, "src/view"),
-      "@utils": resolve(__dirname, "src/utils"),
-      "@/types": resolve(__dirname, "src/types"),
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@root": fileURLToPath(new URL("./", import.meta.url)),
+      "@src": fileURLToPath(new URL("./src", import.meta.url)),
+      "@app": fileURLToPath(new URL("./src/app", import.meta.url)),
+      "@assets": fileURLToPath(new URL("./src/assets", import.meta.url)),
+      "@config": fileURLToPath(new URL("./src/config", import.meta.url)),
+      "@context": fileURLToPath(new URL("./src/context", import.meta.url)),
+      "@layout": fileURLToPath(new URL("./src/layout", import.meta.url)),
+      "@slices": fileURLToPath(new URL("./src/slices", import.meta.url)),
+      "@view": fileURLToPath(new URL("./src/view", import.meta.url)),
+      "@utils": fileURLToPath(new URL("./src/utils", import.meta.url)),
+      "@components": fileURLToPath(new URL("./src/component", import.meta.url)),
+      "@/types": fileURLToPath(new URL("./src/types", import.meta.url)),
     },
   },
 });

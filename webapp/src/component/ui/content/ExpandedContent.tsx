@@ -14,11 +14,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import IframeViewerDialogBox from "@component/dialogs/IframeViewerDialogBox";
-import UpdateContentDialogBox from "@component/dialogs/ContentDialogBox";
-import DeleteContentDialogBox from "@component/dialogs/DeleteDialogBox";
-import ComponentCard from "@component/ui/content/Card";
-import CommentCard from "@component/ui/CommentCard";
+import IframeViewerDialogBox from "@components/dialogs/IframeViewerDialogBox";
+import UpdateContentDialogBox from "@components/dialogs/ContentDialogBox";
+import DeleteContentDialogBox from "@components/dialogs/DeleteDialogBox";
+import ComponentCard from "@components/ui/content/Card";
+import CommentCard from "@components/ui/CommentCard";
 import React, { useState } from "react";
 import {
   Dialog,
@@ -35,7 +35,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
-import { CustomButton, CustomTheme, CommentsResponse } from "../../../types/types";
+import { CustomButton, CustomTheme, CommentsResponse } from "@/types/types";
 import { RootState, useAppSelector, useAppDispatch } from "@slices/store";
 import { addComment } from "@slices/pageSlice/page";
 import { enqueueSnackbarMessage } from "@slices/commonSlice/common";

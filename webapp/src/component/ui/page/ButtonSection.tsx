@@ -23,15 +23,15 @@ import { useNavigate } from "react-router-dom";
 
 import { useState } from "react";
 
-import DeleteContentDialogBox from "@component/dialogs/DeleteDialogBox";
-import RouteContentDialogBox from "@component/dialogs/RouteContentDialogBox";
+import DeleteContentDialogBox from "@components/dialogs/DeleteDialogBox";
+import RouteContentDialogBox from "@components/dialogs/RouteContentDialogBox";
 import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
 import { getPageData } from "@slices/pageSlice/page";
 import { createRouteContent, updateRouteContent, updateRouterPath } from "@slices/routeSlice/route";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
 import { Role } from "@utils/types";
 
-import { RouteContentItem, RouteResponse } from "../../../types/types";
+import { RouteContentItem, RouteResponse } from "@/types/types";
 
 const ButtonSection = () => {
   const {

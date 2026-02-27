@@ -16,11 +16,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
-import SectionDialogBox from "@component/dialogs/SectionDialogBox";
-import ComponentCard from "@component/ui/content/Card";
+import SectionDialogBox from "@components/dialogs/SectionDialogBox";
+import ComponentCard from "@components/ui/content/Card";
 import { Role } from "@utils/types";
-import { Action, ContentResponse, CustomTheme, RouteStatuses } from "../../../types/types";
-import { IconButton } from "@component/common/Common";
+import { Action, ContentResponse, CustomTheme, RouteStatuses } from "@/types/types";
+import { IconButton } from "@components/common/Common";
 import ImageSection from "./ImageSection";
 import {
   DndContext,
@@ -51,14 +51,14 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import LinkIcon from "@mui/icons-material/Link";
-import AddContentDialogBox from "@component/dialogs/ContentDialogBox";
-import DeleteDialogBox from "../../dialogs/DeleteDialogBox";
+import AddContentDialogBox from "@components/dialogs/ContentDialogBox";
+import DeleteDialogBox from "@components/dialogs/DeleteDialogBox";
 import { getContentsInfo, reorderContents } from "@slices/pageSlice/page";
-import GridSortableItem from "@component/common/VerticalSortableItem";
+import GridSortableItem from "@components/common/GridSortableItem";
 import { useLocation } from "react-router-dom";
-import CarouselSection from "@component/ui/section/CarouselSection";
-import SuggestedCarousel from "@component/ui/section/SuggestedCarousel";
-import { SkeletonCard } from "@component/ui/content/SkeletonCard";
+import CarouselSection from "@components/ui/section/CarouselSection";
+import SuggestedCarousel from "@components/ui/section/SuggestedCarousel";
+import { SkeletonCard } from "@components/ui/content/SkeletonCard";
 import { safeParseHtml } from "@utils/safeHtml";
 import { CONTENTS_PER_SECTION } from "@config/constant";
 
