@@ -174,8 +174,11 @@ export const validationPageSchema = Yup.object({
 
 export const validationSectionSchema = Yup.object({
   title: Yup.string()
-    .required("Title is required")
-    .min(4, "Title should contain at least 4 letters")
+    .test(
+      'min-length',
+      'Title should contain at least 4 letters',
+      (value) => !value || value.length >= 4
+    )
     .max(300, "Too Long!"),
   sectionType: Yup.string().required("Section type is required"),
   imageUrl: Yup.string()

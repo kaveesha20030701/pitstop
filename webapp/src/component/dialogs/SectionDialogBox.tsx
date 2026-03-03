@@ -505,7 +505,7 @@ const SectionDialogBox = ({
                         (tempDiv.textContent || tempDiv.innerText || "").trim(),
                       );
                     }}
-                    placeholder="Enter section title (select text to format specific words)"
+                    placeholder="Enter section title (optional, select text to format specific words)"
                     height="120px"
                   />
                   {formik.touched.title && formik.errors.title && (
