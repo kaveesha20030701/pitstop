@@ -6,3 +6,20 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Quill rich text editor size classes */
+.ql-size-14px {
+  font-size: 14px !important;
+}
+
+.ql-size-16px {
+  font-size: 16px !important;
+}
+
+.ql-size-18px {
+  font-size: 18px !important;
+}
+
+.ql-size-20px {
+  font-size: 20px !important;
+}
