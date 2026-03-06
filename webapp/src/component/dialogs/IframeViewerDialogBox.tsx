@@ -390,22 +390,25 @@ const IframeViewerDialogBox: React.FC<IframeViewerDialogBoxProps> = ({
               </Button>
             </Box>
           ) : !isGoogleDriveFolder && !isBlocked ? (
-            <iframe
-              ref={iframeRef}
-              title="Content Preview"
-              src={link}
-              width="100%"
-              height="100%"
-              sandbox="allow-same-origin allow-scripts allow-presentation allow-popups allow-forms"
-              onLoad={handleIframeLoad}
-              onError={handleIframeError}
-              style={{
-                border: "none",
-                display: "block",
-                opacity: isLoading ? 0 : 1,
-                transition: "opacity 0.3s ease-in-out",
-              }}
-            />
+              <iframe
+                ref={iframeRef}
+                title="Content Preview"
+                src={link}
+                sandbox="allow-same-origin allow-scripts allow-presentation allow-forms allow-popups"
+                onLoad={handleIframeLoad}
+                onError={handleIframeError}
+                style={{
+                  border: "none",
+                  display: "block",
+                  opacity: isLoading ? 0 : 1,
+                  transition: "opacity 0.3s ease-in-out",
+                  width: "110%",
+                  height: "100%",
+                  position: "absolute",
+                  top: 0,
+                  left: "-5%",
+                }}
+              />
           ) : null}
         </Box>
       </Box>

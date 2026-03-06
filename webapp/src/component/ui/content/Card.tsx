@@ -13,6 +13,7 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 import ArticleIcon from "@mui/icons-material/Article";
 import BrokenImageIcon from "@mui/icons-material/BrokenImage";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
@@ -552,8 +553,17 @@ const ComponentCard = ({
   const getEmbedContent = () => {
     const embedUrl = getEmbedUrl(contentType as FILETYPE, contentLink, contentSubtype);
 
+    const isPdf = 
+    contentType === FILETYPE.External_Link && (contentSubtype === CONTENT_SUBTYPE.Pdf);
+
     return (
-      <Box sx={{ position: "relative", width: "100%", height: "100%" }}>
+      <Box 
+        sx={{ 
+          position: "relative", 
+          width: "100%", 
+          height: "100%"
+          }}
+      >
         <iframe
           title="Content Viewer"
           src={embedUrl}
@@ -561,6 +571,21 @@ const ComponentCard = ({
           height={`${PREVIEW_H}px`}
           sandbox="allow-same-origin allow-scripts allow-presentation allow-popups"
           style={{
+            ...(isPdf 
+              ? {
+                  position: "absolute",
+                  width: "120%",
+                  height: "140%", 
+                  top: "-45px",
+                  left: "-10%",
+                } 
+              : {
+                  position: "relative",
+                  width: "100%",
+                  height: "100%",
+                }
+            ),
+
             ...(authorizedRoles.includes(Role.SALES_ADMIN) && !localIsVisible
               ? {
                   opacity: 0.6,
@@ -658,6 +683,14 @@ const ComponentCard = ({
             background: theme.palette.common.black,
             border: `1px solid ${theme.palette.primary.main}`,
             transition: "all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+            '& iframe': {
+              display: 'block',
+              border: 'none',
+              margin: 0,
+              padding: 0,
+              width: '100%',
+              height: '100%',
+            },
             ...(authorizedRoles.includes(Role.SALES_ADMIN) && !localIsVisible
               ? {
                   opacity: 0.7,
@@ -1120,12 +1153,12 @@ const ComponentCard = ({
                                 flex: 1,
                                 minWidth: 0,
                                 borderRadius: 8,
-                                borderColor: theme.palette.primary.main,
-                                color: theme.palette.primary.main,
+                                borderColor: theme.palette.primary.dark,
+                                color: theme.palette.primary.dark,
                                 backgroundColor: "transparent",
                                 "&:hover": {
-                                  color: "white",
-                                  borderColor: theme.palette.primary.main,
+                                  color: theme.palette.common.white,
+                                  borderColor: theme.palette.common.white,
                                 },
                                 "& .MuiButton-startIcon": {
                                   marginRight: "4px",
@@ -1231,7 +1264,7 @@ const ComponentCard = ({
             </Fade>
           </Modal>
 
-          <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
+          <Divider sx={{ borderColor: "rgba(255,255,255,0.03)" }} />
 
           <CardActions
             disableSpacing
