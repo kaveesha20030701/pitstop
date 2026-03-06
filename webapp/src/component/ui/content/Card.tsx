@@ -553,8 +553,10 @@ const ComponentCard = ({
   const getEmbedContent = () => {
     const embedUrl = getEmbedUrl(contentType as FILETYPE, contentLink, contentSubtype);
 
-    const isPdf = 
-    contentType === FILETYPE.External_Link && (contentSubtype === CONTENT_SUBTYPE.Pdf);
+    const isGoogleDrivePdf =
+      contentType === FILETYPE.External_Link &&
+      contentSubtype === CONTENT_SUBTYPE.Pdf &&
+      (embedUrl.includes("drive.google.com"));
 
     return (
       <Box 
@@ -571,7 +573,7 @@ const ComponentCard = ({
           height={`${PREVIEW_H}px`}
           sandbox="allow-same-origin allow-scripts allow-presentation allow-popups"
           style={{
-            ...(isPdf 
+            ...(isGoogleDrivePdf
               ? {
                   position: "absolute",
                   width: "120%",
