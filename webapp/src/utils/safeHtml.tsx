@@ -55,6 +55,8 @@ const ALLOWED_STYLE_PROPS = new Set([
   "fontStyle",
   "text-decoration",
   "textDecoration",
+  "font-size",
+  "fontSize",
 ]);
 
 // Sanitize inline style attribute
@@ -131,6 +133,18 @@ export const safeHtmlParserOptions: HTMLReactParserOptions = {
     }
 
     const props: Record<string, unknown> = {};
+
+    // Handle class attributes for size-related classes
+    if (el.attribs?.class) {
+      const classAttr = el.attribs.class;
+      const allowedClasses = classAttr
+        .split(" ")
+        .filter((cls) => cls.startsWith("ql-size-"))
+        .join(" ");
+      if (allowedClasses) {
+        props.className = allowedClasses;
+      }
+    }
 
     // Handle inline styles for all allowed tags
     if (el.attribs?.style) {

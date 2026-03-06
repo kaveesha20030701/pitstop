@@ -15,9 +15,13 @@
 // under the License.
 
 import { Box, Typography, useTheme } from "@mui/material";
-import ReactQuill from "react-quill";
+import ReactQuill, { Quill } from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import React, { useMemo } from "react";
+
+const Size = Quill.import("formats/size");
+Size.whitelist = ["14px", "16px", "18px", "20px"];
+Quill.register(Size, true);
 
 interface RichTextEditorProps {
   value: string;
@@ -25,6 +29,7 @@ interface RichTextEditorProps {
   placeholder?: string;
   disabled?: boolean;
   height?: string;
+  showSizeSelector?: boolean;
 }
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({
@@ -33,6 +38,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   placeholder = "Enter text...",
   disabled = false,
   height = "120px",
+  showSizeSelector = true,
 }) => {
   const theme = useTheme();
 
@@ -40,6 +46,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     () => ({
       toolbar: {
         container: [
+          ...(showSizeSelector ? [[{ size: ["14px", "16px", "18px", "20px"] }]] : []),
           ["bold", "italic", "underline", "strike"],
           [{ color: [] }, { background: [] }],
           [{ script: "sub" }, { script: "super" }],
@@ -48,7 +55,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
         ],
       },
     }),
-    [],
+    [showSizeSelector],
   );
 
   const formats = [
@@ -116,6 +123,18 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           "& .ql-editor u": {
             textDecoration: "underline !important",
           },
+          "& .ql-editor .ql-size-14px": {
+            fontSize: "14px !important",
+          },
+          "& .ql-editor .ql-size-16px": {
+            fontSize: "16px !important",
+          },
+          "& .ql-editor .ql-size-18px": {
+            fontSize: "18px !important",
+          },
+          "& .ql-editor .ql-size-20px": {
+            fontSize: "20px !important",
+          },
           // Color picker styling
           "& .ql-picker-label": {
             cursor: "pointer",
@@ -130,6 +149,27 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           },
           "& .ql-toolbar button.ql-active": {
             color: theme.palette.primary.main,
+          },
+          "& .ql-size .ql-picker-label": {
+            "&::before": {
+              content: '"Size"',
+            },
+          },
+          "& .ql-size .ql-picker-label[data-value]::before": {
+            content: 'attr(data-value)',
+          },
+          // Custom size picker labels
+          "& .ql-size .ql-picker-item[data-value='14px']::before": {
+            content: '"14px"',
+          },
+          "& .ql-size .ql-picker-item[data-value='16px']::before": {
+            content: '"16px"',
+          },
+          "& .ql-size .ql-picker-item[data-value='18px']::before": {
+            content: '"18px"',
+          },
+          "& .ql-size .ql-picker-item[data-value='20px']::before": {
+            content: '"20px"',
           },
         }}
       >

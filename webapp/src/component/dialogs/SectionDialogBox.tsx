@@ -382,6 +382,7 @@ const SectionDialogBox = ({
                     }}
                     placeholder="Enter image title"
                     height="120px"
+                    showSizeSelector={false}
                   />
                   {formik.touched.title && formik.errors.title && (
                     <FormHelperText error sx={{ mt: 1 }}>
@@ -507,6 +508,7 @@ const SectionDialogBox = ({
                     }}
                     placeholder="Enter section title (optional, select text to format specific words)"
                     height="120px"
+                    showSizeSelector={false}
                   />
                   {formik.touched.title && formik.errors.title && (
                     <FormHelperText error sx={{ mt: 1 }}>
