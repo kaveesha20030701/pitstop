@@ -47,7 +47,7 @@ import { matchPath, useLocation, useNavigate } from "react-router-dom";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import wso2Logo from "@assets/images/wso2-logo.svg";
+import wso2Logo from "@assets/images/wso2-logo.png";
 import AdminPanelSideBar from "@components/adminPanel/AdminDrawer";
 import ListItemLink from "@components/layout/LinkItem";
 import {
@@ -291,8 +291,8 @@ const Header = (props: HeaderProps) => {
                   alt="wso2"
                   onClick={() => navigate("/")}
                   style={{
-                    marginRight: "8px",
-                    height: "40px",
+                    marginRight: "10px",
+                    height: "20px",
                     maxWidth: "100px",
                     cursor: "pointer",
                   }}
