@@ -506,53 +506,55 @@ const Section = ({
           items={orderContents.map((item) => item.contentId.toString())}
           strategy={horizontalListSortingStrategy}
         >
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(auto-fit, minmax(399px, 1fr))",
-                md: "repeat(auto-fit, minmax(399px, 1fr))",
-                lg: "repeat(3, 399px)",
-              },
-              gap: 5,
-              width: "100%",
-              justifyContent: "center",
-              alignItems: "start",
-              pt: 6,
-              pb: 6,
-              px: 3,
-              rowGap: 8,
-              "& > *": { position: "relative", zIndex: 1 },
-            }}
-          >
-            {orderContents.map((contentLink) => (
-              <GridSortableItem
-                key={contentLink.contentId}
-                id={contentLink.contentId.toString()}
-                disabled={
-                  !authorizedRoles.includes(Role.SALES_ADMIN) ||
-                  sectionId === -1
-                }
-              >
-                <Box
-                  id={`content-card-${contentLink.contentId}`}
-                  sx={{
-                    width: "399px",
-                    height: "424px",
-                    display: "flex",
-                    flexDirection: "column",
-                    position: "relative",
-                  }}
+          {orderContents.length > 0 && (
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(auto-fit, minmax(399px, 1fr))",
+                  md: "repeat(auto-fit, minmax(399px, 1fr))",
+                  lg: "repeat(3, 399px)",
+                },
+                gap: 5,
+                width: "100%",
+                justifyContent: "center",
+                alignItems: "start",
+                pt: 6,
+                pb: 6,
+                px: 3,
+                rowGap: 8,
+                "& > *": { position: "relative", zIndex: 1 },
+              }}
+            >
+              {orderContents.map((contentLink) => (
+                <GridSortableItem
+                  key={contentLink.contentId}
+                  id={contentLink.contentId.toString()}
+                  disabled={
+                    !authorizedRoles.includes(Role.SALES_ADMIN) ||
+                    sectionId === -1
+                  }
                 >
-                  <ComponentCard
-                    {...contentLink}
-                    isInPinnedSection={sectionId === -2}
-                  />
-                </Box>
-              </GridSortableItem>
-            ))}
-          </Box>
+                  <Box
+                    id={`content-card-${contentLink.contentId}`}
+                    sx={{
+                      width: "399px",
+                      height: "424px",
+                      display: "flex",
+                      flexDirection: "column",
+                      position: "relative",
+                    }}
+                  >
+                    <ComponentCard
+                      {...contentLink}
+                      isInPinnedSection={sectionId === -2}
+                    />
+                  </Box>
+                </GridSortableItem>
+              ))}
+            </Box>
+          )}
         </SortableContext>
       </DndContext>
 

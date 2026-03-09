@@ -48,6 +48,7 @@ import { matchPath, useLocation, useNavigate } from "react-router-dom";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import wso2Logo from "@assets/images/wso2-logo.png";
+import wso2LogoWhite from "@assets/images/wso2-logo-white.png";
 import AdminPanelSideBar from "@components/adminPanel/AdminDrawer";
 import ListItemLink from "@components/layout/LinkItem";
 import {
@@ -64,7 +65,7 @@ import { RootState, useAppSelector } from "@slices/store";
 import { Role } from "@utils/types";
 
 import { ColorModeContext } from "../../App";
-import { RouteResponse } from "../../types/types";
+import { RouteResponse } from "@/types/types";
 import Sidebar from "../sidebar";
 
 const StyledAppBar = styled(MuiAppBar)<MuiAppBarProps>(({ theme }) => ({
@@ -296,7 +297,7 @@ const Header = (props: HeaderProps) => {
                     maxWidth: "100px",
                     cursor: "pointer",
                   }}
-                  src={wso2Logo}
+                  src={theme.palette.mode === "dark" ? wso2LogoWhite : wso2Logo}
                 />
 
                 <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>

@@ -107,7 +107,7 @@ const ViewContent: React.FC<ContentsProps> = ({
 
       const reorderData = newItems.map((section, index) => ({
         sectionId: section.sectionId,
-        sectionOrder: index,
+        sectionOrder: newItems.length - 1 - index,
       }));
 
       dispatch(reorderSections({ reorderSections: reorderData }))
