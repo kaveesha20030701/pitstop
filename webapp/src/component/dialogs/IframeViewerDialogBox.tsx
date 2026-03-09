@@ -32,6 +32,7 @@ import { useAppDispatch, useAppSelector, RootState } from "@slices/store";
 import { getBlockedIframeUrls } from "@slices/pageSlice/page";
 import { CONTENT_STATE_IDLE, CONTENT_STATE_FAILED } from "@config/constant";
 import { isGoogleDriveFolderLink } from "@utils/utils";
+import { FILETYPE, CONTENT_SUBTYPE } from "@utils/types";
 
 export declare let _paq: unknown[];
 if (typeof window !== "undefined" && typeof _paq === "undefined") {
@@ -45,6 +46,8 @@ const IframeViewerDialogBox: React.FC<IframeViewerDialogBoxProps> = ({
   handleClose,
   contentId,
   description,
+  contentType,
+  contentSubtype,
 }) => {
   const [iframeError, setIframeError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -120,6 +123,7 @@ const IframeViewerDialogBox: React.FC<IframeViewerDialogBoxProps> = ({
 
   const isGoogleDriveFolder = isGoogleDriveFolderLink(link);
   const isBlocked = isBlockedUrl(link);
+  const shouldCropIframe = contentType === FILETYPE.External_Link && (contentSubtype === CONTENT_SUBTYPE.Pdf || contentSubtype === CONTENT_SUBTYPE.Video);
 
   const formatsTime = (minutes: number): string => {
     if (minutes >= 60) {
@@ -402,11 +406,11 @@ const IframeViewerDialogBox: React.FC<IframeViewerDialogBoxProps> = ({
                   display: "block",
                   opacity: isLoading ? 0 : 1,
                   transition: "opacity 0.3s ease-in-out",
-                  width: "110%",
+                  width: shouldCropIframe ? "110%" : "100%",
                   height: "100%",
                   position: "absolute",
                   top: 0,
-                  left: "-5%",
+                  left: shouldCropIframe ? "-5%" : 0,
                 }}
               />
           ) : null}

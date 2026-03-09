@@ -19,7 +19,7 @@ import Typography from "@mui/material/Typography";
 import { Box, Container, Stack } from "@mui/material";
 import LinearProgress from "@mui/material/LinearProgress";
 import { useEffect, useState } from "react";
-import wso2Logo from "@assets/images/wso2-logo.svg";
+import wso2Logo from "@assets/images/wso2-logo-white.png";
 import { useTheme } from "@mui/material/styles";
 
 function CustomLinearProgress() {

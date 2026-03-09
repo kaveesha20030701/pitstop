@@ -1361,6 +1361,7 @@ const ComponentCard = ({
           contentLink={getEmbedUrl(contentType as FILETYPE, contentLink, contentSubtype)}
           originalContentLink={contentLink}
           contentType={contentType}
+          contentSubtype={contentSubtype}
           description={description}
           likesCount={localLikesCount}
           contentOrder={contentOrder}
@@ -1381,6 +1382,8 @@ const ComponentCard = ({
           handleClose={() => setIsPreviewModalOpen(false)}
           contentId={contentId}
           description={description}
+          contentType={contentType}
+          contentSubtype={contentSubtype}
         />
 
         <CustomButtonConfigDialog

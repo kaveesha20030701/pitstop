@@ -143,6 +143,16 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
             backgroundColor: theme.palette.background.paper,
             border: `1px solid ${theme.palette.divider}`,
           },
+          // Toolbar button and icon colors for dark mode
+          "& .ql-toolbar .ql-stroke": {
+            stroke: theme.palette.mode === "dark" ? theme.palette.common.white : theme.palette.common.black,
+          },
+          "& .ql-toolbar .ql-fill": {
+            fill: theme.palette.mode === "dark" ? theme.palette.common.white : theme.palette.common.black,
+          },
+          "& .ql-toolbar .ql-picker-label": {
+            color: theme.palette.mode === "dark" ? theme.palette.common.white : theme.palette.common.black,
+          },
           // Toolbar button hover
           "& .ql-toolbar button:hover": {
             color: theme.palette.primary.main,

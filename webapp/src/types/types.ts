@@ -141,6 +141,8 @@ export interface IframeViewerDialogBoxProps {
   handleClose: () => void;
   contentId: number;
   description: string;
+  contentType?: string;
+  contentSubtype?: string;
 }
 
 export const validationContentSchema = Yup.object({

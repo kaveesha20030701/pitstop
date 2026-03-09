@@ -50,6 +50,7 @@ interface ComponentCardProps {
   contentLink: string;
   originalContentLink: string;
   contentType: string;
+  contentSubtype?: string;
   description: string;
   likesCount: number;
   sectionId: number;
@@ -71,6 +72,7 @@ const ExpandedContentCard: React.FC<ComponentCardProps> = ({
   contentLink,
   originalContentLink,
   contentType,
+  contentSubtype,
   description,
   likesCount,
   sectionId,
@@ -429,6 +431,8 @@ const ExpandedContentCard: React.FC<ComponentCardProps> = ({
         handleClose={() => setIsFullScreenDrawerOpen(false)}
         contentId={contentId}
         description={description}
+        contentType={contentType}
+        contentSubtype={contentSubtype}
       />
     </Dialog>
   );
