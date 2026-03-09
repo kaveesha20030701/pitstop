@@ -41,6 +41,8 @@ const ListItemLink = (props: ListItemLinkProps) => {
 
   const isTopLevel = level === 1;
 
+  const [, setTranslateOffset] = useState(0);
+
   useEffect(() => {
     if (matchPath(to, pathname) !== null) {
       dispatch(updateRouteId(routeId));
@@ -55,17 +57,17 @@ const ListItemLink = (props: ListItemLinkProps) => {
       
       if (rect.right > viewportWidth && level > 1) {
         setOpenLeft(true);
+        setTranslateOffset(0);
       } else if (rect.right > viewportWidth && level === 1) {
-        const overflowAmount = rect.right - viewportWidth + 16; 
-        if (dropdownRef.current) {
-          dropdownRef.current.style.transform = `translateX(-${overflowAmount}px)`;
-        }
+        const overflowAmount = rect.right - viewportWidth + 16;
+        setTranslateOffset(-overflowAmount);
+        setOpenLeft(false);
       } else {
         setOpenLeft(false);
-        if (dropdownRef.current) {
-          dropdownRef.current.style.transform = '';
-        }
+        setTranslateOffset(0);
       }
+    } else {
+      setTranslateOffset(0);
     }
   }, [open, level]);
 
