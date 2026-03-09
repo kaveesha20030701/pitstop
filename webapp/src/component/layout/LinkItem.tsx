@@ -22,7 +22,7 @@ import { Theme } from "@mui/material/styles";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import ExpandMore from "@mui/icons-material/ExpandMore";
-import { NavLink, LinkProps as RouterLinkProps, useLocation, matchPath } from "react-router-dom";
+import { NavLink, LinkProps as RouterLinkProps, useLocation, matchPath, useNavigate } from "react-router-dom";
 import { Box } from "@mui/material";
 
 const Link = React.forwardRef<HTMLAnchorElement, RouterLinkProps>((itemProps, ref) => {
@@ -31,10 +31,13 @@ const Link = React.forwardRef<HTMLAnchorElement, RouterLinkProps>((itemProps, re
 
 const ListItemLink = (props: ListItemLinkProps) => {
   const [open, setOpen] = useState(false);
+  const [openLeft, setOpenLeft] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const { primary, to, theme, isActive, children, routeId, level, label, handleSideBar} = props;
   const { pathname } = useLocation();
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const isTopLevel = level === 1;
 
@@ -45,6 +48,27 @@ const ListItemLink = (props: ListItemLinkProps) => {
     }
   }, [pathname, to, routeId, dispatch, label, children]);
 
+  useEffect(() => {
+    if (open && dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      
+      if (rect.right > viewportWidth && level > 1) {
+        setOpenLeft(true);
+      } else if (rect.right > viewportWidth && level === 1) {
+        const overflowAmount = rect.right - viewportWidth + 16; 
+        if (dropdownRef.current) {
+          dropdownRef.current.style.transform = `translateX(-${overflowAmount}px)`;
+        }
+      } else {
+        setOpenLeft(false);
+        if (dropdownRef.current) {
+          dropdownRef.current.style.transform = '';
+        }
+      }
+    }
+  }, [open, level]);
+
   const handleMouseOver = () => {
     if (children && children.length > 0) {
       setOpen(true);
@@ -53,11 +77,13 @@ const ListItemLink = (props: ListItemLinkProps) => {
 
   const handleMouseOut = () => {
     setOpen(false);
+    setOpenLeft(false);
   };
 
   const handleClickOutside = (event: MouseEvent) => {
     if (navRef.current && !navRef.current.contains(event.target as Node)) {
       setOpen(false);
+      setOpenLeft(false);
     }
   };
 
@@ -93,6 +119,7 @@ const ListItemLink = (props: ListItemLinkProps) => {
           margin: 0,
           padding: "0 8px",
           position: "relative",
+          cursor: (children && children.length > 0) || routeId !== -1 ? "pointer" : "default",
           "&:hover": {
             background: !isTopLevel ? theme.palette.secondary.dark : "inherit",
           },
@@ -143,9 +170,16 @@ const ListItemLink = (props: ListItemLinkProps) => {
           onMouseOut={handleMouseOut}
           sx={{
             position: "absolute",
-            top: level === 1 ? "calc(100% + 2px)" : "0",
-            left: level === 1 ? "0" : "100%",
-            ml: level > 1 ? "4px" : 0,
+            top: level === 1 ? "calc(100% + 8px)" : "0",
+            ...(level === 1 ? {
+              left: "0",
+            } : openLeft ? {
+              right: "100%",
+              mr: "4px",
+            } : {
+              left: "100%",
+              ml: "4px",
+            }),
             display: open ? "inline-block" : "none",
             background: theme.palette.secondary.main,
             color: theme.palette.primary.contrastText,
@@ -156,20 +190,55 @@ const ListItemLink = (props: ListItemLinkProps) => {
             minWidth: "180px",
             padding: "8px 4px",
             whiteSpace: "nowrap",
+            "&::before": level === 1 ? {
+              content: '""',
+              position: "absolute",
+              top: "-8px",
+              left: 0,
+              right: 0,
+              height: "8px",
+            } : {},
           }}
         >
           {children.map((component) => (
             <Box
               key={component.routeId}
+              onClick={(e) => {
+                if (component.path && component.path.includes("#")) {
+                  const boxElement = e.currentTarget as HTMLElement;
+                  const linkElement = boxElement.querySelector('a');
+                  if (linkElement) {
+                    linkElement.click();
+                  }
+                  return;
+                }
+                
+                if ((!component.children || component.children.length === 0) && 
+                    component.path && 
+                    component.path !== "#") {
+                  e.preventDefault();
+                  navigate(component.path);
+                  handleSideBar();
+                }
+              }}
               sx={{
                 display: "block",
                 width: "100%",
                 borderRadius: "8px",
+                transition: "background 0.2s ease",
+                cursor: "pointer",
                 "&:hover": {
                   background: theme.palette.secondary.dark,
                 },
+                "& a": {
+                  cursor: "pointer",
+                  textDecoration: "none",
+                },
+                "& .MuiListItem-root": {
+                  width: "100%",
+                  margin: 0,
+                },
                 color: theme.palette.primary.contrastText,
-                cursor: "pointer",
               }}
             >
               <ListItemLink
