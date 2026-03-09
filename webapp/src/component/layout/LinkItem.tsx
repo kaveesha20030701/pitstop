@@ -69,13 +69,13 @@ const ListItemLink = (props: ListItemLinkProps) => {
     }
   }, [open, level]);
 
-  const handleMouseOver = () => {
+  const handleMouseEnter = () => {
     if (children && children.length > 0) {
       setOpen(true);
     }
   };
 
-  const handleMouseOut = () => {
+  const handleMouseLeave = () => {
     setOpen(false);
     setOpenLeft(false);
   };
@@ -97,8 +97,8 @@ const ListItemLink = (props: ListItemLinkProps) => {
   return (
   <Box
       ref={navRef}
-      onMouseOver={handleMouseOver}
-      onMouseOut={handleMouseOut}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       sx={{
         position: "relative",
         display: "inline-block",
@@ -121,7 +121,7 @@ const ListItemLink = (props: ListItemLinkProps) => {
           position: "relative",
           cursor: (children && children.length > 0) || routeId !== -1 ? "pointer" : "default",
           "&:hover": {
-            background: !isTopLevel ? theme.palette.secondary.dark : "inherit",
+            background: !isTopLevel ? "transparent" : "inherit",
           },
           ...(isTopLevel && {
             "&::after": {
@@ -166,8 +166,7 @@ const ListItemLink = (props: ListItemLinkProps) => {
       {/* Dropdown Menu */}
       {children && children.length > 0 && (
         <Box
-          onMouseOver={handleMouseOver}
-          onMouseOut={handleMouseOut}
+          ref={dropdownRef}
           sx={{
             position: "absolute",
             top: level === 1 ? "calc(100% + 8px)" : "0",
