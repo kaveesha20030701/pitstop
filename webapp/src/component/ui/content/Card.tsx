@@ -1057,9 +1057,9 @@ const ComponentCard = ({
                     overflow: "hidden",
                   }}
                 >
-                  {note.length > 50 ? (
+                  {note.length > 100 ? (
                     <>
-                      {note.slice(0, 50)}…{" "}
+                      {note.slice(0, 100)}…{" "}
                       <Typography
                         variant="caption"
                         component="span"
