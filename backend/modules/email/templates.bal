@@ -627,7 +627,7 @@ public final string commentNotificationTemplate = string `
                                         class="darkLogo"
                                         height="40"
                                         id="headerImage"
-                                        src="https://wso2.cachefly.net/wso2/sites/all/images/wso2-logo-white-new.png"
+                                        src="https://wso2.cachefly.net/wso2/sites/all/image_resources/logos/WSO2-Logo-White.png"
                                         style="
                                           width: 100px;
                                           -ms-interpolation-mode: bicubic;
@@ -1030,7 +1030,7 @@ public final string commentNotificationTemplate = string `
                                 text-align: justify;
                               "
                             >
-                                                          Click the link below to open the content and view the related comments.
+                            Click the link below to open the content and view the related comments.
                             </p>
                             
                             <p
@@ -1361,7 +1361,7 @@ public final string commentNotificationTemplate = string `
                                         alt="WSO2 Logo"
                                         height="40"
                                         id="headerImage"
-                                        src="https://wso2.cachefly.net/wso2/sites/all/2022/images/wso2-logo-footer.png"
+                                        src="https://wso2.cachefly.net/wso2/sites/all/image_resources/logos/WSO2-Logo-Black.png"
                                         style="
                                           width: 100px;
                                           -ms-interpolation-mode: bicubic;
