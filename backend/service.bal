@@ -30,8 +30,6 @@ configurable int recentContentsLimit = 6;
 configurable int suggestedContentsLimit = 12;
 configurable int suggestedContentsThreshold = 4;
 
-configurable string salesAdmin = ?;
-
 configurable string frontendBaseUrl = ?;
 
 configurable string appName = ?;
@@ -71,7 +69,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if authorization:hasPermission([salesAdmin], userGroups) {
+        if authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             privileges.push(authorization:SALES_ADMIN_PRIVILEGE);
         }
         return privileges;
@@ -153,7 +151,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: constants:GET_USER_ROLE_ERROR
             };
         }
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -199,7 +197,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -502,7 +500,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        boolean isUser = !authorization:hasPermission([salesAdmin], userGroups);
+        boolean isUser = !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups);
 
         string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
         if userEmail is error {
@@ -600,7 +598,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
                 body: {message: constants:UNAUTHORIZED_ACCESS_ERROR}
@@ -772,7 +770,7 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         // [Start] Custom Resource level authorization.
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -805,7 +803,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: constants:GET_USER_ROLE_ERROR
             };
         }
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -853,7 +851,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -895,7 +893,7 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         // [Start] Custom Resource level authorization.
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             return http:FORBIDDEN;
         }
         // [End] Custom Resource level authorization.
@@ -943,7 +941,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: constants:GET_USER_ROLE_ERROR
             };
         }
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1000,7 +998,7 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         // [Start] Custom Resource level authorization.
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1113,7 +1111,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1152,7 +1150,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1190,7 +1188,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1228,7 +1226,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1261,7 +1259,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1317,7 +1315,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1350,7 +1348,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1386,7 +1384,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1419,7 +1417,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1468,7 +1466,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        boolean isAdmin = authorization:hasPermission([salesAdmin], userGroups);
+        boolean isAdmin = authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups);
 
         types:CommentData|error? data = database:getCommentData(commentId, userEmail);
         string customError = "Error while fetching comment data";
@@ -1605,7 +1603,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        boolean isAdmin = authorization:hasPermission([salesAdmin], userGroups);
+        boolean isAdmin = authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups);
 
         if commentDataResult is () {
             if !isAdmin {
@@ -1712,7 +1710,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: constants:GET_USER_ROLE_ERROR
             };
         }
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1754,7 +1752,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: customerErr
             };
         }
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1814,7 +1812,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: customError}
             };
         }
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1869,7 +1867,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: customError}
             };
         }
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -1969,7 +1967,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             return <http:InternalServerError>{body: {message: constants:GET_USER_ROLE_ERROR}};
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -2006,7 +2004,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             return <http:InternalServerError>{body: {message: constants:GET_USER_ROLE_ERROR}};
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
@@ -2056,7 +2054,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             return <http:InternalServerError>{body: {message: constants:GET_USER_ROLE_ERROR}};
         }
 
-        if !authorization:hasPermission([salesAdmin], userGroups) {
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return http:FORBIDDEN;
         }
