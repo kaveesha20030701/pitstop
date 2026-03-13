@@ -382,6 +382,11 @@ export interface ReorderRoutesPayload {
   parentId: number | null;
   reorderRoutes: ReorderRouteItem[];
 }
+//Reordering route content items
+export interface ReorderRouteContentsPayload {
+  routeId: number;
+  reorderContents: ReorderContentItem[];
+}
 
 //Response interfaces
 
@@ -530,6 +535,7 @@ export interface GridSortableItemProps {
   id: string;
   children: React.ReactNode;
   disabled?: boolean;
+  dragHandlePosition?: 'top-left' | 'center-top';
 }
 
 export interface VerticalSortableItemProps {
@@ -561,6 +567,7 @@ export interface RouteContentItem {
   contentLink: string;
   description: string;
   contentType: string;
+  contentOrder: number;
 }
 
 export interface reparentRoutesPayload {

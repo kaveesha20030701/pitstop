@@ -739,6 +739,35 @@ isolated function reorderRoutesQuery(types:ReorderRoutesPayload reorderRoutesPay
     return finalQuery;
 }
 
+# Query to reorder route contents.
+#
+# + reorderPayload - Reorder route content payload
+# + return - SQL parameterized query
+isolated function reorderRouteContentsQuery(types:ReorderRouteContentPayload reorderPayload) returns sql:ParameterizedQuery {
+    sql:ParameterizedQuery[] caseStatements = from var content in reorderPayload.reorderContents
+        select `WHEN content_id = ${content.contentId} THEN ${content.contentOrder}`;
+    sql:ParameterizedQuery caseClause = sql:queryConcat(...caseStatements);
+
+    sql:ParameterizedQuery[] contentIdParams = [];
+    int index = 0;
+    foreach var content in reorderPayload.reorderContents {
+        contentIdParams.push(`${content.contentId}`);
+        if index < reorderPayload.reorderContents.length() - 1 {
+            contentIdParams.push(`, `);
+        }
+        index += 1;
+    }
+    sql:ParameterizedQuery contentIdsClause = sql:queryConcat(...contentIdParams);
+    sql:ParameterizedQuery finalQuery = sql:queryConcat(
+            `UPDATE content
+         SET content_order = CASE `, caseClause, ` END
+         WHERE content_id IN (`, contentIdsClause, `)
+         AND route_id = ${reorderPayload.routeId}
+         AND is_deleted = false`
+    );
+    return finalQuery;
+}
+
 # Query to get required details of all content for report.
 #
 # + return - SQL parameterized query
@@ -834,12 +863,14 @@ isolated function getRouteContentByRouteIdQuery() returns sql:ParameterizedQuery
         route_id AS routeId,
         c.content_link AS contentLink,
         c.description AS description,
-        c.content_type AS contentType
+        c.content_type AS contentType,
+        c.content_order AS contentOrder
     FROM 
         content c
     WHERE 
         c.route_id IS NOT NULL
-        AND c.is_deleted = false;
+        AND c.is_deleted = false
+    ORDER BY contentOrder ASC;
 `;
 
 # Query to insert a new content item for a route.

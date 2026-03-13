@@ -1211,6 +1211,45 @@ service http:InterceptableService / on new http:Listener(9090) {
         return http:OK;
     }
 
+    # Reorder route contents.
+    #
+    # + reorderRouteContentsPayload - Reorder route content payload
+    # + return - Success or error responses
+    resource function patch route/contents/reorder(http:RequestContext ctx,
+            types:ReorderRouteContentPayload reorderRouteContentsPayload)
+        returns http:Ok|http:BadRequest|http:Forbidden|http:InternalServerError {
+
+        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
+        if userGroups is error {
+            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
+            return <http:InternalServerError>{
+                body: constants:GET_USER_ROLE_ERROR
+            };
+        }
+
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
+            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
+            return http:FORBIDDEN;
+        }
+
+        if reorderRouteContentsPayload.reorderContents.length() == 0 {
+            return http:BAD_REQUEST;
+        }
+
+        error? result = database:reorderRouteContents(reorderRouteContentsPayload);
+        if result is error {
+            string customError = "Failed to reorder route contents";
+            log:printError(customError, result);
+            return <http:InternalServerError>{
+                body: {
+                    "message": customError
+                }
+            };
+        }
+
+        return http:OK;
+    }
+
     # Add a new tag.
     #
     # + tagPayload - Tag details

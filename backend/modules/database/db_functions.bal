@@ -477,6 +477,24 @@ public isolated function reorderRoutes(types:ReorderRoutesPayload reorderRoutesP
     }
 }
 
+# Reorder route contents in the database.
+#
+# + reorderPayload - Reorder route content payload
+# + return - Error or nil
+public isolated function reorderRouteContents(types:ReorderRouteContentPayload reorderPayload) returns error? {
+
+    if reorderPayload.reorderContents.length() == 0 {
+        return;
+    }
+
+    transaction {
+        sql:ParameterizedQuery query = reorderRouteContentsQuery(reorderPayload);
+        _ = check dbClient->execute(query);
+        check commit;
+    }
+
+}
+
 # Get content details for content report.
 #
 # + return - Content or error

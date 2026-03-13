@@ -36,16 +36,29 @@ import { alpha } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
 import { RouteContentItem, RouteResponse } from "src/types/types";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 
 import ErrorHandler from "@components/common/ErrorHandler";
 import DeleteContentDialogBox from "@components/dialogs/DeleteDialogBox";
 import RouteContentDialogBox from "@components/dialogs/RouteContentDialogBox";
 import ActionButton from "@components/ui/page/ActionButton";
 import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
-import { createRouteContent, updateRouteContent } from "@slices/routeSlice/route";
+import { createRouteContent, updateRouteContent, reorderRouteContents} from "@slices/routeSlice/route";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
 import { Role } from "@utils/types";
+import {
+  DndContext,
+  closestCenter,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import GridSortableItem from "@components/common/GridSortableItem";
 
 export default function ActionAreaCard() {
   const page = useAppSelector((state: RootState) => state.page);
@@ -65,6 +78,50 @@ export default function ActionAreaCard() {
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  const sensors = useSensors(useSensor(PointerSensor));
+  const [orderedRouteContents, setOrderedRouteContents] = useState<
+    RouteContentItem[]
+  >([]);
+
+  const currentRouteContents = useMemo(() => {
+    return routeContents
+      .filter((c) => c.routeId === currentRouteId)
+      .sort((a, b) => a.contentOrder - b.contentOrder);
+  }, [routeContents, currentRouteId]);
+
+  useEffect(() => {
+    setOrderedRouteContents(currentRouteContents);
+  }, [currentRouteContents]);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIdx = orderedRouteContents.findIndex(
+      (c) => c.contentId.toString() === active.id
+    );
+    const newIdx = orderedRouteContents.findIndex(
+      (c) => c.contentId.toString() === over.id
+    );
+
+    if (oldIdx < 0 || newIdx < 0) return;
+
+    const newOrder = [...orderedRouteContents];
+    const [moved] = newOrder.splice(oldIdx, 1);
+    newOrder.splice(newIdx, 0, moved);
+    setOrderedRouteContents(newOrder);
+
+    dispatch(
+      reorderRouteContents({
+        routeId: currentRouteId,
+        reorderContents: newOrder.map((c, i) => ({
+          contentId: c.contentId,
+          contentOrder: i + 1,
+        })),
+      })
+    );
+  };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, content: RouteContentItem) => {
     event.stopPropagation();
@@ -176,7 +233,16 @@ export default function ActionAreaCard() {
 
             {/* Grid of Cards  */}
             {showSubpages && (
+             <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
               <Box sx={{ maxWidth: "1400px", margin: "0 auto", pb: 6 }}>
+                <SortableContext
+                  items={orderedRouteContents.map((c) => c.contentId.toString())}
+                  strategy={rectSortingStrategy}
+                >
                 <Stack
                   direction="row"
                   flexWrap="wrap"
@@ -213,7 +279,7 @@ export default function ActionAreaCard() {
                       "menuItem" in item ? item.menuItem : (item.description ?? "Unnamed");
                     const isActive = !isContent && "path" in item && item.path === currentPath;
 
-                    return (
+                    const cardContent = (
                       <Box key={index}>
                         <Card
                           sx={(t) => ({
@@ -363,6 +429,45 @@ export default function ActionAreaCard() {
                         </Card>
                       </Box>
                     );
+
+
+                        return (
+                          <Box
+                            key={index}
+                            sx={{
+                              flexBasis: {
+                                xs: "100%",
+                                sm: "calc(50% - 8px)",
+                                md: "calc(33.333% - 10.667px)",
+                                lg: "calc(16.666% - 13.333px)",
+                              },
+                              minWidth: {
+                                xs: "100%",
+                                sm: "min(calc(50% - 8px), 280px)",
+                                md: "min(calc(33.333% - 10.667px), 240px)",
+                                lg: "min(calc(16.666% - 13.333px), 200px)",
+                              },
+                              maxWidth: {
+                                xs: "100%",
+                                sm: "300px",
+                                md: "280px",
+                                lg: "220px",
+                              },
+                            }}
+                          >
+                            {isContent && authorizedRoles.includes(Role.SALES_ADMIN) ? (
+                              <GridSortableItem
+                                id={(item as RouteContentItem).contentId.toString()}
+                                disabled={false}
+                                dragHandlePosition="top-left"
+                              >
+                                {cardContent}
+                              </GridSortableItem>
+                            ) : (
+                              cardContent
+                            )}
+                          </Box>
+                        );
                   })}
 
                   {/* Add New Card - only when admin */}
@@ -446,7 +551,9 @@ export default function ActionAreaCard() {
                     </Box>
                   )}
                 </Stack>
-              </Box>
+                  </SortableContext>
+                </Box>
+              </DndContext>
             )}
           </Box>
         </Grow>

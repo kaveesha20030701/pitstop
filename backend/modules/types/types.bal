@@ -513,6 +513,8 @@ public type RouteContentItem record {|
     string description;
     # Type of the content
     string contentType;
+    # Content order
+    int contentOrder;
 |};
 
 # Payload for creating content under a route.
@@ -523,6 +525,14 @@ public type RouteContentPayload record {|
     string contentLink;
     # Content description
     string description;
+|};
+
+# Payload for reordering route content.
+public type ReorderRouteContentPayload record {|
+    # Route ID
+    int routeId;
+    # Array of content items to reorder
+    SwapContentOrders[] reorderContents;
 |};
 
 # Payload for updating content under a route.

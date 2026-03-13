@@ -450,6 +450,42 @@ export const reorderRoutes = createAsyncThunk(
     });
   },
 );
+//Reordering route contents
+export const reorderRouteContents = createAsyncThunk(
+  "routeContent/reorderRouteContents",
+  async (
+    payload: { routeId: number; reorderContents: { contentId: number; contentOrder: number }[] },
+    { dispatch }
+  ) => {
+    return new Promise<void>((resolve, reject) => {
+      ApiService.getInstance()
+        .patch(AppConfig.serviceUrls.reorderRouteContents, payload)
+        .then((resp) => {
+          if (resp.status === 200) {
+            dispatch(
+              enqueueSnackbarMessage({
+                message: "Route contents reordered successfully",
+                type: "success",
+                anchorOrigin: { vertical: "bottom", horizontal: "right" },
+              })
+            );
+            resolve();
+            dispatch(getRouteContents());
+          }
+        })
+        .catch((error: Error) => {
+          dispatch(
+            enqueueSnackbarMessage({
+              message: "Error while reordering route contents",
+              type: "error",
+              anchorOrigin: { vertical: "bottom", horizontal: "right" },
+            })
+          );
+          reject(error);
+        });
+    });
+  }
+);
 
 //Get Route Contents
 export const getRouteContents = createAsyncThunk(
