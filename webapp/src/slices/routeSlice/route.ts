@@ -454,12 +454,14 @@ export const reorderRoutes = createAsyncThunk(
 export const reorderRouteContents = createAsyncThunk(
   "routeContent/reorderRouteContents",
   async (
-    payload: { routeId: number; reorderContents: { contentId: number; contentOrder: number }[] },
+    payload: { routeId: string; reorderContents: { contentId: number; contentOrder: number }[] },
     { dispatch }
   ) => {
     return new Promise<void>((resolve, reject) => {
       ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.reorderRouteContents, payload)
+        .patch(AppConfig.serviceUrls.reorderRouteContents(payload.routeId),
+          { reorderContents: payload.reorderContents }
+        )
         .then((resp) => {
           if (resp.status === 200) {
             dispatch(

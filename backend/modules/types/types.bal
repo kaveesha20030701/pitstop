@@ -529,8 +529,6 @@ public type RouteContentPayload record {|
 
 # Payload for reordering route content.
 public type ReorderRouteContentPayload record {|
-    # Route ID
-    int routeId;
     # Array of content items to reorder
     SwapContentOrders[] reorderContents;
 |};

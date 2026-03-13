@@ -436,12 +436,7 @@ public isolated function reorderContents(types:ReorderContentPayload reorderPayl
         return;
     }
 
-    transaction {
-        sql:ParameterizedQuery query = reorderContentsQuery(reorderPayload);
-        _ = check dbClient->execute(query);
-        check commit;
-    }
-    return;
+    _ = check dbClient->execute(reorderContentsQuery(reorderPayload));
 }
 
 # Reorder sections in the database.
@@ -453,12 +448,7 @@ public isolated function reorderSections(types:ReorderSectionPayload reorderPayl
         return;
     }
 
-    transaction {
-        sql:ParameterizedQuery query = reorderSectionsQuery(reorderPayload);
-        _ = check dbClient->execute(query);
-        check commit;
-    }
-    return;
+    _ = check dbClient->execute(reorderSectionsQuery(reorderPayload));
 }
 
 # Reorder routes in the database.
@@ -470,29 +460,20 @@ public isolated function reorderRoutes(types:ReorderRoutesPayload reorderRoutesP
         return;
     }
 
-    transaction {
-        sql:ParameterizedQuery query = reorderRoutesQuery(reorderRoutesPayload);
-        _ = check dbClient->execute(query);
-        check commit;
-    }
+    _ = check dbClient->execute(reorderRoutesQuery(reorderRoutesPayload));
 }
 
 # Reorder route contents in the database.
 #
+# + routeId - Route ID
 # + reorderPayload - Reorder route content payload
 # + return - Error or nil
-public isolated function reorderRouteContents(types:ReorderRouteContentPayload reorderPayload) returns error? {
-
+public isolated function reorderRouteContents(string routeId, types:ReorderRouteContentPayload reorderPayload) returns error? {
     if reorderPayload.reorderContents.length() == 0 {
         return;
     }
 
-    transaction {
-        sql:ParameterizedQuery query = reorderRouteContentsQuery(reorderPayload);
-        _ = check dbClient->execute(query);
-        check commit;
-    }
-
+    _ = check dbClient->execute(reorderRouteContentsQuery(routeId, reorderPayload));
 }
 
 # Get content details for content report.

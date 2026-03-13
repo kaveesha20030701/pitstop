@@ -1213,11 +1213,20 @@ service http:InterceptableService / on new http:Listener(9090) {
 
     # Reorder route contents.
     #
+    # + routeId - Route ID
     # + reorderRouteContentsPayload - Reorder route content payload
     # + return - Success or error responses
-    resource function patch route/contents/reorder(http:RequestContext ctx,
+    resource function patch routes/[string routeId]/contents(http:RequestContext ctx,
             types:ReorderRouteContentPayload reorderRouteContentsPayload)
         returns http:Ok|http:BadRequest|http:Forbidden|http:InternalServerError {
+
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:USER_INFO_HEADER_NOT_FOUND, userEmail);
+            return <http:InternalServerError>{
+                body: constants:USER_INFO_HEADER_NOT_FOUND
+            };
+        }
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
@@ -1236,7 +1245,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             return http:BAD_REQUEST;
         }
 
-        error? result = database:reorderRouteContents(reorderRouteContentsPayload);
+        error? result = database:reorderRouteContents(routeId, reorderRouteContentsPayload);
         if result is error {
             string customError = "Failed to reorder route contents";
             log:printError(customError, result);

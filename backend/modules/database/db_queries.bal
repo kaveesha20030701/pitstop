@@ -741,9 +741,12 @@ isolated function reorderRoutesQuery(types:ReorderRoutesPayload reorderRoutesPay
 
 # Query to reorder route contents.
 #
+# + routeId - Route ID
 # + reorderPayload - Reorder route content payload
 # + return - SQL parameterized query
-isolated function reorderRouteContentsQuery(types:ReorderRouteContentPayload reorderPayload) returns sql:ParameterizedQuery {
+isolated function reorderRouteContentsQuery(string routeId, types:ReorderRouteContentPayload reorderPayload) 
+    returns sql:ParameterizedQuery {
+        
     sql:ParameterizedQuery[] caseStatements = from var content in reorderPayload.reorderContents
         select `WHEN content_id = ${content.contentId} THEN ${content.contentOrder}`;
     sql:ParameterizedQuery caseClause = sql:queryConcat(...caseStatements);
@@ -762,7 +765,7 @@ isolated function reorderRouteContentsQuery(types:ReorderRouteContentPayload reo
             `UPDATE content
          SET content_order = CASE `, caseClause, ` END
          WHERE content_id IN (`, contentIdsClause, `)
-         AND route_id = ${reorderPayload.routeId}
+         AND route_id = ${routeId}
          AND is_deleted = false`
     );
     return finalQuery;

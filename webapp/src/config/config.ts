@@ -78,7 +78,7 @@ export const AppConfig = {
     getPageData: ServiceBaseUrl + "/routes",
     reorderContents: ServiceBaseUrl + "/contents/reorder",
     reorderSections: ServiceBaseUrl + "/sections/reorder",
-    reorderRouteContents: ServiceBaseUrl + "/route/contents/reorder",
+    reorderRouteContents: (routeId: string) => ServiceBaseUrl + "/routes/" + routeId + "/contents",
     reorderRoutes: ServiceBaseUrl + "/routes/reorder",
     getAllTags: ServiceBaseUrl + "/tags",
     createTag: ServiceBaseUrl + "/tags",
