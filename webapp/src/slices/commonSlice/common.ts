@@ -57,8 +57,11 @@ export const CommonSlice = createSlice({
       state.timestamp = Date.now();
       state.anchorOrigin = action.payload.anchorOrigin;
     },
+    clearSnackbarMessage: (state) => {
+      state.timestamp = null;
+    },
   },
 });
 
-export const { enqueueSnackbarMessage } = CommonSlice.actions;
+export const { enqueueSnackbarMessage, clearSnackbarMessage } = CommonSlice.actions;
 export default CommonSlice.reducer;

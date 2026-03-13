@@ -28,7 +28,8 @@ import ConsentHandler from "@components/common/ConsentHandler";
 import { CURRENT_YEAR } from "@config/constant";
 import ConfirmationModalContextProvider from "@context/DialogContext";
 import { selectUserInfo } from "@slices/authSlice";
-import { RootState, useAppSelector } from "@slices/store";
+import { RootState, useAppSelector, useAppDispatch } from "@slices/store";
+import { clearSnackbarMessage } from "@slices/commonSlice/common";
 
 import pJson from "../../package.json";
 import MatomoTracker from "../analytics/MatomoTracker";
@@ -37,6 +38,7 @@ import Header from "./header";
 export default function Layout() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const dispatch = useAppDispatch();
   const common = useAppSelector((state: RootState) => state.common);
 
   useEffect(() => {
@@ -46,8 +48,9 @@ export default function Layout() {
         preventDuplicate: true,
         anchorOrigin: common.anchorOrigin,
       });
+      dispatch(clearSnackbarMessage());
     }
-  }, [common.anchorOrigin, common.message, common.timestamp, common.type, enqueueSnackbar]);
+  }, [common.anchorOrigin, common.message, common.timestamp, common.type, enqueueSnackbar, dispatch]);
 
   useEffect(() => {
     if (localStorage.getItem("hris-app-redirect-url")) {
