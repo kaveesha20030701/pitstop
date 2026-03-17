@@ -188,10 +188,11 @@ public isolated function deleteRoute(int routeId) returns int|error? {
 
 # Update route.
 #
+# + routeId - Route ID
 # + updateRoutePayload - New route details
 # + return - Error or nil
-public isolated function updateRoute(types:UpdateRoutePayload updateRoutePayload) returns int|error? {
-    sql:ExecutionResult result = check dbClient->execute(updateRouteQuery(updateRoutePayload));
+public isolated function updateRoute(int routeId, types:UpdateRoutePayload updateRoutePayload) returns int|error? {
+    sql:ExecutionResult result = check dbClient->execute(updateRouteQuery(routeId, updateRoutePayload));
     return result.affectedRowCount;
 }
 
@@ -273,9 +274,25 @@ public isolated function getSectionById(int sectionId) returns types:SectionPayl
 # + sectionId - Section ID
 # + updateSectionPayload - New section details
 # + return - Error or nil
-public isolated function updateSection(int sectionId, types:UpdateSectionPayload updateSectionPayload) returns int|error? {
-    sql:ExecutionResult result = check dbClient->execute(updateSectionQuery(sectionId, updateSectionPayload));
-    return result.affectedRowCount;
+public isolated function updateSection(int sectionId, types:UpdateSectionPayload updateSectionPayload) 
+    returns int|error? {
+        
+    sql:ParameterizedQuery[] queries = updateSectionQuery(sectionId, updateSectionPayload);
+    int totalAffectedRows = 0;
+
+    transaction {
+        foreach sql:ParameterizedQuery query in queries {
+            sql:ExecutionResult result = check dbClient->execute(query);
+            int? rowCount = result.affectedRowCount;
+            
+            if rowCount is int {
+                totalAffectedRows += rowCount;
+            }
+        }
+        check commit;
+    }
+
+    return totalAffectedRows;
 }
 
 # Get section data of a given route path.
@@ -440,18 +457,6 @@ public isolated function reorderContents(types:ReorderContentPayload reorderPayl
     _ = check dbClient->execute(reorderContentsQuery(reorderPayload));
 }
 
-# Reorder routes in the database.
-#
-# + reorderRoutesPayload - Reorder routes payload
-# + return - Error or nil
-public isolated function reorderRoutes(types:ReorderRoutesPayload reorderRoutesPayload) returns error? {
-    if reorderRoutesPayload.reorderRoutes.length() == 0 {
-        return;
-    }
-
-    _ = check dbClient->execute(reorderRoutesQuery(reorderRoutesPayload));
-}
-
 # Reorder route contents in the database.
 #
 # + routeId - Route ID
@@ -604,16 +609,6 @@ public isolated function getCommentData(int commentId, string email) returns typ
         }
     }
     return result;
-}
-
-# Update the visibility of a route by ID.
-#
-# + routeId - Route ID to update visibility
-# + payload - Route ID to update visibility
-# + return - error? if operation fails
-public isolated function updateRouteVisibility(int routeId, types:Routes payload) returns int|error? {
-    sql:ExecutionResult result = check dbClient->execute(updateRouteVisibilityQuery(routeId, payload));
-    return result.affectedRowCount;
 }
 
 # Add a new custom button.

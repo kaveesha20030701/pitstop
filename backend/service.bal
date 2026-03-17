@@ -793,7 +793,7 @@ service http:InterceptableService / on new http:Listener(9090) {
     #
     # + updateRoutePayload - New route details
     # + return - Success or error responses
-    resource function patch routes(http:RequestContext ctx, types:UpdateRoutePayload updateRoutePayload)
+    resource function patch routes/[int routeId](http:RequestContext ctx, types:UpdateRoutePayload updateRoutePayload)
         returns http:Ok|http:Forbidden|http:NotFound|http:BadRequest|http:InternalServerError {
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
@@ -814,7 +814,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             log:printError(constants:INVALID_URL_ERROR, thumbnail = thumbnail);
             return http:BAD_REQUEST;
         }
-        int|error? route = database:updateRoute(updateRoutePayload);
+        int|error? route = database:updateRoute(routeId, updateRoutePayload);
         if route is error || route is () {
             string customError = "Error while updating route";
             log:printError(customError, route);
@@ -1123,44 +1123,6 @@ service http:InterceptableService / on new http:Listener(9090) {
         error? result = database:reorderContents(reorderContentsPayload);
         if result is error {
             string customError = "Failed to reorder contents";
-            log:printError(customError, result);
-            return <http:InternalServerError>{
-                body: {
-                    "message": customError
-                }
-            };
-        }
-
-        return http:OK;
-    }
-
-    # Reorder routes.
-    #
-    # + reorderRoutesPayload - Reorder routes payload
-    # + return - Success or error responses
-    resource function patch routes/reorder(http:RequestContext ctx, types:ReorderRoutesPayload reorderRoutesPayload)
-        returns http:Ok|http:BadRequest|http:Forbidden|http:InternalServerError {
-
-        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
-        if userGroups is error {
-            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
-            return <http:InternalServerError>{
-                body: constants:GET_USER_ROLE_ERROR
-            };
-        }
-
-        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
-            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
-            return http:FORBIDDEN;
-        }
-
-        if reorderRoutesPayload.reorderRoutes.length() == 0 {
-            return http:BAD_REQUEST;
-        }
-
-        error? result = database:reorderRoutes(reorderRoutesPayload);
-        if result is error {
-            string customError = "Failed to reorder routes";
             log:printError(customError, result);
             return <http:InternalServerError>{
                 body: {
@@ -1699,47 +1661,6 @@ service http:InterceptableService / on new http:Listener(9090) {
         });
         if emailError is error {
             log:printError("Error occurred while sending the email !", emailError);
-        }
-
-        return http:OK;
-    }
-
-    # Updates the visibility of a specific route.
-    #
-    # + routeId - The ID of the route to update
-    # + payload - The request payload containing the updated route data
-    # + return - Success or error responses
-    resource function patch routes/[string routeId](http:RequestContext ctx, types:Routes payload)
-        returns http:Ok|http:BadRequest|http:NotFound|http:Forbidden|http:InternalServerError {
-
-        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
-        if userGroups is error {
-            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
-            return <http:InternalServerError>{
-                body: constants:GET_USER_ROLE_ERROR
-            };
-        }
-        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
-            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
-            return http:FORBIDDEN;
-        }
-
-        int|error routeIdInt = int:fromString(routeId);
-        if routeIdInt is error {
-            log:printError("Invalid routeId, must be an integer", routeId = routeId);
-            return http:BAD_REQUEST;
-        }
-
-        int|error? result = database:updateRouteVisibility(routeIdInt, payload);
-        if result is error || result == () {
-            string customError = "Error while updating route visibility!";
-            log:printError(customError, result);
-            return <http:InternalServerError>{
-                body: {message: customError}
-            };
-        }
-        if result == 0 {
-            return http:NOT_FOUND;
         }
 
         return http:OK;

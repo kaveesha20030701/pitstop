@@ -105,8 +105,6 @@ public type CommentPayload record {|
 
 # Update route payload.
 public type UpdateRoutePayload record {|
-    # route ID
-    int routeId;
     # Page title
     string title?;
     # Page description
@@ -118,7 +116,13 @@ public type UpdateRoutePayload record {|
     # Page custom theme
     CustomTheme customPageTheme?;
     # Sub page visibility
-    boolean isVisible;
+    boolean isVisible?;
+    # Route visibility status
+    boolean isRouteVisible?;
+    # Parent ID
+    int parentId?;
+    # Array of routes items to reorder
+    ReorderRouteItem[] reorderRoutes?;
 |};
 
 public type SwapSectionOrders record {|
@@ -449,14 +453,6 @@ public type ReorderRouteItem record {|
     int isRouteVisible?;
 |};
 
-# Payload for reordering sections.
-public type ReorderRoutesPayload record {|
-    # Parent ID
-    int? parentId;
-    # Array of routes items to reorder
-    ReorderRouteItem[] reorderRoutes;
-|};
-
 # Get all available content record.
 public type ContentReport record {|
     # Content description
@@ -563,12 +559,6 @@ public type CommentData record {|
     # The timestamp when the comment was created
     @sql:Column {name: "created_on"}
     time:Utc createdOn;
-|};
-
-# Update route visibility payload record.
-public type Routes record {|
-    # Route visibility status
-    int isRouteVisible;
 |};
 
 # Pin content payload.

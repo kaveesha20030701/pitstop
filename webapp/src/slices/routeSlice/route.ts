@@ -22,7 +22,6 @@ import { ApiService } from "@utils/apiService";
 
 import {
   PageData,
-  ReorderRoutesPayload,
   RouteContentItem,
   RouteContentPayload,
   RoutePayload,
@@ -137,9 +136,55 @@ export const RouteSlice = createSlice({
       .addCase(updateRoute.pending, (state) => {
         state.state = "loading";
       })
-      .addCase(updateRoute.fulfilled, (state) => {
+      .addCase(updateRoute.fulfilled, (state, action) => {
         state.state = "success";
         state.stateMessage = "You have successfully updated the page";
+
+        const { reorderRoutes: reorderRoutesPayload, parentId } = action.meta.arg.page;
+
+        if (reorderRoutesPayload) {
+          const orderMap = new Map<number, number>(
+            reorderRoutesPayload.map((r) => [r.routeId, r.routeOrder]),
+          );
+
+          const sortByOrderMap = (routes: RouteResponse[]) =>
+            [...routes].sort(
+              (a, b) =>
+                (orderMap.get(a.routeId) ?? a.routeOrder) -
+                (orderMap.get(b.routeId) ?? b.routeOrder),
+            );
+
+          const updateChildrenRecursively = (routes: RouteResponse[]): RouteResponse[] =>
+            routes.map((route) => {
+              if (route.routeId === parentId) {
+                return {
+                  ...route,
+                  children: sortByOrderMap(route.children ?? []).map((child) => ({
+                    ...child,
+                    routeOrder: orderMap.get(child.routeId) ?? child.routeOrder,
+                  })),
+                };
+              } else if (route.children && route.children.length > 0) {
+                return {
+                  ...route,
+                  children: updateChildrenRecursively(route.children),
+                };
+              } else {
+                return route;
+              }
+            });
+
+          if (parentId === null) {
+            const topLevelRoutes = state.routes.map((route) => ({
+              ...route,
+              routeOrder: orderMap.get(route.routeId) ?? route.routeOrder,
+            }));
+
+            state.routes = sortByOrderMap(topLevelRoutes);
+          } else {
+            state.routes = updateChildrenRecursively(state.routes);
+          }
+        }
       })
       .addCase(updateRoute.rejected, (state) => {
         state.state = "failed";
@@ -157,51 +202,6 @@ export const RouteSlice = createSlice({
       .addCase(deleteRoute.rejected, (state) => {
         state.state = "failed";
         state.stateMessage = "Something went wrong :(";
-      })
-      //Reorder Routes
-      .addCase(reorderRoutes.fulfilled, (state, action) => {
-        const { parentId, reorderRoutes } = action.meta.arg;
-
-        const orderMap = new Map<number, number>(
-          reorderRoutes.map((r) => [r.routeId, r.routeOrder]),
-        );
-
-        const sortByOrderMap = (routes: RouteResponse[]) =>
-          [...routes].sort(
-            (a, b) =>
-              (orderMap.get(a.routeId) ?? a.routeOrder) - (orderMap.get(b.routeId) ?? b.routeOrder),
-          );
-
-        const updateChildrenRecursively = (routes: RouteResponse[]): RouteResponse[] =>
-          routes.map((route) => {
-            if (route.routeId === parentId) {
-              return {
-                ...route,
-                children: sortByOrderMap(route.children ?? []).map((child) => ({
-                  ...child,
-                  routeOrder: orderMap.get(child.routeId) ?? child.routeOrder,
-                })),
-              };
-            } else if (route.children && route.children.length > 0) {
-              return {
-                ...route,
-                children: updateChildrenRecursively(route.children),
-              };
-            } else {
-              return route;
-            }
-          });
-
-        if (parentId === null) {
-          const topLevelRoutes = state.routes.map((route) => ({
-            ...route,
-            routeOrder: orderMap.get(route.routeId) ?? route.routeOrder,
-          }));
-
-          state.routes = sortByOrderMap(topLevelRoutes);
-        } else {
-          state.routes = updateChildrenRecursively(state.routes);
-        }
       })
       // Get Route Contents
       .addCase(getRouteContents.pending, (state) => {
@@ -265,10 +265,6 @@ export const RouteSlice = createSlice({
         state.state = "failed";
         state.stateMessage = "Error while reparenting pages :(";
         state.reparentingState = "idle";
-      })
-      .addCase(toggleRouteVisibility.rejected, (state) => {
-        state.state = "failed";
-        state.stateMessage = "Error while updating route visibility :(";
       });
   },
 });
@@ -390,10 +386,10 @@ export const deleteRoute = createAsyncThunk(
 //Update a particular route path
 export const updateRoute = createAsyncThunk(
   "pitstop/updatePage",
-  async (payload: { page: UpdateRoutePayload; routePath: string }, { dispatch }) => {
+  async (payload: { routeId: string; page: UpdateRoutePayload; routePath: string }, { dispatch }) => {
     return new Promise<unknown>((resolve, reject) => {
       ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.updateRouterPath, payload.page)
+        .patch(AppConfig.serviceUrls.updateRouterPath(payload.routeId), payload.page)
         .then((resp) => {
           resolve({ requestResponse: resp.data });
           dispatch(
@@ -427,29 +423,6 @@ export const updateRoute = createAsyncThunk(
   },
 );
 
-//Reordering the routes
-export const reorderRoutes = createAsyncThunk(
-  "pitstop/reorderRoutes",
-  async (payload: ReorderRoutesPayload, { dispatch }) => {
-    return new Promise<unknown>((resolve, reject) => {
-      ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.reorderRoutes, payload)
-        .then((resp) => {
-          resolve({ requestResponse: resp.data });
-        })
-        .catch((resp) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Something went wrong while reordering the routes :(",
-              type: "error",
-              anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            }),
-          );
-          reject(resp);
-        });
-    });
-  },
-);
 //Reordering route contents
 export const reorderRouteContents = createAsyncThunk(
   "routeContent/reorderRouteContents",
@@ -641,48 +614,6 @@ export const reparentRoutes = createAsyncThunk(
           dispatch(
             enqueueSnackbarMessage({
               message: "Error while reparenting pages :(",
-              type: "error",
-              anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            }),
-          );
-          reject(error);
-        });
-    });
-  },
-);
-
-export const toggleRouteVisibility = createAsyncThunk(
-  "pitstop/toggleRouteVisibility",
-  async (
-    payload: { routeId: number; isRouteVisible: number; currentRoutePath: string },
-    { dispatch },
-  ) => {
-    return new Promise<void>((resolve, reject) => {
-      ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.toggleRouteVisibility(String(payload.routeId)), {
-          isRouteVisible: payload.isRouteVisible,
-        })
-
-        .then((resp) => {
-          if (resp.status === 200) {
-            dispatch(
-              enqueueSnackbarMessage({
-                message: "Route visibility updated successfully.",
-                type: "success",
-                anchorOrigin: { vertical: "bottom", horizontal: "right" },
-              }),
-            );
-
-            dispatch(getRoutesInfo(payload.currentRoutePath));
-
-            window.location.href = "/";
-            resolve();
-          }
-        })
-        .catch((error: Error) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Error while updating route visibility ",
               type: "error",
               anchorOrigin: { vertical: "bottom", horizontal: "right" },
             }),

@@ -62,42 +62,98 @@ isolated function getAllRoutesFlatQuery() returns sql:ParameterizedQuery =>
 
 # Query to update route.
 #
-# + updateRoutePayload - Route data to change
+# + routeId - Route ID to update
+# + payload - Route data to change
 # + return - SQL parameterized query
-isolated function updateRouteQuery(types:UpdateRoutePayload updateRoutePayload) returns sql:ParameterizedQuery {
-    sql:ParameterizedQuery sqlQuery = `
-        UPDATE
-            route
-        SET 
-        `;
+isolated function updateRouteQuery(int? routeId, types:UpdateRoutePayload payload) 
+    returns sql:ParameterizedQuery {
 
-    sql:ParameterizedQuery[] sqlQueries = [];
+    sql:ParameterizedQuery[] setClauses = [];
 
-    if updateRoutePayload.title is string {
-        sqlQueries.push(` title = ${updateRoutePayload.title} `);
+    //Normal field updates 
+    if payload.title is string { 
+        setClauses.push(`title = ${payload.title}`); 
     }
 
-    if updateRoutePayload.description is string {
-        sqlQueries.push(` description = ${updateRoutePayload.description} `);
+    if payload.description is string { 
+        setClauses.push(`description = ${payload.description}`); 
     }
 
-    if updateRoutePayload.thumbnail is string {
-        sqlQueries.push(` thumbnail = ${updateRoutePayload.thumbnail} `);
+    if payload.thumbnail is string { 
+        setClauses.push(`thumbnail = ${payload.thumbnail}`); 
     }
 
-    if updateRoutePayload.menuItem is string {
-        sqlQueries.push(` menu_item = ${updateRoutePayload.menuItem} `);
+    if payload.menuItem is string { 
+        setClauses.push(`menu_item = ${payload.menuItem}`); 
     }
 
-    if updateRoutePayload.customPageTheme is types:CustomTheme {
-        sqlQueries.push(` styling_info = ${updateRoutePayload.customPageTheme.toJsonString()} `);
+    if payload.isVisible is boolean { 
+        setClauses.push(`isVisible = ${payload.isVisible}`); 
     }
 
-    sqlQueries.push(` isVisible = ${updateRoutePayload.isVisible} `);
+    if payload.customPageTheme is types:CustomTheme { 
+        setClauses.push(`styling_info = ${payload.customPageTheme.toJsonString()}`); 
+    }
 
-    sqlQuery = buildSqlUpdateQuery(sqlQuery, sqlQueries);
-    return sql:queryConcat(sqlQuery, ` WHERE route_id = ${updateRoutePayload.routeId} AND is_deleted = false`);
-};
+    if payload.isRouteVisible is boolean { 
+        setClauses.push(`isRouteVisible = ${payload.isRouteVisible}`); 
+    }
+
+    //Reordering
+    sql:ParameterizedQuery? reorderClause = ();
+    sql:ParameterizedQuery[] reorderIds = [];
+    var reorderRoutes = payload.reorderRoutes;
+    
+    if reorderRoutes is types:ReorderRouteItem[] && reorderRoutes.length() > 0 {
+        sql:ParameterizedQuery[] caseWhen = [];
+        foreach var route in reorderRoutes {
+            caseWhen.push(`WHEN route_id = ${route.routeId} THEN ${route.routeOrder} `);
+            reorderIds.push(`${route.routeId}`);
+        }
+        caseWhen.push(` END`);
+        reorderClause = sql:queryConcat(`route_order = CASE `, ...caseWhen);
+    }
+
+    if setClauses.length() == 0 && reorderClause is () {
+        return `SELECT 0 WHERE FALSE`;
+    }
+
+    sql:ParameterizedQuery query = `UPDATE route SET `;
+    boolean isFirst = true;
+
+    foreach var clause in setClauses {
+        if !isFirst { query = sql:queryConcat(query, `, `); }
+        query = sql:queryConcat(query, clause);
+        isFirst = false;
+    }
+
+    if reorderClause is sql:ParameterizedQuery {
+        if !isFirst { query = sql:queryConcat(query, `, `); }
+        query = sql:queryConcat(query, reorderClause);
+    }
+
+    if reorderIds.length() > 0 {
+        sql:ParameterizedQuery idList = reorderIds[0];
+        foreach int i in 1 ..< reorderIds.length() {
+            idList = sql:queryConcat(idList, `, `, reorderIds[i]);
+        }
+        query = sql:queryConcat(query, ` 
+        WHERE route_id IN (`, idList, `) AND is_deleted = false`);
+        
+    } else if payload.isRouteVisible is boolean && routeId is int {
+        query = sql:queryConcat(query, ` 
+        WHERE (route_id = ${routeId} OR parent_id = ${routeId}) AND is_deleted = false`);
+        
+    } else if routeId is int {
+        query = sql:queryConcat(query, ` 
+        WHERE route_id = ${routeId} AND is_deleted = false`);
+        
+    } else {
+        return `SELECT 0 WHERE FALSE`; 
+    }
+
+    return query;
+}
 
 # Query to create a content.
 #
@@ -500,8 +556,9 @@ isolated function updateContentQuery(int contentId, types:UpdateContentPayload u
 # + payload - Combined update + reorder payload
 # + return - SQL parameterized query
 isolated function updateSectionQuery(int sectionId, types:UpdateSectionPayload payload) 
-    returns sql:ParameterizedQuery {
+    returns sql:ParameterizedQuery[] {
 
+    sql:ParameterizedQuery[] queries = [];
     sql:ParameterizedQuery[] setClauses = [];
 
     //Normal field updates
@@ -533,53 +590,51 @@ isolated function updateSectionQuery(int sectionId, types:UpdateSectionPayload p
         setClauses.push(`styling_info = ${payload.customSectionTheme.toJsonString()}`); 
     }
 
-    // Reordering
-    sql:ParameterizedQuery? reorderClause = ();
-    sql:ParameterizedQuery[] reorderIds = [];
-    
+    if setClauses.length() > 0 {
+        sql:ParameterizedQuery fieldQuery = `UPDATE section SET `;
+        boolean isFirst = true;
+        
+        foreach var clause in setClauses {
+            if !isFirst { fieldQuery = sql:queryConcat(fieldQuery, `, `); }
+            fieldQuery = sql:queryConcat(fieldQuery, clause);
+            isFirst = false;
+        }
+        
+        fieldQuery = sql:queryConcat(fieldQuery, ` WHERE section_id = ${sectionId} AND is_deleted = false`);
+        queries.push(fieldQuery);
+    }
+
+    //Reordering
     var reorderSections = payload.reorderSections;
     
     if reorderSections is types:SwapSectionOrders[] && reorderSections.length() > 0 {
         sql:ParameterizedQuery[] caseWhen = [];
+        sql:ParameterizedQuery[] reorderIds = [];
         
         foreach var item in reorderSections {
             caseWhen.push(`WHEN section_id = ${item.sectionId} THEN ${item.sectionOrder} `);
             reorderIds.push(`${item.sectionId}`);
         }
-
         caseWhen.push(` END`);
-        reorderClause = sql:queryConcat(`section_order = CASE `, ...caseWhen);
-    }
-
-    if setClauses.length() == 0 && reorderClause is () {
-        return `SELECT 0 WHERE FALSE`;
-    }
-
-    sql:ParameterizedQuery query = `UPDATE section SET `;
-    boolean isFirst = true;
-
-    foreach var clause in setClauses {
-        if !isFirst { query = sql:queryConcat(query, `, `); }
-        query = sql:queryConcat(query, clause);
-        isFirst = false;
-    }
-
-    if reorderClause is sql:ParameterizedQuery {
-        if !isFirst { query = sql:queryConcat(query, `, `); }
-        query = sql:queryConcat(query, reorderClause);
-    }
-
-    if reorderIds.length() > 0 {
+        
+        sql:ParameterizedQuery reorderClause = sql:queryConcat(`section_order = CASE `, ...caseWhen);
+        sql:ParameterizedQuery reorderQuery = sql:queryConcat(`UPDATE section SET `, reorderClause);
+        
         sql:ParameterizedQuery idList = reorderIds[0];
         foreach int i in 1 ..< reorderIds.length() {
             idList = sql:queryConcat(idList, `, `, reorderIds[i]);
         }
-        query = sql:queryConcat(query, ` WHERE section_id IN (`, idList, `) AND is_deleted = false`);
-    } else {
-        query = sql:queryConcat(query, ` WHERE section_id = ${sectionId} AND is_deleted = false`);
+        
+        reorderQuery = sql:queryConcat(reorderQuery, ` 
+        WHERE section_id IN (`, idList, `) AND is_deleted = false`);
+        queries.push(reorderQuery);
     }
 
-    return query;
+    if queries.length() == 0 {
+        queries.push(`SELECT 0 WHERE FALSE`);
+    }
+
+    return queries;
 }
 
 # Get section data of a given route path.
@@ -716,36 +771,6 @@ isolated function reorderContentsQuery(types:ReorderContentPayload reorderPayloa
          WHERE content_id IN (`, contentIdsClause, `)
          AND section_id = ${reorderPayload.sectionId}
          AND is_deleted = false`
-    );
-    return finalQuery;
-}
-
-# Query to reorder routes.
-#
-# + reorderRoutesPayload - Reorder routes payload
-# + return - SQL parameterized query
-isolated function reorderRoutesQuery(types:ReorderRoutesPayload reorderRoutesPayload) returns sql:ParameterizedQuery {
-    sql:ParameterizedQuery[] caseStatements = from var route in reorderRoutesPayload.reorderRoutes
-        select `WHEN route_id = ${route.routeId} THEN ${route.routeOrder}`;
-
-    sql:ParameterizedQuery caseClause = sql:queryConcat(...caseStatements);
-
-    sql:ParameterizedQuery[] routeIdParams = [];
-    int index = 0;
-    foreach var route in reorderRoutesPayload.reorderRoutes {
-        routeIdParams.push(`${route.routeId}`);
-        if index < reorderRoutesPayload.reorderRoutes.length() - 1 {
-            routeIdParams.push(`, `);
-        }
-        index += 1;
-    }
-    sql:ParameterizedQuery routeIdsClause = sql:queryConcat(...routeIdParams);
-
-    sql:ParameterizedQuery finalQuery = sql:queryConcat(
-            `UPDATE route
-         SET route_order = CASE `, caseClause, ` END
-         WHERE route_id IN (`, routeIdsClause, `)
-         AND is_deleted = FALSE`
     );
     return finalQuery;
 }
@@ -1046,23 +1071,6 @@ isolated function getCommentDataQuery(int commentId, string email) returns sql:P
         c.comment_id = ${commentId} 
         AND c.is_deleted = false 
         AND u.email = ${email};
-`;
-
-# Update route visibility by route ID.
-#
-# + routeId - Route ID to update visibility
-# + payload - Route ID to update visibility
-# + return - SQL query
-public isolated function updateRouteVisibilityQuery(int routeId, types:Routes payload)
-    returns sql:ParameterizedQuery => `
-    UPDATE 
-        route 
-    SET 
-        isRouteVisible = ${payload.isRouteVisible} 
-    WHERE 
-        (route_id = ${routeId} 
-        OR parent_id = ${routeId})
-        AND is_deleted = false
 `;
 
 # Add a new custom button.

@@ -242,14 +242,15 @@ export interface ContentPayload {
 }
 
 export interface UpdateRoutePayload {
-  routeId: number;
   title?: string;
   description?: string;
   thumbnail?: string;
   menuItem?: string;
   customPageTheme?: CustomTheme;
-  isVisible: boolean;
-  isRouteVisible?: boolean; 
+  isVisible?: boolean;
+  isRouteVisible?: boolean;
+  parentId?: number | null;
+  reorderRoutes?: ReorderRouteItem[];
 }
 
 export interface UpdateSectionPayload {
@@ -372,11 +373,6 @@ export interface ReorderRouteItem {
   isRouteVisible: number;
 }
 
-// Reordering multiple route items
-export interface ReorderRoutesPayload {
-  parentId: number | null;
-  reorderRoutes: ReorderRouteItem[];
-}
 //Reordering route content items
 export interface ReorderRouteContentsPayload {
   routeId: number;

@@ -96,11 +96,13 @@ const PageDialogBox = ({
   const handleUpdatePage = (values: typeof formik.values) => {
     dispatch(
       updateRoute({
+        routeId: values.routeId.toString(),
         page: {
-          routeId: values.routeId,
           title: values.title,
           description: values.description,
           menuItem: values.label,
+          parentId,
+          reorderRoutes: [],
           customPageTheme: {
             title: titleDefaultStyleConfigs,
             description: descriptionDefaultStyleConfigs,

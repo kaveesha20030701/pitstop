@@ -49,9 +49,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DeleteDialogBox from "@components/dialogs/DeleteDialogBox";
 import AddRouteDialogBox from "@components/dialogs/PageDialogBox";
 import {
-  reorderRoutes,
   reparentRoutes,
-  toggleRouteVisibility,
+  updateRoute,
   updateRouterPath,
 } from "@slices/routeSlice/route";
 import { useAppDispatch, useAppSelector } from "@slices/store";
@@ -135,13 +134,18 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
     newOrder.splice(newIdx, 0, moved);
     setChildrenOrderRoutes(newOrder);
     dispatch(
-      reorderRoutes({
-        parentId: routeId,
-        reorderRoutes: newOrder.map((r, i) => ({
-          routeId: r.routeId,
-          routeOrder: i + 1,
-          isRouteVisible: Number(r.isRouteVisible),
-        })),
+      updateRoute({
+        routeId: String(routeId),
+        page: {
+          parentId: routeId,
+          reorderRoutes: newOrder.map((r, i) => ({
+            routeId: r.routeId,
+            routeOrder: i + 1,
+            isRouteVisible: Number(r.isRouteVisible),
+          })),
+          isVisible: false,
+        },
+        routePath: pathname,
       }),
     );
   };
@@ -415,10 +419,12 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
                   onClick={(e) => {
                     e.stopPropagation();
                     dispatch(
-                      toggleRouteVisibility({
-                        routeId: routeId,
-                        isRouteVisible: isRouteVisible === 1 ? 0 : 1,
-                        currentRoutePath: pathname,
+                      updateRoute({
+                        routeId: String(routeId),
+                        page: {
+                          isRouteVisible: isRouteVisible === 1 ? false : true,
+                        },
+                        routePath: pathname,
                       }),
                     );
                   }}
