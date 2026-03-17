@@ -494,53 +494,92 @@ isolated function updateContentQuery(int contentId, types:UpdateContentPayload u
     return sql:queryConcat(sqlQuery, ` WHERE  content_id = ${contentId} AND is_deleted = false`);
 }
 
-# Query to update section.
+# Query to update section fields and reorder sections in one query.
 #
-# + updateSectionPayload - Section data to change
+# + sectionId - Section ID to update
+# + payload - Combined update + reorder payload
 # + return - SQL parameterized query
-isolated function updateSectionQuery(types:UpdateSectionPayload updateSectionPayload) returns sql:ParameterizedQuery {
-    sql:ParameterizedQuery sqlQuery = `
-        UPDATE
-            section
-        SET 
-        `;
+isolated function updateSectionQuery(int sectionId, types:UpdateSectionPayload payload) 
+    returns sql:ParameterizedQuery {
 
-    sql:ParameterizedQuery[] sqlQueries = [];
+    sql:ParameterizedQuery[] setClauses = [];
 
-    if updateSectionPayload.title is string {
-        sqlQueries.push(` title = ${updateSectionPayload.title} `);
+    //Normal field updates
+    if payload.title is string { 
+        setClauses.push(`title = ${payload.title}`); 
     }
 
-    if updateSectionPayload.description is string {
-        sqlQueries.push(` description = ${updateSectionPayload.description} `);
+    if payload.description is string { 
+        setClauses.push(`description = ${payload.description}`); 
     }
 
-    if updateSectionPayload.sectionType is string {
-        sqlQueries.push(` section_type = ${updateSectionPayload.sectionType} `);
+    if payload.sectionType is string { 
+        setClauses.push(`section_type = ${payload.sectionType}`); 
     }
 
-    if updateSectionPayload.imageUrl is string {
-        sqlQueries.push(` image_url = ${updateSectionPayload.imageUrl} `);
+    if payload.imageUrl is string { 
+        setClauses.push(`image_url = ${payload.imageUrl}`); 
     }
 
-    if updateSectionPayload.redirectUrl is string {
-        sqlQueries.push(` redirect_url = ${updateSectionPayload.redirectUrl} `);
+    if payload.redirectUrl is string { 
+        setClauses.push(`redirect_url = ${payload.redirectUrl}`); 
     }
 
-    if updateSectionPayload.customSectionTheme is types:CustomTheme {
-        sqlQueries.push(` styling_info = ${updateSectionPayload.customSectionTheme.toJsonString()} `);
+    if payload.tags is string { 
+        setClauses.push(`tags = ${payload.tags}`); 
+    }
+    
+    if payload.customSectionTheme is types:CustomTheme { 
+        setClauses.push(`styling_info = ${payload.customSectionTheme.toJsonString()}`); 
     }
 
-    if updateSectionPayload.tags is string {
-        sqlQueries.push(` tags = ${updateSectionPayload.tags} `);
+    // Reordering
+    sql:ParameterizedQuery? reorderClause = ();
+    sql:ParameterizedQuery[] reorderIds = [];
+    
+    var reorderSections = payload.reorderSections;
+    
+    if reorderSections is types:SwapSectionOrders[] && reorderSections.length() > 0 {
+        sql:ParameterizedQuery[] caseWhen = [];
+        
+        foreach var item in reorderSections {
+            caseWhen.push(`WHEN section_id = ${item.sectionId} THEN ${item.sectionOrder} `);
+            reorderIds.push(`${item.sectionId}`);
+        }
+
+        caseWhen.push(` END`);
+        reorderClause = sql:queryConcat(`section_order = CASE `, ...caseWhen);
     }
 
-    if sqlQueries.length() == 0 {
+    if setClauses.length() == 0 && reorderClause is () {
         return `SELECT 0 WHERE FALSE`;
     }
 
-    sqlQuery = buildSqlUpdateQuery(sqlQuery, sqlQueries);
-    return sql:queryConcat(sqlQuery, ` WHERE  section_id = ${updateSectionPayload.sectionId} AND is_deleted = false`);
+    sql:ParameterizedQuery query = `UPDATE section SET `;
+    boolean isFirst = true;
+
+    foreach var clause in setClauses {
+        if !isFirst { query = sql:queryConcat(query, `, `); }
+        query = sql:queryConcat(query, clause);
+        isFirst = false;
+    }
+
+    if reorderClause is sql:ParameterizedQuery {
+        if !isFirst { query = sql:queryConcat(query, `, `); }
+        query = sql:queryConcat(query, reorderClause);
+    }
+
+    if reorderIds.length() > 0 {
+        sql:ParameterizedQuery idList = reorderIds[0];
+        foreach int i in 1 ..< reorderIds.length() {
+            idList = sql:queryConcat(idList, `, `, reorderIds[i]);
+        }
+        query = sql:queryConcat(query, ` WHERE section_id IN (`, idList, `) AND is_deleted = false`);
+    } else {
+        query = sql:queryConcat(query, ` WHERE section_id = ${sectionId} AND is_deleted = false`);
+    }
+
+    return query;
 }
 
 # Get section data of a given route path.
@@ -676,34 +715,6 @@ isolated function reorderContentsQuery(types:ReorderContentPayload reorderPayloa
          SET content_order = CASE `, caseClause, ` END
          WHERE content_id IN (`, contentIdsClause, `)
          AND section_id = ${reorderPayload.sectionId}
-         AND is_deleted = false`
-    );
-    return finalQuery;
-}
-
-# Query to reorder sections.
-#
-# + reorderPayload - Reorder section payload
-# + return - SQL parameterized query
-isolated function reorderSectionsQuery(types:ReorderSectionPayload reorderPayload) returns sql:ParameterizedQuery {
-    sql:ParameterizedQuery[] caseStatements = from var section in reorderPayload.reorderSections
-        select `WHEN section_id = ${section.sectionId} THEN ${section.sectionOrder}`;
-    sql:ParameterizedQuery caseClause = sql:queryConcat(...caseStatements);
-
-    sql:ParameterizedQuery[] sectionIdParams = [];
-    int index = 0;
-    foreach var section in reorderPayload.reorderSections {
-        sectionIdParams.push(`${section.sectionId}`);
-        if index < reorderPayload.reorderSections.length() - 1 {
-            sectionIdParams.push(`, `);
-        }
-        index += 1;
-    }
-    sql:ParameterizedQuery sectionIdsClause = sql:queryConcat(...sectionIdParams);
-    sql:ParameterizedQuery finalQuery = sql:queryConcat(
-            `UPDATE section
-         SET section_order = CASE `, caseClause, ` END
-         WHERE section_id IN (`, sectionIdsClause, `)
          AND is_deleted = false`
     );
     return finalQuery;

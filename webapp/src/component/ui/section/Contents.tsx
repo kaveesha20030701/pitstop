@@ -24,7 +24,6 @@ import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
 import SectionCard from "@components/ui/section/Section";
 import {
   getContentsInfo,
-  reorderSections,
 } from "@slices/pageSlice/page";
 import { Box } from "@mui/material";
 import { Section } from "@/types/types";
@@ -45,6 +44,7 @@ import {
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import VerticalSortableItem from "@components/common/VerticalSortableItem";
+import { updateSection } from "@root/src/slices/sectionSlice/section";
 
 interface ContentsProps {
   afterSectionId?: number;
@@ -110,8 +110,19 @@ const ViewContent: React.FC<ContentsProps> = ({
         sectionOrder: newItems.length - 1 - index,
       }));
 
-      dispatch(reorderSections({ reorderSections: reorderData }))
-        .unwrap()
+      const updatePromises = reorderData.map((section) =>
+      dispatch(
+        updateSection({
+          sectionId: section.sectionId.toString(),
+          section: { reorderSections: reorderData },
+          routePath: window.location.pathname,
+        })
+      )
+    );
+
+      Promise.all(updatePromises)
+        .then(() => {
+        })
         .catch((error: unknown) => {
           console.error("Reorder failed:", error);
           setOrderSections(orderSections);

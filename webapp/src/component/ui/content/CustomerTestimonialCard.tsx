@@ -81,7 +81,7 @@ const CustomerTestimonialCard: React.FC<CustomerTestimonialCardProps> = ({
         position: "relative",
         borderRadius: "20px",
         overflow: "hidden",
-        background: theme.palette.background.paper,
+        background: theme.palette.common.white,
         border: "none",
         boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)",
         opacity: 1,
@@ -279,14 +279,14 @@ const CustomerTestimonialCard: React.FC<CustomerTestimonialCardProps> = ({
             alignItems: "center",
             display: "flex",
             flexDirection: "column",
-            background: theme.palette.background.paper,
+            background: theme.palette.common.white,
           }}
         >
           <Typography
             variant="h6"
             fontWeight="700"
             sx={{
-              color: theme.palette.text.primary,
+              color: theme.palette.common.black,
               fontSize: "0.9rem",
               lineHeight: 1.3,
               mt: 0,

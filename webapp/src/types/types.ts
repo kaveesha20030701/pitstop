@@ -253,7 +253,6 @@ export interface UpdateRoutePayload {
 }
 
 export interface UpdateSectionPayload {
-  sectionId: number;
   title?: string;
   description?: string;
   sectionType?: string;
@@ -261,6 +260,7 @@ export interface UpdateSectionPayload {
   redirectUrl?: string;
   customSectionTheme?: CustomTheme;
   tags?: string;
+  reorderSections?: ReorderSectionItem[];
 }
 
 export interface UpdateContentPayload {
@@ -351,11 +351,6 @@ export interface CustomStylingInfo {
 export type ReorderSectionItem = {
   sectionId: number;
   sectionOrder: number;
-};
-
-// Reordering multiple section items
-export type ReorderSectionsPayload = {
-  reorderSections: ReorderSectionItem[];
 };
 
 // Single content item to be reordered

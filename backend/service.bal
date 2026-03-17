@@ -931,7 +931,7 @@ service http:InterceptableService / on new http:Listener(9090) {
     #
     # + updatedSectionPayload - New section details
     # + return - Success or error respon
-    resource function patch sections(http:RequestContext ctx, types:UpdateSectionPayload updatedSectionPayload)
+    resource function patch sections/[int sectionId](http:RequestContext ctx, types:UpdateSectionPayload updatedSectionPayload)
         returns http:Ok|http:Forbidden|http:NotFound|http:BadRequest|http:InternalServerError {
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
@@ -968,7 +968,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             }
         }
 
-        int|error? section = database:updateSection(updatedSectionPayload);
+        int|error? section = database:updateSection(sectionId, updatedSectionPayload);
         if section is error || section is () {
             string customError = "Error while updating section";
             log:printError(customError, section);
@@ -1123,45 +1123,6 @@ service http:InterceptableService / on new http:Listener(9090) {
         error? result = database:reorderContents(reorderContentsPayload);
         if result is error {
             string customError = "Failed to reorder contents";
-            log:printError(customError, result);
-            return <http:InternalServerError>{
-                body: {
-                    "message": customError
-                }
-            };
-        }
-
-        return http:OK;
-    }
-
-    # Reorder sections.
-    #
-    # + reorderSectionsPayload - Reorder section payload
-    # + return - Success or error responses
-    resource function patch sections/reorder(http:RequestContext ctx,
-            types:ReorderSectionPayload reorderSectionsPayload)
-        returns http:Ok|http:BadRequest|http:Forbidden|http:InternalServerError {
-
-        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
-        if userGroups is error {
-            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
-            return <http:InternalServerError>{
-                body: constants:GET_USER_ROLE_ERROR
-            };
-        }
-
-        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
-            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
-            return http:FORBIDDEN;
-        }
-
-        if reorderSectionsPayload.reorderSections.length() == 0 {
-            return http:BAD_REQUEST;
-        }
-
-        error? result = database:reorderSections(reorderSectionsPayload);
-        if result is error {
-            string customError = "Failed to reorder sections";
             log:printError(customError, result);
             return <http:InternalServerError>{
                 body: {

@@ -121,10 +121,15 @@ public type UpdateRoutePayload record {|
     boolean isVisible;
 |};
 
-# Update section payload.
-public type UpdateSectionPayload record {|
+public type SwapSectionOrders record {|
     # Section ID
     int sectionId;
+    # Section Order
+    int sectionOrder;
+|};
+
+# Update section payload.
+public type UpdateSectionPayload record {|
     # Type of the section
     string sectionType?;
     # Image url
@@ -139,6 +144,8 @@ public type UpdateSectionPayload record {|
     CustomTheme customSectionTheme?;
     # Vertical tags
     string tags?;
+    # Array of section items to reorder
+    SwapSectionOrders[] reorderSections?;
 |};
 
 # Update content payload.
@@ -431,19 +438,6 @@ public type ReorderContentPayload record {|
     SwapContentOrders[] reorderContents;
 |};
 
-# Update section order record.
-public type SwapSectionOrders record {|
-    # Section ID
-    int sectionId;
-    # Section Order
-    int sectionOrder;
-|};
-
-# Payload for reordering sections.
-public type ReorderSectionPayload record {|
-    # Array of section items to reorder
-    SwapSectionOrders[] reorderSections;
-|};
 
 # Update route order record.
 public type ReorderRouteItem record {|

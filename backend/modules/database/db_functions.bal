@@ -270,10 +270,11 @@ public isolated function getSectionById(int sectionId) returns types:SectionPayl
 
 # Update section.
 #
+# + sectionId - Section ID
 # + updateSectionPayload - New section details
 # + return - Error or nil
-public isolated function updateSection(types:UpdateSectionPayload updateSectionPayload) returns int|error? {
-    sql:ExecutionResult result = check dbClient->execute(updateSectionQuery(updateSectionPayload));
+public isolated function updateSection(int sectionId, types:UpdateSectionPayload updateSectionPayload) returns int|error? {
+    sql:ExecutionResult result = check dbClient->execute(updateSectionQuery(sectionId, updateSectionPayload));
     return result.affectedRowCount;
 }
 
@@ -437,18 +438,6 @@ public isolated function reorderContents(types:ReorderContentPayload reorderPayl
     }
 
     _ = check dbClient->execute(reorderContentsQuery(reorderPayload));
-}
-
-# Reorder sections in the database.
-#
-# + reorderPayload - Reorder section payload
-# + return - Error or nil
-public isolated function reorderSections(types:ReorderSectionPayload reorderPayload) returns error? {
-    if reorderPayload.reorderSections.length() == 0 {
-        return;
-    }
-
-    _ = check dbClient->execute(reorderSectionsQuery(reorderPayload));
 }
 
 # Reorder routes in the database.

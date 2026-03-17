@@ -27,7 +27,6 @@ import {
   ReorderContentsPayload,
   ContentReportResponse,
   TagResponse,
-  ReorderSectionsPayload,
   UpdateCommentPayload,
   CustomTheme,
 } from "@/types/types";
@@ -575,17 +574,6 @@ export const PageSlice = createSlice({
       })
       .addCase(reorderContents.rejected, (state) => {
         state.swapContentsState = CONTENT_STATE_FAILED;
-      })
-
-      //Reorder sections
-      .addCase(reorderSections.pending, (state) => {
-        state.swapSectionsState = CONTENT_STATE_LOADING;
-      })
-      .addCase(reorderSections.fulfilled, (state) => {
-        state.swapSectionsState = CONTENT_STATE_SUCCESS;
-      })
-      .addCase(reorderSections.rejected, (state) => {
-        state.swapSectionsState = CONTENT_STATE_FAILED;
       })
 
       //Search contents
@@ -1410,34 +1398,6 @@ export const deleteComment = createAsyncThunk(
               message:
                 resp?.response?.data?.message ||
                 "Something went wrong while deleting the comment",
-              type: "error",
-              anchorOrigin: {
-                vertical: "bottom",
-                horizontal: "right",
-              },
-            })
-          );
-          reject(resp);
-        });
-    });
-  }
-);
-
-export const reorderSections = createAsyncThunk(
-  "pitstop/reorderSections",
-  async (payload: ReorderSectionsPayload, { dispatch }) => {
-    return new Promise<unknown>((resolve, reject) => {
-      ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.reorderSections, {
-          reorderSections: payload.reorderSections,
-        })
-        .then((resp) => {
-          resolve({ requestResponse: resp.data });
-        })
-        .catch((resp) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Something went wrong while reordering the sections :(",
               type: "error",
               anchorOrigin: {
                 vertical: "bottom",

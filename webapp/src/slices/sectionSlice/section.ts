@@ -161,10 +161,13 @@ export const deleteSection = createAsyncThunk(
 //Update a section
 export const updateSection = createAsyncThunk(
   "pitstop/updateSection",
-  async (payload: { section: UpdateSectionPayload; routePath: string }, { dispatch }) => {
+  async (
+    payload: { sectionId: string; section: UpdateSectionPayload; routePath: string },
+    { dispatch }
+  ) => {
     return new Promise<unknown>((resolve, reject) => {
       ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.updateSection, payload.section)
+        .patch(AppConfig.serviceUrls.updateSection(payload.sectionId), payload.section)
         .then((resp) => {
           if (resp.status == 200) {
             dispatch(getPageData(payload.routePath));
@@ -176,7 +179,7 @@ export const updateSection = createAsyncThunk(
                   vertical: "bottom",
                   horizontal: "right",
                 },
-              }),
+              })
             );
             resolve({ requestResponse: resp.data });
           }
@@ -190,12 +193,12 @@ export const updateSection = createAsyncThunk(
                 vertical: "bottom",
                 horizontal: "right",
               },
-            }),
+            })
           );
           reject(resp);
         });
     });
-  },
+  }
 );
 
 export default SectionSlice.reducer;
