@@ -68,35 +68,35 @@ isolated function getAllRoutesFlatQuery() returns sql:ParameterizedQuery =>
 isolated function updateRouteQuery(int? routeId, types:UpdateRoutePayload payload) 
     returns sql:ParameterizedQuery {
 
-    sql:ParameterizedQuery[] setClauses = [];
+    sql:ParameterizedQuery[] sqlQueries = [];
 
     //Normal field updates 
     if payload.title is string { 
-        setClauses.push(`title = ${payload.title}`); 
+        sqlQueries.push(`title = ${payload.title}`); 
     }
 
     if payload.description is string { 
-        setClauses.push(`description = ${payload.description}`); 
+        sqlQueries.push(`description = ${payload.description}`); 
     }
 
     if payload.thumbnail is string { 
-        setClauses.push(`thumbnail = ${payload.thumbnail}`); 
+        sqlQueries.push(`thumbnail = ${payload.thumbnail}`); 
     }
 
     if payload.menuItem is string { 
-        setClauses.push(`menu_item = ${payload.menuItem}`); 
+        sqlQueries.push(`menu_item = ${payload.menuItem}`); 
     }
 
     if payload.isVisible is boolean { 
-        setClauses.push(`isVisible = ${payload.isVisible}`); 
+        sqlQueries.push(`isVisible = ${payload.isVisible}`); 
     }
 
     if payload.customPageTheme is types:CustomTheme { 
-        setClauses.push(`styling_info = ${payload.customPageTheme.toJsonString()}`); 
+        sqlQueries.push(`styling_info = ${payload.customPageTheme.toJsonString()}`); 
     }
 
     if payload.isRouteVisible is boolean { 
-        setClauses.push(`isRouteVisible = ${payload.isRouteVisible}`); 
+        sqlQueries.push(`isRouteVisible = ${payload.isRouteVisible}`); 
     }
 
     //Reordering
@@ -114,14 +114,14 @@ isolated function updateRouteQuery(int? routeId, types:UpdateRoutePayload payloa
         reorderClause = sql:queryConcat(`route_order = CASE `, ...caseWhen);
     }
 
-    if setClauses.length() == 0 && reorderClause is () {
+    if sqlQueries.length() == 0 && reorderClause is () {
         return `SELECT 0 WHERE FALSE`;
     }
 
     sql:ParameterizedQuery query = `UPDATE route SET `;
     boolean isFirst = true;
 
-    foreach var clause in setClauses {
+    foreach var clause in sqlQueries {
         if !isFirst { query = sql:queryConcat(query, `, `); }
         query = sql:queryConcat(query, clause);
         isFirst = false;
@@ -155,15 +155,16 @@ isolated function updateRouteQuery(int? routeId, types:UpdateRoutePayload payloa
     return query;
 }
 
-# Query to create a content.
+# Query to add a unified content (section or route content).
 #
-# + createdBy - Created by user email 
-# + content - Content details
+# + content - Content payload (with either sectionId or routeId)
+# + createdBy - User email who created the content
 # + return - SQL parameterized query
 isolated function addContentQuery(types:ContentPayload content, string createdBy)
     returns sql:ParameterizedQuery => `
         INSERT INTO content(
             section_id, 
+            route_id,
             content_link, 
             content_type, 
             content_sub_type,
@@ -180,12 +181,13 @@ isolated function addContentQuery(types:ContentPayload content, string createdBy
         ) 
         VALUES (
             ${content.sectionId}, 
+            ${content.routeId},
             ${content.contentLink}, 
             ${content.contentType},
             ${content.contentSubtype},
             ${content.description}, 
             ${content.thumbnail}, 
-            ${content.customContentTheme.toJsonString()}, 
+            ${(content.customContentTheme is types:CustomTheme) ? content.customContentTheme.toJsonString() : ()},
             ${content.isDeleted}, 
             ${createdBy}, 
             ${createdBy}, 
@@ -217,8 +219,9 @@ isolated function addCommentQuery(types:Comment comment) returns sql:Parameteriz
 # + contentType - Type of the content
 # + contentId - Content ID of the content
 # + sectionId - Section ID of the content
+# + routeId - Route ID of the content
 # + return - SQL parameterized query
-isolated function getContentIdQuery(string? contentLink, string? contentType, int? sectionId, int? contentId)
+isolated function getContentIdQuery(string? contentLink, string? contentType, int? sectionId, int? contentId, int? routeId = ())
     returns sql:ParameterizedQuery {
     sql:ParameterizedQuery query = `
         SELECT
@@ -235,6 +238,11 @@ isolated function getContentIdQuery(string? contentLink, string? contentType, in
         return sql:queryConcat(query, ` AND content_type = ${contentType} 
             AND content_link = ${contentLink} 
             AND section_id = ${sectionId}`
+            );
+    } else if contentType is string && contentLink is string && routeId is int {
+        return sql:queryConcat(query, ` AND content_type = ${contentType} 
+            AND content_link = ${contentLink} 
+            AND route_id = ${routeId}`
             );
     }
     return query;
@@ -312,16 +320,17 @@ isolated function deleteContentByIdQuery(int contentId) returns sql:Parameterize
         content_id = ${contentId}
 `;
 
-# Query to get all the contents under a given section.
+# Query to get contents by section ID or route ID using a unified query.
 #
-# + isUser - Whether the request is from a normal user
-# + sectionId - Section ID of the content
-# + userEmail - User email
-# + limit - Number of records to retrieve
-# + offset - Number of records to offset
+# + isUser - Boolean indicating if the requester is a user or admin
+# + sectionId - Section ID (optional, null if filtering by route)
+# + routeId - Route ID (optional, null if filtering by section)
+# + userEmail - User email for like status filtering
+# + 'limit - Number of records to retrieve
+# + 'offset - Number of records to offset
 # + return - SQL parameterized query
-isolated function getContentsBySectionIdQuery(boolean isUser, int sectionId, string userEmail, int 'limit, int 'offset)
-    returns sql:ParameterizedQuery => `
+isolated function getContentsQuery(boolean isUser, int? sectionId, int? routeId, string? userEmail, 
+        int 'limit, int 'offset) returns sql:ParameterizedQuery => `
     SELECT
         c.content_id,
         c.section_id,
@@ -337,6 +346,7 @@ isolated function getContentsBySectionIdQuery(boolean isUser, int sectionId, str
         c.tags,
         c.is_visible,
         c.is_reused,
+        c.route_id,
         cl.status,
         COUNT(cmt.comment_id) AS comment_count,
         (
@@ -345,7 +355,7 @@ isolated function getContentsBySectionIdQuery(boolean isUser, int sectionId, str
             FROM 
                 content_like cl_total 
             WHERE 
-                cl_total.content_id = c.content_id  AND cl_total.status = true 
+                cl_total.content_id = c.content_id AND cl_total.status = true 
         ) AS likes_count
     FROM
         content c
@@ -368,7 +378,8 @@ isolated function getContentsBySectionIdQuery(boolean isUser, int sectionId, str
         comment cmt ON c.content_id = cmt.content_id
         AND cmt.is_deleted = false
     WHERE
-        section_id = ${sectionId} AND
+        (${sectionId} IS NULL OR section_id = ${sectionId}) AND
+        (${routeId} IS NULL OR route_id = ${routeId}) AND
         c.is_deleted = false AND
         (CASE WHEN ${isUser} THEN c.is_visible = 1 ELSE true END)
     GROUP BY 
@@ -386,6 +397,7 @@ isolated function getContentsBySectionIdQuery(boolean isUser, int sectionId, str
         c.tags,
         c.is_visible,
         c.is_reused,
+        c.route_id,
         cl.status  
     ORDER BY c.content_order DESC      
     LIMIT ${'limit} 
@@ -416,6 +428,7 @@ isolated function addLikeQuery(types:LikeContent likeContent) returns sql:Parame
 # + return - SQL parameterized query
 isolated function getPageDataQuery(string routePath) returns sql:ParameterizedQuery => `
     SELECT 
+        route_id,
         title,
         description,
         thumbnail,
@@ -486,11 +499,14 @@ isolated function deleteContentsBySectionIdQuery(int sectionId) returns sql:Para
 # Query to update content.
 #
 # + contentId - Content ID to update
-# + updateContentPayload - Content data to change
+# + payload - Content data to change
 # + userEmail - Email of the user for last verified by / updated by
+# + sectionId - Section ID (required for reordering)
+# + routeId - Route ID (required for reordering)
 # + return - SQL parameterized query
-isolated function updateContentQuery(int contentId, types:UpdateContentPayload updateContentPayload, string userEmail)
-    returns sql:ParameterizedQuery {
+isolated function updateContentQuery(int? contentId, types:UpdateContentPayload payload, 
+    string? userEmail = (), int? sectionId = (), int? routeId = ())
+    returns sql:ParameterizedQuery[] {
 
     sql:ParameterizedQuery sqlQuery = `
         UPDATE
@@ -502,52 +518,102 @@ isolated function updateContentQuery(int contentId, types:UpdateContentPayload u
 
     sqlQueries.push(` updated_by = ${userEmail} `);
 
-    if updateContentPayload.description is string {
-        sqlQueries.push(` description = ${updateContentPayload.description} `);
+    if payload.description is string {
+        sqlQueries.push(` description = ${payload.description} `);
     }
 
-    if updateContentPayload.contentLink is string {
-        sqlQueries.push(` content_link = ${updateContentPayload.contentLink} `);
+    if payload.contentLink is string {
+        sqlQueries.push(` content_link = ${payload.contentLink} `);
     }
 
-    if updateContentPayload.contentType is string {
-        sqlQueries.push(` content_type = ${updateContentPayload.contentType} `);
+    if payload.contentType is string {
+        sqlQueries.push(` content_type = ${payload.contentType} `);
     }
-    if updateContentPayload.contentSubtype is string {
-        sqlQueries.push(` content_sub_type = ${updateContentPayload.contentSubtype} `);
-    }
-
-    if updateContentPayload.thumbnail is string {
-        sqlQueries.push(` thumbnail = ${updateContentPayload.thumbnail} `);
+    if payload.contentSubtype is string {
+        sqlQueries.push(` content_sub_type = ${payload.contentSubtype} `);
     }
 
-    if updateContentPayload.note is string {
-        sqlQueries.push(` note = ${updateContentPayload.note} `);
+    if payload.thumbnail is string {
+        sqlQueries.push(` thumbnail = ${payload.thumbnail} `);
     }
 
-    if updateContentPayload.customContentTheme is types:CustomTheme {
-        sqlQueries.push(` styling_info = ${updateContentPayload.customContentTheme.toJsonString()} `);
+    if payload.note is string {
+        sqlQueries.push(` note = ${payload.note} `);
     }
 
-    if updateContentPayload.verifyContent is boolean {
-        sqlQueries.push(` last_verified_on = CURRENT_TIMESTAMP()`);
-        sqlQueries.push(` last_verified_by = ${userEmail}`);
+    if payload.customContentTheme is types:CustomTheme {
+        sqlQueries.push(` styling_info = ${payload.customContentTheme.toJsonString()} `);
     }
 
-    if updateContentPayload.tags is string {
-        sqlQueries.push(` tags = ${updateContentPayload.tags}`);
+    if payload.verifyContent is boolean {
+        sqlQueries.push(`last_verified_on = CURRENT_TIMESTAMP()`);
+        if userEmail is string {
+            sqlQueries.push(`last_verified_by = ${userEmail}`);
+        }
     }
 
-    if updateContentPayload.isVisible is boolean {
-        sqlQueries.push(` is_visible = ${updateContentPayload.isVisible}`);
+    if payload.tags is string { 
+        sqlQueries.push(`tags = ${payload.tags}`);
+    }
+    if payload.isVisible is boolean { 
+        sqlQueries.push(`is_visible = ${payload.isVisible}`); 
+    }
+    if payload.isReused is boolean { 
+        sqlQueries.push(`is_reused = ${payload.isReused}`); 
     }
 
-    if updateContentPayload.isReused is boolean {
-        sqlQueries.push(` is_reused = ${updateContentPayload.isReused}`);
+    if sqlQueries.length() > 0 && contentId is int {
+        sql:ParameterizedQuery fieldQuery = `UPDATE content SET `;
+        boolean isFirst = true;
+        
+        foreach var clause in sqlQueries {
+            if !isFirst { fieldQuery = sql:queryConcat(fieldQuery, `, `); }
+            fieldQuery = sql:queryConcat(fieldQuery, clause);
+            isFirst = false;
+        }
+        
+        fieldQuery = sql:queryConcat(fieldQuery, ` WHERE content_id = ${contentId} AND is_deleted = false`);
+        sqlQueries = [];
+        sqlQueries.push(fieldQuery);
     }
 
-    sqlQuery = buildSqlUpdateQuery(sqlQuery, sqlQueries);
-    return sql:queryConcat(sqlQuery, ` WHERE  content_id = ${contentId} AND is_deleted = false`);
+    //Reordering 
+    var reorderContents = payload.reorderContents;
+    
+    if reorderContents is types:SwapContentOrders[] && reorderContents.length() > 0 {
+        sql:ParameterizedQuery[] caseWhen = [];
+        sql:ParameterizedQuery[] contentIds = [];
+        
+        foreach var item in reorderContents {
+            caseWhen.push(`WHEN content_id = ${item.contentId} THEN ${item.contentOrder} `);
+            contentIds.push(`${item.contentId}`);
+        }
+        
+        caseWhen.push(` END`);
+        sql:ParameterizedQuery caseClause = sql:queryConcat(`content_order = CASE `, ...caseWhen);
+        sql:ParameterizedQuery reorderQuery = sql:queryConcat(`UPDATE content SET `, caseClause);
+        
+        sql:ParameterizedQuery idList = contentIds[0];
+        foreach int i in 1 ..< contentIds.length() {
+            idList = sql:queryConcat(idList, `, `, contentIds[i]);
+        }
+        
+        reorderQuery = sql:queryConcat(reorderQuery, ` WHERE content_id IN (`, idList, `) AND is_deleted = false`);
+
+        if sectionId is int {
+            reorderQuery = sql:queryConcat(reorderQuery, ` AND section_id = ${sectionId}`);
+        } else if routeId is int {
+            reorderQuery = sql:queryConcat(reorderQuery, ` AND route_id = ${routeId}`);
+        }
+
+        sqlQueries.push(reorderQuery);
+    }
+
+    if sqlQueries.length() == 0 {
+        sqlQueries.push(`SELECT 0 WHERE FALSE`);
+    }
+
+    return sqlQueries;
 }
 
 # Query to update section fields and reorder sections in one query.
@@ -559,42 +625,42 @@ isolated function updateSectionQuery(int sectionId, types:UpdateSectionPayload p
     returns sql:ParameterizedQuery[] {
 
     sql:ParameterizedQuery[] queries = [];
-    sql:ParameterizedQuery[] setClauses = [];
+    sql:ParameterizedQuery[] sqlQueries = [];
 
     //Normal field updates
     if payload.title is string { 
-        setClauses.push(`title = ${payload.title}`); 
+        sqlQueries.push(`title = ${payload.title}`); 
     }
 
     if payload.description is string { 
-        setClauses.push(`description = ${payload.description}`); 
+        sqlQueries.push(`description = ${payload.description}`); 
     }
 
     if payload.sectionType is string { 
-        setClauses.push(`section_type = ${payload.sectionType}`); 
+        sqlQueries.push(`section_type = ${payload.sectionType}`); 
     }
 
     if payload.imageUrl is string { 
-        setClauses.push(`image_url = ${payload.imageUrl}`); 
+        sqlQueries.push(`image_url = ${payload.imageUrl}`); 
     }
 
     if payload.redirectUrl is string { 
-        setClauses.push(`redirect_url = ${payload.redirectUrl}`); 
+        sqlQueries.push(`redirect_url = ${payload.redirectUrl}`); 
     }
 
     if payload.tags is string { 
-        setClauses.push(`tags = ${payload.tags}`); 
+        sqlQueries.push(`tags = ${payload.tags}`); 
     }
     
     if payload.customSectionTheme is types:CustomTheme { 
-        setClauses.push(`styling_info = ${payload.customSectionTheme.toJsonString()}`); 
+        sqlQueries.push(`styling_info = ${payload.customSectionTheme.toJsonString()}`); 
     }
 
-    if setClauses.length() > 0 {
+    if sqlQueries.length() > 0 {
         sql:ParameterizedQuery fieldQuery = `UPDATE section SET `;
         boolean isFirst = true;
         
-        foreach var clause in setClauses {
+        foreach var clause in sqlQueries {
             if !isFirst { fieldQuery = sql:queryConcat(fieldQuery, `, `); }
             fieldQuery = sql:queryConcat(fieldQuery, clause);
             isFirst = false;
@@ -746,67 +812,6 @@ isolated function getCommentsByContentIdQuery(int contentId) returns sql:Paramet
         content_id =${contentId} AND is_deleted = false;
 `;
 
-# Query to reorder contents within a section.
-#
-# + reorderPayload - Reorder content payload
-# + return - SQL parameterized query
-isolated function reorderContentsQuery(types:ReorderContentPayload reorderPayload) returns sql:ParameterizedQuery {
-    sql:ParameterizedQuery[] caseStatements = from var content in reorderPayload.reorderContents
-        select `WHEN content_id = ${content.contentId} THEN ${content.contentOrder}`;
-    sql:ParameterizedQuery caseClause = sql:queryConcat(...caseStatements);
-
-    sql:ParameterizedQuery[] contentIdParams = [];
-    int index = 0;
-    foreach var content in reorderPayload.reorderContents {
-        contentIdParams.push(`${content.contentId}`);
-        if index < reorderPayload.reorderContents.length() - 1 {
-            contentIdParams.push(`, `);
-        }
-        index += 1;
-    }
-    sql:ParameterizedQuery contentIdsClause = sql:queryConcat(...contentIdParams);
-    sql:ParameterizedQuery finalQuery = sql:queryConcat(
-            `UPDATE content
-         SET content_order = CASE `, caseClause, ` END
-         WHERE content_id IN (`, contentIdsClause, `)
-         AND section_id = ${reorderPayload.sectionId}
-         AND is_deleted = false`
-    );
-    return finalQuery;
-}
-
-# Query to reorder route contents.
-#
-# + routeId - Route ID
-# + reorderPayload - Reorder route content payload
-# + return - SQL parameterized query
-isolated function reorderRouteContentsQuery(string routeId, types:ReorderRouteContentPayload reorderPayload) 
-    returns sql:ParameterizedQuery {
-
-    sql:ParameterizedQuery[] caseStatements = from var content in reorderPayload.reorderContents
-        select `WHEN content_id = ${content.contentId} THEN ${content.contentOrder}`;
-    sql:ParameterizedQuery caseClause = sql:queryConcat(...caseStatements);
-
-    sql:ParameterizedQuery[] contentIdParams = [];
-    int index = 0;
-    foreach var content in reorderPayload.reorderContents {
-        contentIdParams.push(`${content.contentId}`);
-        if index < reorderPayload.reorderContents.length() - 1 {
-            contentIdParams.push(`, `);
-        }
-        index += 1;
-    }
-    sql:ParameterizedQuery contentIdsClause = sql:queryConcat(...contentIdParams);
-    sql:ParameterizedQuery finalQuery = sql:queryConcat(`
-         UPDATE content
-         SET content_order = CASE `, caseClause, ` END
-         WHERE content_id IN (`, contentIdsClause, `)
-         AND route_id = ${routeId}
-         AND is_deleted = false`
-    );
-    return finalQuery;
-}
-
 # Query to get required details of all content for report.
 #
 # + return - SQL parameterized query
@@ -891,87 +896,6 @@ isolated function deleteTagQuery(string tagName) returns sql:ParameterizedQuery 
     SET is_deleted = TRUE
     WHERE tag_name = ${tagName}
     AND is_deleted = FALSE;
-`;
-
-# Query to get contents by route ID.
-#
-# + return - SQL parameterized query
-isolated function getRouteContentByRouteIdQuery() returns sql:ParameterizedQuery => `
-    SELECT 
-        c.content_id AS contentId,
-        route_id AS routeId,
-        c.content_link AS contentLink,
-        c.description AS description,
-        c.content_type AS contentType,
-        c.content_order AS contentOrder
-    FROM 
-        content c
-    WHERE 
-        c.route_id IS NOT NULL
-        AND c.is_deleted = false
-    ORDER BY contentOrder ASC;
-`;
-
-# Query to insert a new content item for a route.
-#
-# + payload - Content creation payload
-# + return - SQL parameterized query
-isolated function addRouteContentQuery(types:RouteContentPayload payload) returns sql:ParameterizedQuery => `
-    INSERT INTO content (
-        route_id,
-        content_link,
-        description,
-        content_type,
-        is_deleted
-    ) VALUES (
-        ${payload.routeId},
-        ${payload.contentLink},
-        ${payload.description},
-        ${ROUTE_CONTENT_TYPE},
-        false
-    );
-`;
-
-# Query to update a content item for a route.
-#
-# + payload - Content creation payload
-# + return - SQL parameterized query
-isolated function updateRouteContentQuery(types:UpdateRouteContentPayload payload) returns sql:ParameterizedQuery {
-    sql:ParameterizedQuery sqlQuery = `
-        UPDATE
-            content
-        SET 
-    `;
-
-    sql:ParameterizedQuery[] sqlQueries = [];
-
-    if payload.contentLink is string {
-        sqlQueries.push(` content_link = ${payload.contentLink} `);
-    }
-
-    if payload.description is string {
-        sqlQueries.push(` description = ${payload.description} `);
-    }
-
-    // Guard against empty updates - return no-op query if no fields to update
-    if sqlQueries.length() == 0 {
-        return `SELECT 0 WHERE FALSE`;
-    }
-
-    sqlQuery = buildSqlUpdateQuery(sqlQuery, sqlQueries);
-    return sql:queryConcat(sqlQuery, ` WHERE content_id = ${payload.contentId} AND is_deleted = false`);
-}
-
-# Query to delete a content in a route.
-#
-# + contentId - Content Id
-# + return - SQL parameterized query
-isolated function DeleteRouteContentQuery(int contentId) returns sql:ParameterizedQuery => `
-    UPDATE content
-    SET 
-        is_deleted = true
-    WHERE 
-        content_id = ${contentId} AND is_deleted = false;
 `;
 
 # Query to reparent routes to a new parent.

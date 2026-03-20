@@ -68,29 +68,31 @@ public type SectionPayload record {|
     string tags?;
 |};
 
-# Content payload.
+# Content payload. Can be used for both regular content (with sectionId) and route content (with routeId).
 public type ContentPayload record {|
     # Section ID
-    int sectionId;
+    int? sectionId = ();
+    # Route ID
+    int? routeId = ();
     # Link to redirect to the content
     @constraint:String {pattern: constants:URL}
     string contentLink;
     # Type of the content
     string contentType;
     # Content subtype of the content
-    string contentSubtype?;
+    string? contentSubtype = ();
     # Thumbnail image url
-    string thumbnail?;
+    string? thumbnail = ();
     # Content notes
-    string note?;
+    string? note = ();
     # Content description
     string description;
     # Content custom theme 
-    CustomTheme customContentTheme?;
-    # Boolean value ro check the deletion of the content
+    CustomTheme? customContentTheme = ();
+    # Boolean value to check the deletion of the content
     boolean isDeleted = false;
     # Content tags
-    string tags;
+    string? tags = ();
     # Content reuse 
     boolean isReused = false;
 |};
@@ -176,6 +178,8 @@ public type UpdateContentPayload record {|
     boolean isVisible?;
     # Content reuse
     boolean isReused?;
+    # Array of content items to reorder
+    SwapContentOrders[] reorderContents?;
 |};
 
 # Route response.
@@ -196,6 +200,8 @@ public type RouteResponse record {|
 
 # Page response.
 public type PageResponse record {|
+    # Route ID
+    int routeId?;
     # Page title
     string title;
     # Page description
@@ -204,6 +210,8 @@ public type PageResponse record {|
     string thumbnail?;
     # Page custom theme
     CustomTheme customPageTheme?;
+    # Route contents
+    ContentResponse[] routeContents?;
     # Sub page visibility
     boolean isVisible;
 |};
@@ -237,7 +245,7 @@ public type ContentResponse record {|
     # Content ID
     int contentId;
     # Route ID
-    int sectionId;
+    int? sectionId;
     # Link to redirect to the content
     string contentLink;
     # Type of the content
@@ -264,6 +272,8 @@ public type ContentResponse record {|
     int commentCount;
     # Content tags
     string[] tags?;
+    #route id
+    int? routeId;
     # Content visibility
     boolean isVisible;
     # Content reuse
@@ -434,15 +444,6 @@ public type SwapContentOrders record {|
     int contentOrder;
 |};
 
-# Payload for reordering contents.
-public type ReorderContentPayload record {|
-    # Section ID
-    int sectionId;
-    # Array of content items to reorder
-    SwapContentOrders[] reorderContents;
-|};
-
-
 # Update route order record.
 public type ReorderRouteItem record {|
     # Route ID
@@ -505,32 +506,6 @@ public type RouteContentItem record {|
     string contentType;
     # Content order
     int contentOrder;
-|};
-
-# Payload for creating content under a route.
-public type RouteContentPayload record {|
-    # Route ID
-    int routeId;
-    # Content link
-    string contentLink;
-    # Content description
-    string description;
-|};
-
-# Payload for reordering route content.
-public type ReorderRouteContentPayload record {|
-    # Array of content items to reorder
-    SwapContentOrders[] reorderContents;
-|};
-
-# Payload for updating content under a route.
-public type UpdateRouteContentPayload record {|
-    # Content ID
-    int contentId;
-    # Content link
-    string contentLink;
-    # Content description
-    string description;
 |};
 
 # Payload for reparenting routes.

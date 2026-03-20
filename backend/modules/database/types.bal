@@ -136,6 +136,9 @@ public type CustomButtonUpdatePayload record {|
 
 # Page response record.
 public type PageResponse record {|
+    # Route ID
+    @sql:Column {name: "route_id"}
+    int routeId;
     # Page title
     string title;
     # Page description
@@ -154,9 +157,9 @@ public type ContentResponse record {|
     # Id of the content
     @sql:Column {name: "content_id"}
     int contentId;
-    # Route ID
+    # Section ID
     @sql:Column {name: "section_id"}
-    int sectionId;
+    int? sectionId;
     # Link to redirect to the content
     @sql:Column {name: "content_link"}
     string contentLink;
@@ -191,6 +194,9 @@ public type ContentResponse record {|
     int commentCount;
     # Content tags
     string tags?;
+    #route id
+    @sql:Column {name: "route_id"}
+    int? routeId;
     # Content visibility
     @sql:Column {name: "is_visible"}
     boolean isVisible;
@@ -235,7 +241,7 @@ public type PinnedContentResponse record {|
     int contentId;
     # Route ID
     @sql:Column {name: "section_id"}
-    int sectionId;
+    int? sectionId;
     # Link to redirect to the content
     @sql:Column {name: "content_link"}
     string contentLink;
@@ -270,6 +276,9 @@ public type PinnedContentResponse record {|
     int commentCount;
     # Content tags
     string tags;
+    # route id
+    @sql:Column {name: "route_id"}
+    int? routeId;
     # Content visibility
     @sql:Column {name: "is_visible"}
     boolean isVisible;

@@ -173,12 +173,13 @@ service http:InterceptableService / on new http:Listener(9090) {
         return http:CREATED;
     }
 
-    # Add a new content under a particular router path.
+    # Add a new content under a particular section or route.
     #
-    # + contentPayload - ContentPayload data
+    # + ctx - Request context
+    # + contentPayload - ContentPayload data (can contain either sectionId or routeId, but not both)
     # + return - Success or error responses
-    resource function post contents(types:ContentPayload contentPayload, http:RequestContext ctx)
-        returns http:Created|http:Conflict|http:Forbidden|http:InternalServerError {
+    resource function post contents(http:RequestContext ctx, types:ContentPayload contentPayload)
+        returns http:Created|http:Conflict|http:Forbidden|http:BadRequest|http:InternalServerError {
 
         string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
         if userEmail is error {
@@ -202,10 +203,32 @@ service http:InterceptableService / on new http:Listener(9090) {
             return http:FORBIDDEN;
         }
 
+        // Validate that either sectionId or routeId is provided, but not both
+        if (contentPayload.sectionId is () && contentPayload.routeId is ()) {
+            log:printError("Either sectionId or routeId must be provided");
+            return <http:BadRequest>{
+                body: "Either sectionId or routeId must be provided"
+            };
+        }
+
+        if (contentPayload.sectionId is int && contentPayload.routeId is int) {
+            log:printError("Cannot provide both sectionId and routeId");
+            return <http:BadRequest>{
+                body: "Cannot provide both sectionId and routeId"
+            };
+        }
+
+        types:ContentPayload finalPayload = contentPayload;
+        if contentPayload.routeId is int {
+            finalPayload.contentType = "route_content";
+        }
+
         boolean|error? isContentExistsResult = database:checkContentExists(
             contentPayload.contentLink,
             contentPayload.contentType,
-            contentPayload.sectionId
+            contentPayload.sectionId,
+            (),
+            contentPayload.routeId
         );
         if isContentExistsResult is error {
             string customError = "Error while checking content existence";
@@ -483,14 +506,16 @@ service http:InterceptableService / on new http:Listener(9090) {
         return sectionResponseData;
     }
 
-    # Get contents under a given section ID.
+    # Get contents with optional filtering by section ID or route ID.
     #
+    # + ctx - Request context
     # + sectionId - Section ID to get contents
+    # + routeId - Route ID
     # + limit - Number of contents to retrieve
     # + offset - Number of contents to offset
     # + return - Contents or error responses
-    resource function get routes/sections/[int sectionId]/contents(int 'limit, int 'offset, http:RequestContext ctx)
-        returns types:ContentResponse[]|http:NotFound|http:InternalServerError {
+    resource function get contents(http:RequestContext ctx, int? sectionId = (), int? routeId = (), int 'limit = 10, int 'offset = 0)
+        returns types:ContentResponse[]|http:NotFound|http:Forbidden|http:BadRequest|http:InternalServerError {
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
@@ -510,40 +535,62 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
+        // Validate that either sectionId or routeId is provided, but not both
+        if (sectionId is () && routeId is ()) {
+            log:printError("Either sectionId or routeId must be provided");
+            return <http:BadRequest>{
+                body: "Either sectionId or routeId must be provided"
+            };
+        }
+
+        if (sectionId is int && routeId is int) {
+            log:printError("Cannot provide both sectionId and routeId");
+            return <http:BadRequest>{
+                body: "Cannot provide both sectionId and routeId"
+            };
+        }
+
         types:ContentResponse[]|error contents = [];
-        if sectionId == RECENT_CONTENT_SECTION_ID {
-            contents = database:getRecentContents(userEmail, recentContentsLimit, 0);
-        } else if sectionId == PINNED_CONTENT_SECTION_ID {
-            contents = database:getPinnedContents(userEmail, 'limit, 'offset);
-        } else if sectionId == SUGGESTED_CONTENT_SECTION_ID {
-            analytics:VisitSummary|error visitSummary = trap analytics:processRecentActivityForUser(userEmail);
-            if visitSummary is error {
-                log:printWarn("Analytics unavailable. Using fallback suggestions", userEmail = userEmail);
-                contents = database:getSuggestionsFromPinnedContents(userEmail, suggestedContentsLimit, 0);
+
+        if sectionId is int {
+            if sectionId == RECENT_CONTENT_SECTION_ID {
+                contents = database:getRecentContents(userEmail, recentContentsLimit, 0);
+            } else if sectionId == PINNED_CONTENT_SECTION_ID {
+                contents = database:getPinnedContents(userEmail, 'limit, 'offset);
+            } else if sectionId == SUGGESTED_CONTENT_SECTION_ID {
+                analytics:VisitSummary|error visitSummary = trap analytics:processRecentActivityForUser(userEmail);
+                if visitSummary is error {
+                    log:printWarn("Analytics unavailable. Using fallback suggestions", userEmail = userEmail);
+                    contents = database:getSuggestionsFromPinnedContents(userEmail, suggestedContentsLimit, 0);
+                } else {
+                    log:printDebug("Analytics data loaded for suggested section", userEmail = userEmail);
+                    contents = database:getSuggestionsFromRecentActivity(userEmail, visitSummary.searchedKeywords,
+                        visitSummary.viewedContentNames, suggestedContentsLimit, 0);
+                }
             } else {
-                log:printDebug("Analytics data loaded for suggested section", userEmail = userEmail);
-                contents = database:getSuggestionsFromRecentActivity(userEmail, visitSummary.searchedKeywords,
-                    visitSummary.viewedContentNames, suggestedContentsLimit, 0);
+                boolean|error? exists = database:checkSectionExists((), (), sectionId);
+                if exists is error {
+                    string customError = "Error while checking section existence.";
+                    log:printError(customError, exists);
+                    return <http:InternalServerError>{
+                        body: {message: customError}
+                    };
+                }
+                if exists is boolean && !exists {
+                    return <http:NotFound>{
+                        body: {message: "Section not found."}
+                    };
+                }
+                contents = database:getContents(isUser, 'limit, 'offset, sectionId, (), userEmail);
             }
-        } else {
-            boolean|error? exists = database:checkSectionExists((), (), sectionId);
-            if exists is error {
-                string customError = "Error while checking section existence.";
-                log:printError(customError, exists);
-                return <http:InternalServerError>{
-                    body: {message: customError}
-                };
-            }
-            if exists is boolean && !exists {
-                return <http:NotFound>{
-                    body: {message: "Section not found."}
-                };
-            }
-            contents = database:getContentsBySectionId(isUser, sectionId, userEmail, 'limit, 'offset);
+        } else if routeId is int {
+            contents = database:getContents(isUser, 'limit, 'offset, (), routeId, userEmail);
         }
 
         if contents is error {
-            string customError = "Error while fetching contents for section ID: " + sectionId.toString();
+            string customError = sectionId is int ? 
+                "Error while fetching contents for section ID: " + sectionId.toString() :
+                "Error while fetching contents for route ID: " + (routeId is int ? routeId.toString() : "unknown");
             log:printError(customError, contents);
             return <http:InternalServerError>{
                 body: {message: customError}
@@ -1095,93 +1142,6 @@ service http:InterceptableService / on new http:Listener(9090) {
         return contentResponse;
     }
 
-    # Reorder contents within a section.
-    #
-    # + reorderContentsPayload - Reorder content payload
-    # + return - Success or error responses
-    resource function patch contents/reorder(http:RequestContext ctx,
-            types:ReorderContentPayload reorderContentsPayload)
-        returns http:Ok|http:BadRequest|http:Forbidden|http:InternalServerError {
-
-        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
-        if userGroups is error {
-            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
-            return <http:InternalServerError>{
-                body: constants:GET_USER_ROLE_ERROR
-            };
-        }
-
-        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
-            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
-            return http:FORBIDDEN;
-        }
-
-        if reorderContentsPayload.reorderContents.length() == 0 {
-            return http:BAD_REQUEST;
-        }
-
-        error? result = database:reorderContents(reorderContentsPayload);
-        if result is error {
-            string customError = "Failed to reorder contents";
-            log:printError(customError, result);
-            return <http:InternalServerError>{
-                body: {
-                    "message": customError
-                }
-            };
-        }
-
-        return http:OK;
-    }
-
-    # Reorder route contents.
-    #
-    # + routeId - Route ID
-    # + reorderRouteContentsPayload - Reorder route content payload
-    # + return - Success or error responses
-    resource function patch routes/[string routeId]/contents(http:RequestContext ctx,
-            types:ReorderRouteContentPayload reorderRouteContentsPayload)
-        returns http:Ok|http:BadRequest|http:Forbidden|http:InternalServerError {
-
-        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
-        if userEmail is error {
-            log:printError(constants:USER_INFO_HEADER_NOT_FOUND, userEmail);
-            return <http:InternalServerError>{
-                body: constants:USER_INFO_HEADER_NOT_FOUND
-            };
-        }
-
-        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
-        if userGroups is error {
-            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
-            return <http:InternalServerError>{
-                body: constants:GET_USER_ROLE_ERROR
-            };
-        }
-
-        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
-            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
-            return http:FORBIDDEN;
-        }
-
-        if reorderRouteContentsPayload.reorderContents.length() == 0 {
-            return http:BAD_REQUEST;
-        }
-
-        error? result = database:reorderRouteContents(routeId, reorderRouteContentsPayload);
-        if result is error {
-            string customError = "Failed to reorder route contents";
-            log:printError(customError, result);
-            return <http:InternalServerError>{
-                body: {
-                    "message": customError
-                }
-            };
-        }
-
-        return http:OK;
-    }
-
     # Add a new tag.
     #
     # + tagPayload - Tag details
@@ -1247,128 +1207,6 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
         if result == 0 {
             return http:NOT_FOUND;
-        }
-        return http:OK;
-    }
-
-    # Get all route content items where route id is not null.
-    #
-    # + return - Array of content items or error
-    resource function get route/contents(http:RequestContext ctx)
-        returns types:RouteContentItem[]|http:InternalServerError {
-
-        types:RouteContentItem[]|error result = database:getRouteContentDetails();
-
-        if result is error {
-            string customError = "Error while retrieving all route content items!";
-            log:printError(customError, result);
-            return <http:InternalServerError>{
-                body: {
-                    message: customError
-                }
-            };
-        }
-        return result;
-    }
-
-    # Add a new content under a particular route path.
-    #
-    # + contentPayload - Routew  Content details
-    # + return - Success or error responses
-    resource function post route/contents(http:RequestContext ctx, types:RouteContentPayload contentPayload)
-        returns http:Created|http:Forbidden|http:InternalServerError {
-
-        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
-        if userGroups is error {
-            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
-            return <http:InternalServerError>{
-                body: constants:GET_USER_ROLE_ERROR
-            };
-        }
-
-        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
-            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
-            return http:FORBIDDEN;
-        }
-
-        error? result = database:addRouteContent(contentPayload);
-        if result is error {
-            string customError = "Error while adding route content!";
-            log:printError(customError, result);
-            return <http:InternalServerError>{
-                body: {
-                    "message": customError
-                }
-            };
-        }
-        return http:CREATED;
-    }
-
-    # Update content under a route.
-    #
-    # + contentPayload - Update content details
-    # + return - Success or error responses
-    resource function patch route/contents(http:RequestContext ctx, types:UpdateRouteContentPayload contentPayload)
-        returns http:Ok|http:NotFound|http:Forbidden|http:InternalServerError {
-
-        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
-        if userGroups is error {
-            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
-            return <http:InternalServerError>{
-                body: constants:GET_USER_ROLE_ERROR
-            };
-        }
-
-        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
-            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
-            return http:FORBIDDEN;
-        }
-
-        int|error? result = database:updateRouteContent(contentPayload);
-        if result is error || result is () {
-            string customError = "Error while updating route content!";
-            log:printError(customError, result);
-            return <http:InternalServerError>{
-                body: {
-                    "message": customError
-                }
-            };
-        }
-        if result == 0 {
-            return http:NOT_FOUND;
-        }
-        return http:OK;
-    }
-
-    # Delete a content in a route.
-    #
-    # + contentId - Content ID
-    # + return - Success or error responses
-    resource function delete route/contents/[int contentId](http:RequestContext ctx)
-        returns http:Ok|http:Forbidden|http:InternalServerError {
-
-        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
-        if userGroups is error {
-            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
-            return <http:InternalServerError>{
-                body: constants:GET_USER_ROLE_ERROR
-            };
-        }
-
-        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
-            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
-            return http:FORBIDDEN;
-        }
-
-        error? result = database:DeleteRouteContent(contentId);
-        if result is error {
-            string customError = "Error while deleting route content!";
-            log:printError(customError, result);
-            return <http:InternalServerError>{
-                body: {
-                    "message": customError
-                }
-            };
         }
         return http:OK;
     }
