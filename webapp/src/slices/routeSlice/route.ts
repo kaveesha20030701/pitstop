@@ -22,12 +22,9 @@ import { ApiService } from "@utils/apiService";
 
 import {
   PageData,
-  RouteContentItem,
-  RouteContentPayload,
   RoutePayload,
   RouteResponse,
   RouteStatuses,
-  UpdateRouteContentPayload,
   UpdateRoutePayload,
   reparentRoutesPayload,
 } from "@/types/types";
@@ -41,7 +38,6 @@ const initialState: RouteState = {
   label: "home",
   childrenRoutes: [],
   routes: [],
-  routeContents: [],
   pageData: undefined,
   isRouteVisible: 1,
   reparentingState: "idle",
@@ -56,7 +52,6 @@ interface RouteState {
   childrenRoutes: RouteResponse[];
   stateMessage: string | null;
   routes: RouteResponse[];
-  routeContents: RouteContentItem[];
   pageData?: PageData;
   isRouteVisible: number;
   reparentingState: RouteStatuses;
@@ -202,54 +197,6 @@ export const RouteSlice = createSlice({
       .addCase(deleteRoute.rejected, (state) => {
         state.state = "failed";
         state.stateMessage = "Something went wrong :(";
-      })
-      // Get Route Contents
-      .addCase(getRouteContents.pending, (state) => {
-        state.state = "loading";
-      })
-      .addCase(getRouteContents.fulfilled, (state, action) => {
-        state.routeContents = action.payload;
-        state.state = "success";
-      })
-      .addCase(getRouteContents.rejected, (state) => {
-        state.state = "failed";
-        state.stateMessage = "Error while fetching route contents :(";
-      })
-      // Create Route Contents
-      .addCase(createRouteContent.pending, (state) => {
-        state.state = "loading";
-      })
-      .addCase(createRouteContent.fulfilled, (state) => {
-        state.state = "success";
-        state.stateMessage = "Route content created successfully";
-      })
-      .addCase(createRouteContent.rejected, (state) => {
-        state.state = "failed";
-        state.stateMessage = "Error while creating route content :(";
-      })
-      // Update Route Contents
-      .addCase(updateRouteContent.pending, (state) => {
-        state.state = "loading";
-      })
-      .addCase(updateRouteContent.fulfilled, (state) => {
-        state.state = "success";
-        state.stateMessage = "Route content updated successfully";
-      })
-      .addCase(updateRouteContent.rejected, (state) => {
-        state.state = "failed";
-        state.stateMessage = "Error while updating route content :(";
-      })
-      // Delete Route Contents
-      .addCase(deleteRouteContent.pending, (state) => {
-        state.state = "loading";
-      })
-      .addCase(deleteRouteContent.fulfilled, (state, action) => {
-        const { contentId } = action.meta.arg;
-        state.routeContents = state.routeContents.filter((c) => c.contentId !== contentId);
-      })
-      .addCase(deleteRouteContent.rejected, (state) => {
-        state.state = "failed";
-        state.stateMessage = "Error while deleting route content :(";
       })
       // Reparent Route
       .addCase(reparentRoutes.pending, (state) => {
@@ -418,173 +365,6 @@ export const updateRoute = createAsyncThunk(
         })
         .finally(() => {
           dispatch(getRoutesInfo(payload.routePath));
-        });
-    });
-  },
-);
-
-//Reordering route contents
-export const reorderRouteContents = createAsyncThunk(
-  "routeContent/reorderRouteContents",
-  async (
-    payload: { routeId: string; reorderContents: { contentId: number; contentOrder: number }[] },
-    { dispatch }
-  ) => {
-    return new Promise<void>((resolve, reject) => {
-      ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.reorderRouteContents(payload.routeId),
-          { reorderContents: payload.reorderContents }
-        )
-        .then((resp) => {
-          if (resp.status === 200) {
-            dispatch(
-              enqueueSnackbarMessage({
-                message: "Route contents reordered successfully",
-                type: "success",
-                anchorOrigin: { vertical: "bottom", horizontal: "right" },
-              })
-            );
-            resolve();
-            dispatch(getRouteContents());
-          }
-        })
-        .catch((error: Error) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Error while reordering route contents",
-              type: "error",
-              anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            })
-          );
-          reject(error);
-        });
-    });
-  }
-);
-
-//Get Route Contents
-export const getRouteContents = createAsyncThunk(
-  "routeContent/getRouteContents",
-  async (_: void, { dispatch }) => {
-    return new Promise<RouteContentItem[]>((resolve, reject) => {
-      ApiService.getInstance()
-        .get(`${AppConfig.serviceUrls.routeContents}`)
-        .then((resp) => {
-          if (resp.status === 200) {
-            resolve(resp.data);
-          }
-        })
-        .catch((error: Error) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Error while fetching Button :(",
-              type: "error",
-              anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            }),
-          );
-          reject(error);
-        });
-    });
-  },
-);
-
-//Create Route Content
-export const createRouteContent = createAsyncThunk(
-  "routeContent/createRouteContent",
-  async (payload: { content: RouteContentPayload; routeId: number }, { dispatch }) => {
-    return new Promise<void>((resolve, reject) => {
-      ApiService.getInstance()
-        .post(AppConfig.serviceUrls.routeContents, payload.content)
-        .then((resp) => {
-          if (resp.status === 201) {
-            dispatch(
-              enqueueSnackbarMessage({
-                message: "Button created successfully",
-                type: "success",
-                anchorOrigin: { vertical: "bottom", horizontal: "right" },
-              }),
-            );
-            resolve();
-            dispatch(getRouteContents());
-          }
-        })
-        .catch((error: Error) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Error while creating Button :(",
-              type: "error",
-              anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            }),
-          );
-          reject(error);
-        });
-    });
-  },
-);
-
-//Update Route Content
-export const updateRouteContent = createAsyncThunk(
-  "routeContent/updateRouteContent",
-  async (payload: { content: UpdateRouteContentPayload; routeId: number }, { dispatch }) => {
-    return new Promise<void>((resolve, reject) => {
-      ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.routeContents, payload.content)
-        .then((resp) => {
-          if (resp.status === 200) {
-            dispatch(
-              enqueueSnackbarMessage({
-                message: "Button updated successfully",
-                type: "success",
-                anchorOrigin: { vertical: "bottom", horizontal: "right" },
-              }),
-            );
-            resolve();
-            dispatch(getRouteContents());
-          }
-        })
-        .catch((error: Error) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Error while updating Button :(",
-              type: "error",
-              anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            }),
-          );
-          reject(error);
-        });
-    });
-  },
-);
-
-//Delete Route Content
-export const deleteRouteContent = createAsyncThunk(
-  "routeContent/deleteRouteContent",
-  async (payload: { contentId: number; routeId: number }, { dispatch }) => {
-    return new Promise<void>((resolve, reject) => {
-      ApiService.getInstance()
-        .delete(`${AppConfig.serviceUrls.routeContents}/${payload.contentId}`)
-        .then((resp) => {
-          if (resp.status === 200) {
-            dispatch(
-              enqueueSnackbarMessage({
-                message: "Button deleted successfully",
-                type: "success",
-                anchorOrigin: { vertical: "bottom", horizontal: "right" },
-              }),
-            );
-            resolve();
-            dispatch(getRouteContents());
-          }
-        })
-        .catch((error: Error) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Error while deleting Button :(",
-              type: "error",
-              anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            }),
-          );
-          reject(error);
         });
     });
   },

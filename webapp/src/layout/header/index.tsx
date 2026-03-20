@@ -265,7 +265,7 @@ const Header = (props: HeaderProps) => {
         <Box>
           <CssBaseline />
           <StyledAppBar>
-            <Toolbar>
+            <Toolbar sx={{ alignItems: "center" }}>
               <IconButton
                 aria-label="open drawer"
                 edge="start"
@@ -295,23 +295,23 @@ const Header = (props: HeaderProps) => {
                     marginRight: "10px",
                     height: "20px",
                     maxWidth: "100px",
-                    cursor: "pointer",
                   }}
                   src={theme.palette.mode === "dark" ? wso2LogoWhite : wso2Logo}
                 />
 
                 <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-                  <Typography
-                    variant="h5"
-                    noWrap
-                    component="div"
-                    sx={{
-                      fontWeight: 500,
-                      color: theme.palette.primary.contrastText,
-                      cursor: "pointer",
-                    }}
-                    onClick={() => navigate("/")}
-                  >
+                <Typography
+                  noWrap
+                  component="div"
+                  sx={{
+                    fontWeight: 500,
+                    fontSize: "1.25rem",
+                    color: theme.palette.primary.contrastText,
+                    lineHeight: 1,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
                     {window.config?.APP_DETAILS?.NAME || ""}
                   </Typography>
 

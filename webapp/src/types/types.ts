@@ -230,7 +230,8 @@ export interface SectionPayload {
 }
 
 export interface ContentPayload {
-  sectionId: number;
+  routeId?: number;
+  sectionId?: number;
   contentLink: string;
   contentType: string;
   contentSubtype?: CONTENT_SUBTYPE;
@@ -276,6 +277,7 @@ export interface UpdateContentPayload {
   customButtons?: CustomButton[];
   isVisible?: boolean;
   isReused?: boolean;
+  reorderContents: ReorderContentItem[];
 }
 
 export interface TagPayload {
@@ -286,12 +288,6 @@ export interface RouteContentPayload {
   routeId: number;
   contentLink: string;
   description: string;
-}
-
-export interface UpdateRouteContentPayload {
-  contentId: number;
-  contentLink?: string;
-  description?: string;
 }
 
 export interface UpdateCommentPayload {
@@ -360,23 +356,11 @@ export type ReorderContentItem = {
   contentOrder: number;
 };
 
-// Reordering multiple content items
-export type ReorderContentsPayload = {
-  sectionId: number;
-  reorderContents: ReorderContentItem[];
-};
-
 // Single route item to be reordered
 export interface ReorderRouteItem {
   routeId: number;
   routeOrder: number;
   isRouteVisible: number;
-}
-
-//Reordering route content items
-export interface ReorderRouteContentsPayload {
-  routeId: number;
-  reorderContents: ReorderContentItem[];
 }
 
 //Response interfaces
@@ -409,6 +393,7 @@ export interface RouteResponse extends NonIndexRouteObject {
 export interface ContentResponse {
   contentId: number;
   sectionId: number;
+  routeId?: number;
   contentLink: string;
   contentType: string;
   description: string;

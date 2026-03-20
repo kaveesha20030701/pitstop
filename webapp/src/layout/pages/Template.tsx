@@ -34,7 +34,7 @@ import {
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
-import { RouteContentItem, RouteResponse } from "src/types/types";
+import { RouteResponse, ContentResponse } from "src/types/types";
 
 import React, { useState, useEffect, useMemo } from "react";
 
@@ -43,7 +43,7 @@ import DeleteContentDialogBox from "@components/dialogs/DeleteDialogBox";
 import RouteContentDialogBox from "@components/dialogs/RouteContentDialogBox";
 import ActionButton from "@components/ui/page/ActionButton";
 import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
-import { createRouteContent, updateRouteContent, reorderRouteContents} from "@slices/routeSlice/route";
+import { createNewContent, updateContent } from "@slices/pageSlice/page";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
 import { Role } from "@utils/types";
 import {
@@ -64,7 +64,6 @@ export default function ActionAreaCard() {
   const page = useAppSelector((state: RootState) => state.page);
   const {
     childrenRoutes,
-    routeContents,
     routeId: currentRouteId,
     currentPath,
   } = useAppSelector((state: RootState) => state.route);
@@ -74,21 +73,21 @@ export default function ActionAreaCard() {
   const dispatch = useAppDispatch();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedContent, setSelectedContent] = useState<RouteContentItem | null>(null);
+  const [selectedContent, setSelectedContent] = useState<ContentResponse | null>(null);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor));
   const [orderedRouteContents, setOrderedRouteContents] = useState<
-    RouteContentItem[]
+    ContentResponse[]
   >([]);
 
   const currentRouteContents = useMemo(() => {
-    return routeContents
-      .filter((c) => c.routeId === currentRouteId)
+    return (page.contents || [])
+      .filter((c) => c.routeId === currentRouteId && c.description)
       .sort((a, b) => a.contentOrder - b.contentOrder);
-  }, [routeContents, currentRouteId]);
+  }, [page.contents, currentRouteId]);
 
   useEffect(() => {
     setOrderedRouteContents(currentRouteContents);
@@ -113,17 +112,20 @@ export default function ActionAreaCard() {
     setOrderedRouteContents(newOrder);
 
     dispatch(
-      reorderRouteContents({
-        routeId: currentRouteId,
-        reorderContents: newOrder.map((c, i) => ({
-          contentId: c.contentId,
-          contentOrder: i + 1,
-        })),
+      updateContent({
+        contentId: newOrder[0].contentId,
+        content: {
+          reorderContents: newOrder.map((c, i) => ({
+            contentId: c.contentId,
+            contentOrder: i + 1,
+          })),
+        },
+        routePath: window.location.pathname,
       })
     );
   };
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, content: RouteContentItem) => {
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, content: ContentResponse) => {
     event.stopPropagation();
     setAnchorEl(event.currentTarget);
     setSelectedContent(content);
@@ -154,7 +156,7 @@ export default function ActionAreaCard() {
     navigate(route.path);
   };
 
-  const openContent = (content: RouteContentItem) => {
+  const openContent = (content: ContentResponse) => {
     if (content.contentLink) {
       window.open(content.contentLink, "_blank");
     }
@@ -162,9 +164,7 @@ export default function ActionAreaCard() {
 
   const combinedItems = [
     ...childrenRoutes.map((r) => ({ ...r, type: "route" })),
-    ...routeContents
-      .filter((c) => c.routeId === currentRouteId)
-      .map((c) => ({ ...c, type: "content" })),
+    ...currentRouteContents.map((c) => ({ ...c, type: "content" })),
   ];
 
   const isVisibleRaw = page.pageData?.isVisible;
@@ -334,7 +334,7 @@ export default function ActionAreaCard() {
                           <CardActionArea
                             onClick={() =>
                               isContent
-                                ? openContent(item as RouteContentItem)
+                                ? openContent(item as ContentResponse)
                                 : navigateToRoute(item as RouteResponse)
                             }
                             sx={{ height: "100%" }}
@@ -412,7 +412,7 @@ export default function ActionAreaCard() {
                           {isContent && authorizedRoles.includes(Role.SALES_ADMIN) && (
                             <IconButton
                               size="small"
-                              onClick={(e) => handleMenuOpen(e, item as RouteContentItem)}
+                              onClick={(e) => handleMenuOpen(e, item as ContentResponse)}
                               sx={{
                                 position: "absolute",
                                 top: 6,
@@ -457,7 +457,7 @@ export default function ActionAreaCard() {
                           >
                             {isContent && authorizedRoles.includes(Role.SALES_ADMIN) ? (
                               <GridSortableItem
-                                id={(item as RouteContentItem).contentId.toString()}
+                                id={(item as ContentResponse).contentId.toString()}
                                 disabled={false}
                                 dragHandlePosition="top-left"
                               >
@@ -551,9 +551,9 @@ export default function ActionAreaCard() {
                     </Box>
                   )}
                 </Stack>
-                  </SortableContext>
-                </Box>
-              </DndContext>
+              </SortableContext>
+              </Box>
+            </DndContext>
             )}
           </Box>
         </Grow>
@@ -600,7 +600,7 @@ export default function ActionAreaCard() {
           description={selectedContent.description}
           contentLink={selectedContent.contentLink}
           onUpdate={(payload) =>
-            dispatch(updateRouteContent({ content: payload, routeId: currentRouteId }))
+            dispatch(updateContent({ contentId: selectedContent.contentId, content: payload, routePath: window.location.pathname }))
           }
         />
       )}
@@ -611,7 +611,7 @@ export default function ActionAreaCard() {
         mode="create"
         routeId={currentRouteId}
         onCreate={(payload) =>
-          dispatch(createRouteContent({ content: payload, routeId: payload.routeId }))
+          dispatch(createNewContent({ content: payload, routePath: window.location.pathname }))
         }
       />
 

@@ -24,7 +24,6 @@ import {
   CommentsResponse,
   UpdateContentPayload,
   Section,
-  ReorderContentsPayload,
   ContentReportResponse,
   TagResponse,
   UpdateCommentPayload,
@@ -127,6 +126,7 @@ export const PageSlice = createSlice({
         isRouteVisible: 1,
       };
       state.sectionData = [];
+      state.contents = [];
       state.state = CONTENT_STATE_LOADING;
       state.pageDataState = CONTENT_STATE_LOADING;
       state.sectionState = CONTENT_STATE_IDLE;
@@ -219,6 +219,12 @@ export const PageSlice = createSlice({
         state.pageDataState = CONTENT_STATE_SUCCESS;
         state.state = CONTENT_STATE_SUCCESS;
         state.pageData = action.payload.pageData;
+        // Set route contents from the page response
+        if (action.payload.routeContents && action.payload.routeContents.length > 0) {
+          state.contents = action.payload.routeContents;
+        } else {
+          state.contents = [];
+        }
       })
       .addCase(getPageData.rejected, (state) => {
         state.pageDataState = CONTENT_STATE_SUCCESS;
@@ -565,17 +571,6 @@ export const PageSlice = createSlice({
         state.blockedUrlsState = CONTENT_STATE_FAILED;
       })
 
-      //Reorder contents
-      .addCase(reorderContents.pending, (state) => {
-        state.swapContentsState = CONTENT_STATE_LOADING;
-      })
-      .addCase(reorderContents.fulfilled, (state) => {
-        state.swapContentsState = CONTENT_STATE_SUCCESS;
-      })
-      .addCase(reorderContents.rejected, (state) => {
-        state.swapContentsState = CONTENT_STATE_FAILED;
-      })
-
       //Search contents
       .addCase(searchContent.pending, (state) => {
         state.searchState = CONTENT_STATE_LOADING;
@@ -778,17 +773,14 @@ export const getContentsInfo = createAsyncThunk(
     }>((resolve, reject) => {
     const { sectionId, offset, loadAll } = payload;
       const limit = (sectionId === -3 && loadAll) ? 1000 : (CONTENTS_PER_SECTION + 1);
+      const params = new URLSearchParams();
+      params.append('sectionId', String(sectionId));
+      params.append('limit', String(limit));
+      params.append('offset', String(offset));
+      const url = `${AppConfig.serviceUrls.getContents}?${params.toString()}`;
       
       ApiService.getInstance()
-        .get(
-          AppConfig.serviceUrls.getContentInfo +
-            "sections/" +
-            sectionId +
-            "/contents?limit=" +
-            limit +
-            "&offset=" +
-            offset 
-        )
+        .get(url)
         .then((resp) => {
           if (resp.data.length === 0 && offset !== 0) {
             dispatch(
@@ -857,19 +849,31 @@ export const getPageData = createAsyncThunk(
   async (routePath: string, { dispatch }) => {
     const excludedRoutes = ["/search", "search", "/my-board", "my-board"];
     if (excludedRoutes.includes(routePath)) {
-      return { pageData };
+      return { pageData, routeContents: [] };
     }
 
     return new Promise<{
       pageData: LocalPageData;
+      routeContents: ContentResponse[];
     }>((resolve, reject) => {
       ApiService.getInstance()
         .get(AppConfig.serviceUrls.getPageData + "?routePath=" + routePath)
         .then((resp) => {
+          const pageResponse = resp.data;
+          const routeContents = pageResponse.routeContents || [];
           dispatch(getSectionInfo({ routePath, offset: 0, isInitial: true }))
             .finally(() => {
               resolve({
-                pageData: resp.data,
+                pageData: {
+                  customButtons: [],
+                  title: pageResponse.title,
+                  description: pageResponse.description,
+                  thumbnail: pageResponse.thumbnail,
+                  customPageTheme: pageResponse.customPageTheme,
+                  isVisible: pageResponse.isVisible,
+                  isRouteVisible: 1,
+                },
+                routeContents: routeContents,
               });
             });
         })
@@ -936,7 +940,7 @@ export const createNewContent = createAsyncThunk(
 export const updateContent = createAsyncThunk(
   "pitstop/updateContent",
   async (
-    payload: { contentId: number; content: UpdateContentPayload; routePath: string },
+    payload: {contentId: number; content: UpdateContentPayload; routePath: string },
     { dispatch }
   ) => {
     return new Promise<unknown>((resolve, reject) => {
@@ -1024,10 +1028,16 @@ export const fetchMyBoardSection = createAsyncThunk(
 
     const limit = MY_BOARD_ITEMS_PER_PAGE + 1;
 
-    const url =
-      PanelTypes === "pinned"
-        ? `${AppConfig.serviceUrls.createNewContent}/pinned?limit=${limit}&offset=${offset}`
-        : `${AppConfig.serviceUrls.getContentInfo}sections/${MY_BOARD_ESSENTIALS_SECTION_ID}/contents?limit=${limit}&offset=${offset}`;
+    let url: string;
+    if (PanelTypes === "pinned") {
+      url = `${AppConfig.serviceUrls.createNewContent}/pinned?limit=${limit}&offset=${offset}`;
+    } else {
+      const params = new URLSearchParams();
+      params.append('sectionId', String(MY_BOARD_ESSENTIALS_SECTION_ID));
+      params.append('limit', String(limit));
+      params.append('offset', String(offset));
+      url = `${AppConfig.serviceUrls.getContents}?${params.toString()}`;
+    }
 
     try {
       const resp = await ApiService.getInstance().get(url);
@@ -1306,35 +1316,6 @@ export const filterContent = createAsyncThunk(
             enqueueSnackbarMessage({
               message:
                 "Something went wrong while filtering content by tags :(",
-              type: "error",
-              anchorOrigin: {
-                vertical: "bottom",
-                horizontal: "right",
-              },
-            })
-          );
-          reject(resp);
-        });
-    });
-  }
-);
-
-export const reorderContents = createAsyncThunk(
-  "pitstop/reorderContents",
-  async (payload: ReorderContentsPayload, { dispatch }) => {
-    return new Promise<unknown>((resolve, reject) => {
-      ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.reorderContents, {
-          sectionId: payload.sectionId,
-          reorderContents: payload.reorderContents,
-        })
-        .then((resp) => {
-          resolve({ requestResponse: resp.data });
-        })
-        .catch((resp) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Something went wrong while reordering the contents :(",
               type: "error",
               anchorOrigin: {
                 vertical: "bottom",
