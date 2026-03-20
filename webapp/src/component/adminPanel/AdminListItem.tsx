@@ -143,7 +143,6 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
             routeOrder: i + 1,
             isRouteVisible: Number(r.isRouteVisible),
           })),
-          isVisible: false,
         },
         routePath: pathname,
       }),

@@ -87,19 +87,17 @@ const AdminPanelSideBar = (props: SidebarProps) => {
         updateRoute({
           routeId: String(moved.routeId),
           page: {
-            parentId: null,
             reorderRoutes: newOrder.map((r, i) => ({
               routeId: r.routeId,
               routeOrder: i + 1,
               isRouteVisible: Number(r.isRouteVisible ?? 1),
             })),
-            isVisible: false,
           },
           routePath: pathname,
         })
       );
     },
-    [orderRoutes, dispatch]
+    [orderRoutes, dispatch, pathname]
   );
 
   const [sidebarWidth, setSidebarWidth] = useState(INITIAL_SIDEBAR_WIDTH);

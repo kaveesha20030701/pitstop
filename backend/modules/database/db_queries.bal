@@ -508,12 +508,6 @@ isolated function updateContentQuery(int? contentId, types:UpdateContentPayload 
     string? userEmail = (), int? sectionId = (), int? routeId = ())
     returns sql:ParameterizedQuery[] {
 
-    sql:ParameterizedQuery sqlQuery = `
-        UPDATE
-            content
-        SET 
-        `;
-
     sql:ParameterizedQuery[] sqlQueries = [];
 
     sqlQueries.push(` updated_by = ${userEmail} `);

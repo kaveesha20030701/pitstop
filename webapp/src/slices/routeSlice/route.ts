@@ -169,7 +169,7 @@ export const RouteSlice = createSlice({
               }
             });
 
-          if (parentId === null) {
+          if (!parentId) {
             const topLevelRoutes = state.routes.map((route) => ({
               ...route,
               routeOrder: orderMap.get(route.routeId) ?? route.routeOrder,
@@ -219,7 +219,7 @@ export const RouteSlice = createSlice({
 //Get new route paths
 export const getRoutesInfo = createAsyncThunk(
   "pitstop/getRoutesInfo",
-  async (routePath: string, { dispatch }) => {
+  async (_routePath: string, { dispatch }) => {
     return new Promise<{
       routesInfo: RouteResponse[];
     }>((resolve, reject) => {
@@ -227,10 +227,8 @@ export const getRoutesInfo = createAsyncThunk(
         .get(AppConfig.serviceUrls.createRouterPath)
         .then((resp) => {
           if (resp.status === 200) {
-            dispatch(getPageData(routePath)).then(() => {
-              resolve({
-                routesInfo: resp.data,
-              });
+            resolve({
+              routesInfo: resp.data,
             });
           }
         })
@@ -364,7 +362,11 @@ export const updateRoute = createAsyncThunk(
           reject(resp);
         })
         .finally(() => {
-          dispatch(getRoutesInfo(payload.routePath));
+          if (!payload.page.reorderRoutes?.length) {
+            dispatch(getRoutesInfo(payload.routePath)).then(() => {
+              dispatch(getPageData(payload.routePath));
+            });
+          }
         });
     });
   },
