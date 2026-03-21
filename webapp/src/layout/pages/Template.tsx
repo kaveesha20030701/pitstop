@@ -85,8 +85,7 @@ export default function ActionAreaCard() {
 
   const currentRouteContents = useMemo(() => {
     return (page.contents || [])
-      .filter((c) => c.routeId === currentRouteId && c.description)
-      .sort((a, b) => a.contentOrder - b.contentOrder);
+      .filter((c) => c.routeId === currentRouteId && c.description);
   }, [page.contents, currentRouteId]);
 
   useEffect(() => {
@@ -117,8 +116,9 @@ export default function ActionAreaCard() {
         content: {
           reorderContents: newOrder.map((c, i) => ({
             contentId: c.contentId,
-            contentOrder: i + 1,
+            contentOrder: newOrder.length - i,
           })),
+          routeId: currentRouteId,
         },
         routePath: window.location.pathname,
       })

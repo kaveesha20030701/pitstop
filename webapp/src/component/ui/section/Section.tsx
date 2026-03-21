@@ -135,13 +135,14 @@ const Section = ({
 
       const reorderData = newItems.map((item, index) => ({
         contentId: item.contentId,
-        contentOrder: index,
+        contentOrder: newItems.length - index,
       }));
 
       dispatch(updateContent({
         contentId: parseInt(String(active.id), 10),
         content: {
           reorderContents: reorderData,
+          sectionId: sectionId,
         },
         routePath: window.location.pathname,
        }))

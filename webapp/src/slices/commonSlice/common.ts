@@ -25,6 +25,7 @@ export interface CommonState {
     vertical: "top" | "bottom";
     horizontal: "left" | "center" | "right";
   };
+  navigationLoading: boolean;
 }
 
 const initialState: CommonState = {
@@ -35,6 +36,7 @@ const initialState: CommonState = {
     vertical: "bottom",
     horizontal: "right",
   },
+  navigationLoading: false,
 };
 
 export const CommonSlice = createSlice({
@@ -60,8 +62,11 @@ export const CommonSlice = createSlice({
     clearSnackbarMessage: (state) => {
       state.timestamp = null;
     },
+    setNavigationLoading: (state, action: PayloadAction<boolean>) => {
+      state.navigationLoading = action.payload;
+    },
   },
 });
 
-export const { enqueueSnackbarMessage, clearSnackbarMessage } = CommonSlice.actions;
+export const { enqueueSnackbarMessage, clearSnackbarMessage, setNavigationLoading } = CommonSlice.actions;
 export default CommonSlice.reducer;

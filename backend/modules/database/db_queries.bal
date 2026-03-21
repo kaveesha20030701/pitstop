@@ -501,11 +501,8 @@ isolated function deleteContentsBySectionIdQuery(int sectionId) returns sql:Para
 # + contentId - Content ID to update
 # + payload - Content data to change
 # + userEmail - Email of the user for last verified by / updated by
-# + sectionId - Section ID (required for reordering)
-# + routeId - Route ID (required for reordering)
 # + return - SQL parameterized query
-isolated function updateContentQuery(int? contentId, types:UpdateContentPayload payload, 
-    string? userEmail = (), int? sectionId = (), int? routeId = ())
+isolated function updateContentQuery(int? contentId, types:UpdateContentPayload payload, string? userEmail = ())
     returns sql:ParameterizedQuery[] {
 
     sql:ParameterizedQuery[] sqlQueries = [];
@@ -594,10 +591,10 @@ isolated function updateContentQuery(int? contentId, types:UpdateContentPayload 
         
         reorderQuery = sql:queryConcat(reorderQuery, ` WHERE content_id IN (`, idList, `) AND is_deleted = false`);
 
-        if sectionId is int {
-            reorderQuery = sql:queryConcat(reorderQuery, ` AND section_id = ${sectionId}`);
-        } else if routeId is int {
-            reorderQuery = sql:queryConcat(reorderQuery, ` AND route_id = ${routeId}`);
+        if payload.sectionId is int {
+            reorderQuery = sql:queryConcat(reorderQuery, ` AND section_id = ${payload.sectionId}`);
+        } else if payload.routeId is int {
+            reorderQuery = sql:queryConcat(reorderQuery, ` AND route_id = ${payload.routeId}`);
         }
 
         sqlQueries.push(reorderQuery);

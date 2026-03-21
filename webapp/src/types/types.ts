@@ -278,6 +278,8 @@ export interface UpdateContentPayload {
   isVisible?: boolean;
   isReused?: boolean;
   reorderContents: ReorderContentItem[];
+  sectionId?: number;
+  routeId?: number;
 }
 
 export interface TagPayload {

@@ -16,6 +16,7 @@
 
 import { useAppDispatch } from "@slices/store";
 import { updateRouteId, updateRouterPath } from "@slices/routeSlice/route";
+import { setNavigationLoading } from "@slices/commonSlice/common";
 import { RouteResponse } from "@/types/types";
 import React, { useEffect, useRef, useState } from "react";
 import { Theme } from "@mui/material/styles";
@@ -110,6 +111,12 @@ const ListItemLink = (props: ListItemLinkProps) => {
       <ListItem
         component={routeId !== -1 ? Link : "div"}
         to={routeId !== -1 ? to : undefined}
+        onClick={() => {
+          if (routeId !== -1) {
+            dispatch(setNavigationLoading(true));
+            handleSideBar();
+          }
+        }}
         sx={{
           display: "flex",
           alignItems: "center",
@@ -218,6 +225,7 @@ const ListItemLink = (props: ListItemLinkProps) => {
                     component.path && 
                     component.path !== "#") {
                   e.preventDefault();
+                  dispatch(setNavigationLoading(true));
                   navigate(component.path);
                   handleSideBar();
                 }

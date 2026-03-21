@@ -180,6 +180,10 @@ public type UpdateContentPayload record {|
     boolean isReused?;
     # Array of content items to reorder
     SwapContentOrders[] reorderContents?;
+    # Section ID for reorder operations
+    int? sectionId = ();
+    # Route ID for reorder operations
+    int? routeId = ();
 |};
 
 # Route response.
