@@ -100,6 +100,7 @@ const initialState: PageStateWithMyBoard = {
   blockedUrlsState: CONTENT_STATE_IDLE,
   comments: [],
   contents: [],
+  searchResults: [],
   contentReport: [],
   tagData: [],
   blockedIframeUrls: [],
@@ -132,7 +133,7 @@ export const PageSlice = createSlice({
       state.sectionState = CONTENT_STATE_IDLE;
     },
     clearSearchResults(state) {
-      state.contents = [];
+      state.searchResults = [];
       state.searchState = CONTENT_STATE_IDLE;
     },
   },
@@ -576,7 +577,7 @@ export const PageSlice = createSlice({
         state.searchState = CONTENT_STATE_LOADING;
       })
       .addCase(searchContent.fulfilled, (state, action) => {
-        state.contents = action.payload.searchInfo;
+        state.searchResults = action.payload.searchInfo;
         state.searchState = CONTENT_STATE_SUCCESS;
       })
       .addCase(searchContent.rejected, (state) => {
@@ -589,7 +590,7 @@ export const PageSlice = createSlice({
         state.searchState = CONTENT_STATE_LOADING;
       })
       .addCase(filterContent.fulfilled, (state, action) => {
-        state.contents = action.payload.filterInfo;
+        state.searchResults = action.payload.filterInfo;
         state.searchState = CONTENT_STATE_SUCCESS;
       })
       .addCase(filterContent.rejected, (state) => {

@@ -203,24 +203,24 @@ service http:InterceptableService / on new http:Listener(9090) {
             return http:FORBIDDEN;
         }
 
-        // Validate that either sectionId or routeId is provided, but not both
-        if (contentPayload.sectionId is () && contentPayload.routeId is ()) {
-            log:printError("Either sectionId or routeId must be provided");
+        if contentPayload.sectionId is () && contentPayload.routeId is () {
+            string customError = "Either section or route is required to create a content";
+            log:printWarn(customError);
             return <http:BadRequest>{
-                body: "Either sectionId or routeId must be provided"
+                body: customError
             };
         }
 
         if (contentPayload.sectionId is int && contentPayload.routeId is int) {
-            log:printError("Cannot provide both sectionId and routeId");
+            string customError = "Both section and route is not allowed to create a content";
+            log:printWarn(customError);
             return <http:BadRequest>{
-                body: "Cannot provide both sectionId and routeId"
+                body: customError
             };
         }
 
-        types:ContentPayload finalPayload = contentPayload;
         if contentPayload.routeId is int {
-            finalPayload.contentType = "route_content";
+            contentPayload.contentType = "route_content";
         }
 
         boolean|error? isContentExistsResult = database:checkContentExists(
@@ -535,18 +535,19 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        // Validate that either sectionId or routeId is provided, but not both
         if (sectionId is () && routeId is ()) {
-            log:printError("Either sectionId or routeId must be provided");
+            string customError = "Either section or route is required to create a content";
+            log:printWarn(customError);
             return <http:BadRequest>{
-                body: "Either sectionId or routeId must be provided"
+                body: customError
             };
         }
 
         if (sectionId is int && routeId is int) {
-            log:printError("Cannot provide both sectionId and routeId");
+            string customError = "Both section and route is not allowed to create a content";
+            log:printWarn(customError);
             return <http:BadRequest>{
-                body: "Cannot provide both sectionId and routeId"
+                body: customError
             };
         }
 
@@ -978,8 +979,8 @@ service http:InterceptableService / on new http:Listener(9090) {
     #
     # + updatedSectionPayload - New section details
     # + return - Success or error respon
-    resource function patch sections/[int sectionId](http:RequestContext ctx, types:UpdateSectionPayload updatedSectionPayload)
-        returns http:Ok|http:Forbidden|http:NotFound|http:BadRequest|http:InternalServerError {
+    resource function patch sections/[int sectionId](http:RequestContext ctx, types:UpdateSectionPayload 
+        updatedSectionPayload) returns http:Ok|http:Forbidden|http:NotFound|http:BadRequest|http:InternalServerError {
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {

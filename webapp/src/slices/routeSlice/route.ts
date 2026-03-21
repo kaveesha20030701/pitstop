@@ -176,8 +176,22 @@ export const RouteSlice = createSlice({
             }));
 
             state.routes = sortByOrderMap(topLevelRoutes);
+
+            if (!state.routeId || state.routeId === 1) {
+              state.childrenRoutes = state.routes.filter((route) => route.routeId !== 1);
+            }
           } else {
             state.routes = updateChildrenRecursively(state.routes);
+
+            if (parentId === state.routeId) {
+              const reorderedParent = state.routes.find((route) => route.routeId === parentId);
+              if (reorderedParent?.children) {
+                state.childrenRoutes = reorderedParent.children.map((child) => ({
+                  ...child,
+                  routeOrder: orderMap.get(child.routeId) ?? child.routeOrder,
+                }));
+              }
+            }
           }
         }
       })

@@ -135,11 +135,11 @@ const Header = (props: HeaderProps) => {
   const scrollButtonRef = useRef<HTMLButtonElement>(null);
   const publiclyVisibleRoutes = useMemo(() => filterPubliclyVisibleRoutes(routes), [routes]);
 
-  // Helper function to navigate with loading state
   const navigateWithLoading = useCallback((path: string) => {
+    if (path === pathname) return;
     dispatch(setNavigationLoading(true));
     navigate(path);
-  }, [navigate, dispatch]);
+  }, [pathname, navigate, dispatch]);
 
   const newRoutes = useMemo(() => {
     const homeItem = publiclyVisibleRoutes.find((r) => r.routeId === ROUTE_ID_HOME);

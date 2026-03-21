@@ -66,7 +66,7 @@ isolated function getAllRoutesFlatQuery() returns sql:ParameterizedQuery =>
 # + payload - Route data to change
 # + return - SQL parameterized query
 isolated function updateRouteQuery(int? routeId, types:UpdateRoutePayload payload) 
-    returns sql:ParameterizedQuery {
+    returns sql:ParameterizedQuery[] {
 
     sql:ParameterizedQuery[] sqlQueries = [];
 
@@ -115,44 +115,52 @@ isolated function updateRouteQuery(int? routeId, types:UpdateRoutePayload payloa
     }
 
     if sqlQueries.length() == 0 && reorderClause is () {
-        return `SELECT 0 WHERE FALSE`;
+        sql:ParameterizedQuery[] emptyResult = [];
+        emptyResult.push(`SELECT 0 WHERE FALSE`);
+        return emptyResult;
     }
 
-    sql:ParameterizedQuery query = `UPDATE route SET `;
-    boolean isFirst = true;
+    sql:ParameterizedQuery[] queries = [];
 
-    foreach var clause in sqlQueries {
-        if !isFirst { query = sql:queryConcat(query, `, `); }
-        query = sql:queryConcat(query, clause);
-        isFirst = false;
+    if sqlQueries.length() > 0 && routeId is int {
+        sql:ParameterizedQuery fieldQuery = `UPDATE route SET `;
+        boolean isFirst = true;
+        
+        foreach var clause in sqlQueries {
+            if !isFirst { fieldQuery = sql:queryConcat(fieldQuery, `, `); }
+            fieldQuery = sql:queryConcat(fieldQuery, clause);
+            isFirst = false;
+        }
+        
+        if payload.isRouteVisible is boolean {
+            fieldQuery = sql:queryConcat(fieldQuery, ` 
+        WHERE (route_id = ${routeId} OR parent_id = ${routeId}) AND is_deleted = false`);
+        } else {
+            fieldQuery = sql:queryConcat(fieldQuery, ` 
+        WHERE route_id = ${routeId} AND is_deleted = false`);
+        }
+        queries.push(fieldQuery);
     }
 
     if reorderClause is sql:ParameterizedQuery {
-        if !isFirst { query = sql:queryConcat(query, `, `); }
-        query = sql:queryConcat(query, reorderClause);
-    }
-
-    if reorderIds.length() > 0 {
+        sql:ParameterizedQuery reorderQuery = `UPDATE route SET `;
+        reorderQuery = sql:queryConcat(reorderQuery, reorderClause);
+        
         sql:ParameterizedQuery idList = reorderIds[0];
         foreach int i in 1 ..< reorderIds.length() {
             idList = sql:queryConcat(idList, `, `, reorderIds[i]);
         }
-        query = sql:queryConcat(query, ` 
+        
+        reorderQuery = sql:queryConcat(reorderQuery, ` 
         WHERE route_id IN (`, idList, `) AND is_deleted = false`);
-        
-    } else if payload.isRouteVisible is boolean && routeId is int {
-        query = sql:queryConcat(query, ` 
-        WHERE (route_id = ${routeId} OR parent_id = ${routeId}) AND is_deleted = false`);
-        
-    } else if routeId is int {
-        query = sql:queryConcat(query, ` 
-        WHERE route_id = ${routeId} AND is_deleted = false`);
-        
-    } else {
-        return `SELECT 0 WHERE FALSE`; 
+        queries.push(reorderQuery);
     }
 
-    return query;
+    if queries.length() == 0 {
+        queries.push(`SELECT 0 WHERE FALSE`);
+    }
+
+    return queries;
 }
 
 # Query to add a unified content (section or route content).
@@ -221,8 +229,11 @@ isolated function addCommentQuery(types:Comment comment) returns sql:Parameteriz
 # + sectionId - Section ID of the content
 # + routeId - Route ID of the content
 # + return - SQL parameterized query
-isolated function getContentIdQuery(string? contentLink, string? contentType, int? sectionId, int? contentId, int? routeId = ())
+isolated function getContentIdQuery(string? contentLink, string? contentType, int? sectionId, int? contentId, 
+    int? routeId = ())
+    
     returns sql:ParameterizedQuery {
+
     sql:ParameterizedQuery query = `
         SELECT
             content_id

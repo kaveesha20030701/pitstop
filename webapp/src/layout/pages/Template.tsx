@@ -13,6 +13,16 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
+import {
+  DndContext,
+  DragEndEvent,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -34,11 +44,12 @@ import {
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
-import { RouteResponse, ContentResponse } from "src/types/types";
+import { ContentResponse, RouteResponse } from "src/types/types";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import ErrorHandler from "@components/common/ErrorHandler";
+import GridSortableItem from "@components/common/GridSortableItem";
 import DeleteContentDialogBox from "@components/dialogs/DeleteDialogBox";
 import RouteContentDialogBox from "@components/dialogs/RouteContentDialogBox";
 import ActionButton from "@components/ui/page/ActionButton";
@@ -46,19 +57,6 @@ import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
 import { createNewContent, updateContent } from "@slices/pageSlice/page";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
 import { Role } from "@utils/types";
-import {
-  DndContext,
-  closestCenter,
-  useSensor,
-  useSensors,
-  PointerSensor,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  rectSortingStrategy,
-} from "@dnd-kit/sortable";
-import GridSortableItem from "@components/common/GridSortableItem";
 
 export default function ActionAreaCard() {
   const page = useAppSelector((state: RootState) => state.page);
@@ -79,13 +77,10 @@ export default function ActionAreaCard() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor));
-  const [orderedRouteContents, setOrderedRouteContents] = useState<
-    ContentResponse[]
-  >([]);
+  const [orderedRouteContents, setOrderedRouteContents] = useState<ContentResponse[]>([]);
 
   const currentRouteContents = useMemo(() => {
-    return (page.contents || [])
-      .filter((c) => c.routeId === currentRouteId && c.description);
+    return (page.contents || []).filter((c) => c.routeId === currentRouteId && c.description);
   }, [page.contents, currentRouteId]);
 
   useEffect(() => {
@@ -96,12 +91,8 @@ export default function ActionAreaCard() {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const oldIdx = orderedRouteContents.findIndex(
-      (c) => c.contentId.toString() === active.id
-    );
-    const newIdx = orderedRouteContents.findIndex(
-      (c) => c.contentId.toString() === over.id
-    );
+    const oldIdx = orderedRouteContents.findIndex((c) => c.contentId.toString() === active.id);
+    const newIdx = orderedRouteContents.findIndex((c) => c.contentId.toString() === over.id);
 
     if (oldIdx < 0 || newIdx < 0) return;
 
@@ -121,7 +112,7 @@ export default function ActionAreaCard() {
           routeId: currentRouteId,
         },
         routePath: window.location.pathname,
-      })
+      }),
     );
   };
 
@@ -162,9 +153,14 @@ export default function ActionAreaCard() {
     }
   };
 
+  const displayedRouteContents =
+    orderedRouteContents.length === currentRouteContents.length
+      ? orderedRouteContents
+      : currentRouteContents;
+
   const combinedItems = [
     ...childrenRoutes.map((r) => ({ ...r, type: "route" })),
-    ...currentRouteContents.map((c) => ({ ...c, type: "content" })),
+    ...displayedRouteContents.map((c) => ({ ...c, type: "content" })),
   ];
 
   const isVisibleRaw = page.pageData?.isVisible;
@@ -233,204 +229,202 @@ export default function ActionAreaCard() {
 
             {/* Grid of Cards  */}
             {showSubpages && (
-             <DndContext
+              <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 onDragEnd={handleDragEnd}
               >
-              <Box sx={{ maxWidth: "1400px", margin: "0 auto", pb: 6 }}>
-                <SortableContext
-                  items={orderedRouteContents.map((c) => c.contentId.toString())}
-                  strategy={rectSortingStrategy}
-                >
-                <Stack
-                  direction="row"
-                  flexWrap="wrap"
-                  spacing={2}
-                  justifyContent="center"
-                  alignItems="stretch"
-                  sx={{
-                    gap: 2,
-                    "& > *": {
-                      flexBasis: {
-                        xs: "100%",
-                        sm: "calc(50% - 8px)",
-                        md: "calc(33.333% - 10.667px)",
-                        lg: "calc(16.666% - 13.333px)",
-                      },
-                      minWidth: {
-                        xs: "100%",
-                        sm: "min(calc(50% - 8px), 280px)",
-                        md: "min(calc(33.333% - 10.667px), 240px)",
-                        lg: "min(calc(16.666% - 13.333px), 200px)",
-                      },
-                      maxWidth: {
-                        xs: "100%",
-                        sm: "300px",
-                        md: "280px",
-                        lg: "220px",
-                      },
-                    },
-                  }}
-                >
-                  {combinedItems.map((item, index) => {
-                    const isContent = item.type === "content";
-                    const label =
-                      "menuItem" in item ? item.menuItem : (item.description ?? "Unnamed");
-                    const isActive = !isContent && "path" in item && item.path === currentPath;
+                <Box sx={{ maxWidth: "1400px", margin: "0 auto", pb: 6 }}>
+                  <SortableContext
+                    items={orderedRouteContents.map((c) => c.contentId.toString())}
+                    strategy={rectSortingStrategy}
+                  >
+                    <Stack
+                      direction="row"
+                      flexWrap="wrap"
+                      spacing={2}
+                      justifyContent="center"
+                      alignItems="stretch"
+                      sx={{
+                        gap: 2,
+                        "& > *": {
+                          flexBasis: {
+                            xs: "100%",
+                            sm: "calc(50% - 8px)",
+                            md: "calc(33.333% - 10.667px)",
+                            lg: "calc(16.666% - 13.333px)",
+                          },
+                          minWidth: {
+                            xs: "100%",
+                            sm: "min(calc(50% - 8px), 280px)",
+                            md: "min(calc(33.333% - 10.667px), 240px)",
+                            lg: "min(calc(16.666% - 13.333px), 200px)",
+                          },
+                          maxWidth: {
+                            xs: "100%",
+                            sm: "300px",
+                            md: "280px",
+                            lg: "220px",
+                          },
+                        },
+                      }}
+                    >
+                      {combinedItems.map((item, index) => {
+                        const isContent = item.type === "content";
+                        const label =
+                          "menuItem" in item ? item.menuItem : (item.description ?? "Unnamed");
+                        const isActive = !isContent && "path" in item && item.path === currentPath;
 
-                    const cardContent = (
-                      <Box key={index}>
-                        <Card
-                          sx={(t) => ({
-                            background:
-                              t.palette.mode === "dark"
-                                ? `linear-gradient(135deg, ${alpha(
-                                    t.palette.primary.main,
-                                    0.15,
-                                  )} 0%, ${alpha(t.palette.warning.main, 0.08)} 100%)`
-                                : `linear-gradient(135deg, ${alpha(
-                                    t.palette.primary.main,
-                                    0.08,
-                                  )} 0%, ${alpha(t.palette.warning.main, 0.05)} 100%)`,
-                            backdropFilter: "blur(16px) saturate(150%)",
-                            WebkitBackdropFilter: "blur(16px) saturate(150%)",
-                            borderRadius: 6,
-                            border: `1px solid ${alpha(
-                              t.palette.mode === "dark"
-                                ? t.palette.primary.light
-                                : t.palette.primary.main,
-                              t.palette.mode === "dark" ? 0.2 : 0.15,
-                            )}`,
-                            boxShadow:
-                              t.palette.mode === "dark"
-                                ? "0 8px 32px rgba(0,0,0,0.4)"
-                                : "0 8px 24px rgba(0,0,0,0.12)",
-                            height: "100%",
-                            position: "relative",
-                            transition:
-                              "transform .3s ease, box-shadow .3s ease, border-color .3s ease, background .3s ease",
-                            borderColor: isActive ? t.palette.primary.main : undefined,
-                            "&:hover": {
-                              transform: "translateY(-4px) scale(1.02)",
-                              boxShadow:
-                                t.palette.mode === "dark"
-                                  ? `0 16px 40px ${alpha(t.palette.primary.main, 0.3)}`
-                                  : `0 16px 32px ${alpha(t.palette.primary.main, 0.2)}`,
-                              borderColor: t.palette.primary.main,
-                              background:
-                                t.palette.mode === "dark"
-                                  ? `linear-gradient(135deg, ${alpha(
-                                      t.palette.primary.main,
-                                      0.25,
-                                    )} 0%, ${alpha(t.palette.warning.main, 0.15)} 100%)`
-                                  : `linear-gradient(135deg, ${alpha(
-                                      t.palette.primary.main,
-                                      0.15,
-                                    )} 0%, ${alpha(t.palette.warning.main, 0.1)} 100%)`,
-                            },
-                          })}
-                        >
-                          <CardActionArea
-                            onClick={() =>
-                              isContent
-                                ? openContent(item as ContentResponse)
-                                : navigateToRoute(item as RouteResponse)
-                            }
-                            sx={{ height: "100%" }}
-                          >
-                            <CardContent
-                              sx={{
-                                height: 100,
-                                p: 2,
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "center",
-                                alignItems: "center",
+                        const cardContent = (
+                          <Box key={index}>
+                            <Card
+                              sx={(t) => ({
+                                background:
+                                  t.palette.mode === "dark"
+                                    ? `linear-gradient(135deg, ${alpha(
+                                        t.palette.primary.main,
+                                        0.15,
+                                      )} 0%, ${alpha(t.palette.warning.main, 0.08)} 100%)`
+                                    : `linear-gradient(135deg, ${alpha(
+                                        t.palette.primary.main,
+                                        0.08,
+                                      )} 0%, ${alpha(t.palette.warning.main, 0.05)} 100%)`,
+                                backdropFilter: "blur(16px) saturate(150%)",
+                                WebkitBackdropFilter: "blur(16px) saturate(150%)",
+                                borderRadius: 6,
+                                border: `1px solid ${alpha(
+                                  t.palette.mode === "dark"
+                                    ? t.palette.primary.light
+                                    : t.palette.primary.main,
+                                  t.palette.mode === "dark" ? 0.2 : 0.15,
+                                )}`,
+                                boxShadow:
+                                  t.palette.mode === "dark"
+                                    ? "0 8px 32px rgba(0,0,0,0.4)"
+                                    : "0 8px 24px rgba(0,0,0,0.12)",
+                                height: "100%",
                                 position: "relative",
-                                gap: 1,
-                              }}
+                                transition:
+                                  "transform .3s ease, box-shadow .3s ease, border-color .3s ease, background .3s ease",
+                                borderColor: isActive ? t.palette.primary.main : undefined,
+                                "&:hover": {
+                                  transform: "translateY(-4px) scale(1.02)",
+                                  boxShadow:
+                                    t.palette.mode === "dark"
+                                      ? `0 16px 40px ${alpha(t.palette.primary.main, 0.3)}`
+                                      : `0 16px 32px ${alpha(t.palette.primary.main, 0.2)}`,
+                                  borderColor: t.palette.primary.main,
+                                  background:
+                                    t.palette.mode === "dark"
+                                      ? `linear-gradient(135deg, ${alpha(
+                                          t.palette.primary.main,
+                                          0.25,
+                                        )} 0%, ${alpha(t.palette.warning.main, 0.15)} 100%)`
+                                      : `linear-gradient(135deg, ${alpha(
+                                          t.palette.primary.main,
+                                          0.15,
+                                        )} 0%, ${alpha(t.palette.warning.main, 0.1)} 100%)`,
+                                },
+                              })}
                             >
-                              <Box
-                                sx={(t) => ({
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: 10,
-                                  backgroundColor: isActive
-                                    ? t.palette.primary.main
-                                    : t.palette.mode === "dark"
-                                      ? alpha(t.palette.primary.light, 0.3)
-                                      : alpha(t.palette.primary.main, 0.15),
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  transition: "all .3s ease",
-                                  boxShadow: isActive
-                                    ? `0 4px 12px ${alpha(t.palette.primary.main, 0.4)}`
-                                    : "none",
-                                })}
+                              <CardActionArea
+                                onClick={() =>
+                                  isContent
+                                    ? openContent(item as ContentResponse)
+                                    : navigateToRoute(item as RouteResponse)
+                                }
+                                sx={{ height: "100%" }}
                               >
-                                {isContent ? (
-                                  <LinkIcon
-                                    sx={{ fontSize: 22, color: theme.palette.primary.main }}
-                                  />
-                                ) : (
-                                  <FolderIcon
-                                    sx={{ fontSize: 22, color: theme.palette.primary.main }}
-                                  />
-                                )}
-                              </Box>
+                                <CardContent
+                                  sx={{
+                                    height: 100,
+                                    p: 2,
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    position: "relative",
+                                    gap: 1,
+                                  }}
+                                >
+                                  <Box
+                                    sx={(t) => ({
+                                      width: 40,
+                                      height: 40,
+                                      borderRadius: 10,
+                                      backgroundColor: isActive
+                                        ? t.palette.primary.main
+                                        : t.palette.mode === "dark"
+                                          ? alpha(t.palette.primary.light, 0.3)
+                                          : alpha(t.palette.primary.main, 0.15),
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      transition: "all .3s ease",
+                                      boxShadow: isActive
+                                        ? `0 4px 12px ${alpha(t.palette.primary.main, 0.4)}`
+                                        : "none",
+                                    })}
+                                  >
+                                    {isContent ? (
+                                      <LinkIcon
+                                        sx={{ fontSize: 22, color: theme.palette.primary.main }}
+                                      />
+                                    ) : (
+                                      <FolderIcon
+                                        sx={{ fontSize: 22, color: theme.palette.primary.main }}
+                                      />
+                                    )}
+                                  </Box>
 
-                              <Typography
-                                variant="subtitle2"
-                                sx={{
-                                  fontWeight: 600,
-                                  textAlign: "center",
-                                  lineHeight: 1.25,
-                                }}
-                              >
-                                {label}
-                              </Typography>
+                                  <Typography
+                                    variant="subtitle2"
+                                    sx={{
+                                      fontWeight: 600,
+                                      textAlign: "center",
+                                      lineHeight: 1.25,
+                                    }}
+                                  >
+                                    {label}
+                                  </Typography>
 
-                              {isActive && (
-                                <Box
-                                  sx={(t) => ({
+                                  {isActive && (
+                                    <Box
+                                      sx={(t) => ({
+                                        position: "absolute",
+                                        top: 6,
+                                        right: 6,
+                                        width: 8,
+                                        height: 8,
+                                        borderRadius: "50%",
+                                        backgroundColor: t.palette.primary.main,
+                                      })}
+                                    />
+                                  )}
+                                </CardContent>
+                              </CardActionArea>
+
+                              {/* Menu Button for Content */}
+                              {isContent && authorizedRoles.includes(Role.SALES_ADMIN) && (
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => handleMenuOpen(e, item as ContentResponse)}
+                                  sx={{
                                     position: "absolute",
                                     top: 6,
                                     right: 6,
-                                    width: 8,
-                                    height: 8,
-                                    borderRadius: "50%",
-                                    backgroundColor: t.palette.primary.main,
-                                  })}
-                                />
+                                    backgroundColor: "rgba(0,0,0,0.04)",
+                                    "&:hover": {
+                                      backgroundColor: "rgba(0,0,0,0.08)",
+                                    },
+                                  }}
+                                >
+                                  <MoreVertIcon fontSize="small" />
+                                </IconButton>
                               )}
-                            </CardContent>
-                          </CardActionArea>
-
-                          {/* Menu Button for Content */}
-                          {isContent && authorizedRoles.includes(Role.SALES_ADMIN) && (
-                            <IconButton
-                              size="small"
-                              onClick={(e) => handleMenuOpen(e, item as ContentResponse)}
-                              sx={{
-                                position: "absolute",
-                                top: 6,
-                                right: 6,
-                                backgroundColor: "rgba(0,0,0,0.04)",
-                                "&:hover": {
-                                  backgroundColor: "rgba(0,0,0,0.08)",
-                                },
-                              }}
-                            >
-                              <MoreVertIcon fontSize="small" />
-                            </IconButton>
-                          )}
-                        </Card>
-                      </Box>
-                    );
-
-
+                            </Card>
+                          </Box>
+                        );
                         return (
                           <Box
                             key={index}
@@ -468,92 +462,92 @@ export default function ActionAreaCard() {
                             )}
                           </Box>
                         );
-                  })}
+                      })}
 
-                  {/* Add New Card - only when admin */}
-                  {authorizedRoles.includes(Role.SALES_ADMIN) && (
-                    <Box>
-                      <Card
-                        sx={(t) => ({
-                          background:
-                            t.palette.mode === "dark"
-                              ? `linear-gradient(135deg, ${alpha(
-                                  t.palette.primary.main,
-                                  0.15,
-                                )} 0%, ${alpha(t.palette.warning.main, 0.08)} 100%)`
-                              : `linear-gradient(135deg, ${alpha(
-                                  t.palette.primary.main,
-                                  0.08,
-                                )} 0%, ${alpha(t.palette.warning.main, 0.05)} 100%)`,
-                          backdropFilter: "blur(16px) saturate(150%)",
-                          WebkitBackdropFilter: "blur(16px) saturate(150%)",
-                          borderRadius: 6,
-                          border: `1px solid ${alpha(
-                            t.palette.mode === "dark"
-                              ? t.palette.primary.light
-                              : t.palette.primary.main,
-                            t.palette.mode === "dark" ? 0.2 : 0.15,
-                          )}`,
-                          boxShadow:
-                            t.palette.mode === "dark"
-                              ? "0 8px 32px rgba(0,0,0,0.4)"
-                              : "0 8px 24px rgba(0,0,0,0.12)",
-                          height: "100%",
-                          position: "relative",
-                          "&:hover": {
-                            transform: "translateY(-4px) scale(1.02)",
-                            boxShadow:
-                              t.palette.mode === "dark"
-                                ? `0 16px 40px ${alpha(t.palette.primary.main, 0.3)}`
-                                : `0 16px 32px ${alpha(t.palette.primary.main, 0.2)}`,
-                            borderColor: t.palette.primary.main,
-                            background:
-                              t.palette.mode === "dark"
-                                ? `linear-gradient(135deg, ${alpha(
-                                    t.palette.primary.main,
-                                    0.25,
-                                  )} 0%, ${alpha(t.palette.warning.main, 0.15)} 100%)`
-                                : `linear-gradient(135deg, ${alpha(
-                                    t.palette.primary.main,
-                                    0.15,
-                                  )} 0%, ${alpha(t.palette.warning.main, 0.1)} 100%)`,
-                          },
-                        })}
-                      >
-                        <CardActionArea
-                          onClick={() => setIsCreateDialogOpen(true)}
-                          sx={{ height: "100%" }}
-                        >
-                          <CardContent
-                            sx={{
-                              height: 80,
-                              p: 2,
-                              display: "flex",
-                              flexDirection: "column",
-                              justifyContent: "center",
-                              alignItems: "center",
-                              gap: 0.5,
-                            }}
+                      {/* Add New Card - only when admin */}
+                      {authorizedRoles.includes(Role.SALES_ADMIN) && (
+                        <Box>
+                          <Card
+                            sx={(t) => ({
+                              background:
+                                t.palette.mode === "dark"
+                                  ? `linear-gradient(135deg, ${alpha(
+                                      t.palette.primary.main,
+                                      0.15,
+                                    )} 0%, ${alpha(t.palette.warning.main, 0.08)} 100%)`
+                                  : `linear-gradient(135deg, ${alpha(
+                                      t.palette.primary.main,
+                                      0.08,
+                                    )} 0%, ${alpha(t.palette.warning.main, 0.05)} 100%)`,
+                              backdropFilter: "blur(16px) saturate(150%)",
+                              WebkitBackdropFilter: "blur(16px) saturate(150%)",
+                              borderRadius: 6,
+                              border: `1px solid ${alpha(
+                                t.palette.mode === "dark"
+                                  ? t.palette.primary.light
+                                  : t.palette.primary.main,
+                                t.palette.mode === "dark" ? 0.2 : 0.15,
+                              )}`,
+                              boxShadow:
+                                t.palette.mode === "dark"
+                                  ? "0 8px 32px rgba(0,0,0,0.4)"
+                                  : "0 8px 24px rgba(0,0,0,0.12)",
+                              height: "100%",
+                              position: "relative",
+                              "&:hover": {
+                                transform: "translateY(-4px) scale(1.02)",
+                                boxShadow:
+                                  t.palette.mode === "dark"
+                                    ? `0 16px 40px ${alpha(t.palette.primary.main, 0.3)}`
+                                    : `0 16px 32px ${alpha(t.palette.primary.main, 0.2)}`,
+                                borderColor: t.palette.primary.main,
+                                background:
+                                  t.palette.mode === "dark"
+                                    ? `linear-gradient(135deg, ${alpha(
+                                        t.palette.primary.main,
+                                        0.25,
+                                      )} 0%, ${alpha(t.palette.warning.main, 0.15)} 100%)`
+                                    : `linear-gradient(135deg, ${alpha(
+                                        t.palette.primary.main,
+                                        0.15,
+                                      )} 0%, ${alpha(t.palette.warning.main, 0.1)} 100%)`,
+                              },
+                            })}
                           >
-                            <AddCircleOutlineIcon
-                              sx={{
-                                fontSize: 40,
-                                opacity: 0.9,
-                                color: theme.palette.primary.main,
-                              }}
-                            />
-                            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                              Add Content
-                            </Typography>
-                          </CardContent>
-                        </CardActionArea>
-                      </Card>
-                    </Box>
-                  )}
-                </Stack>
-              </SortableContext>
-              </Box>
-            </DndContext>
+                            <CardActionArea
+                              onClick={() => setIsCreateDialogOpen(true)}
+                              sx={{ height: "100%" }}
+                            >
+                              <CardContent
+                                sx={{
+                                  height: 80,
+                                  p: 2,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  justifyContent: "center",
+                                  alignItems: "center",
+                                  gap: 0.5,
+                                }}
+                              >
+                                <AddCircleOutlineIcon
+                                  sx={{
+                                    fontSize: 40,
+                                    opacity: 0.9,
+                                    color: theme.palette.primary.main,
+                                  }}
+                                />
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                  Add Content
+                                </Typography>
+                              </CardContent>
+                            </CardActionArea>
+                          </Card>
+                        </Box>
+                      )}
+                    </Stack>
+                  </SortableContext>
+                </Box>
+              </DndContext>
             )}
           </Box>
         </Grow>
@@ -600,7 +594,13 @@ export default function ActionAreaCard() {
           description={selectedContent.description}
           contentLink={selectedContent.contentLink}
           onUpdate={(payload) =>
-            dispatch(updateContent({ contentId: selectedContent.contentId, content: payload, routePath: window.location.pathname }))
+            dispatch(
+              updateContent({
+                contentId: selectedContent.contentId,
+                content: payload,
+                routePath: window.location.pathname,
+              }),
+            )
           }
         />
       )}

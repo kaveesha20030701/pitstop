@@ -48,7 +48,7 @@ const ITEMS_PER_PAGE = 6;
 export default function Layout() {
   const routes = useAppSelector((state: RootState) => state.route.routes);
   const userInfo = useSelector(selectUserInfo);
-  const searchData = useAppSelector((state: RootState) => state.page.contents);
+  const searchData = useAppSelector((state: RootState) => state.page.searchResults);
   const searchState = useAppSelector(
     (state: RootState) => state.page.searchState
   );

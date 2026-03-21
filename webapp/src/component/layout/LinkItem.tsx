@@ -111,7 +111,8 @@ const ListItemLink = (props: ListItemLinkProps) => {
       <ListItem
         component={routeId !== -1 ? Link : "div"}
         to={routeId !== -1 ? to : undefined}
-        onClick={() => {
+        onClick={(e: React.MouseEvent) => {
+          e.stopPropagation();
           if (routeId !== -1) {
             dispatch(setNavigationLoading(true));
             handleSideBar();
@@ -212,6 +213,8 @@ const ListItemLink = (props: ListItemLinkProps) => {
             <Box
               key={component.routeId}
               onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
                 if (component.path && component.path.includes("#")) {
                   const boxElement = e.currentTarget as HTMLElement;
                   const linkElement = boxElement.querySelector('a');
@@ -224,7 +227,6 @@ const ListItemLink = (props: ListItemLinkProps) => {
                 if ((!component.children || component.children.length === 0) && 
                     component.path && 
                     component.path !== "#") {
-                  e.preventDefault();
                   dispatch(setNavigationLoading(true));
                   navigate(component.path);
                   handleSideBar();

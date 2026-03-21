@@ -121,14 +121,12 @@ public isolated function getContents(boolean isUser, int 'limit, int 'offset, in
             if convertedContent is error {
                 string errorCategory = sectionId is int ? "section ID: " + sectionId.toString() : 
                                        routeId is int ? "route ID: " + routeId.toString() : "unknown";
-                log:printError(constants:GET_CONTENTS_ERROR, convertedContent, filterType = errorCategory);
                 return error(constants:GET_CONTENTS_ERROR, filterType = errorCategory);
             }
             contents.push(convertedContent);
         };
 
     if response is error {
-        log:printError(constants:GET_CONTENTS_ERROR, response);
         return error(constants:GET_CONTENTS_ERROR);
     }
     return contents;
@@ -197,8 +195,22 @@ public isolated function deleteRoute(int routeId) returns int|error? {
 # + updateRoutePayload - New route details
 # + return - Error or nil
 public isolated function updateRoute(int routeId, types:UpdateRoutePayload updateRoutePayload) returns int|error? {
-    sql:ExecutionResult result = check dbClient->execute(updateRouteQuery(routeId, updateRoutePayload));
-    return result.affectedRowCount;
+    sql:ParameterizedQuery[] queries = updateRouteQuery(routeId, updateRoutePayload);
+    int totalAffectedRows = 0;
+
+    transaction {
+        foreach sql:ParameterizedQuery query in queries {
+            sql:ExecutionResult result = check dbClient->execute(query);
+            int? rowCount = result.affectedRowCount;
+            
+            if rowCount is int {
+                totalAffectedRows += rowCount;
+            }
+        }
+        check commit;
+    }
+
+    return totalAffectedRows;
 }
 
 # Get route details of a given path.

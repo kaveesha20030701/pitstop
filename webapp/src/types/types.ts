@@ -452,6 +452,7 @@ export interface PageState {
   comments: CommentsResponse[];
   sectionOffset: number;
   contents: ContentResponse[];
+  searchResults: ContentResponse[];
   contentReport: ContentReportResponse[];
   tagData: TagResponse[];
   blockedIframeUrls: string[];
