@@ -69,3 +69,4 @@ export const ROUTE_ID_MORE = -1;
 export const ROUTE_ID_ADMIN_PANEL = -2;
 export const ROUTE_ID_ADMIN_EDIT_MENU = -3;
 export const ROUTE_ID_ADMIN_REPORT = -4;
+export const INVALID_ROUTE_ID = -1;

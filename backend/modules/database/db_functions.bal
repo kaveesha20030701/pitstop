@@ -114,21 +114,13 @@ public isolated function getContents(boolean isUser, int 'limit, int 'offset, in
     stream<ContentResponse, sql:Error?> resultStream = dbClient->query(
         getContentsQuery(isUser, sectionId, routeId, userEmail, 'limit, 'offset));
 
-    error? response = from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
+    check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse|error convertedContent = transformContentResponse(customContentTheme, tags, 
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags, 
                     {...contentRest});
-            if convertedContent is error {
-                string errorCategory = sectionId is int ? "section ID: " + sectionId.toString() : 
-                                       routeId is int ? "route ID: " + routeId.toString() : "unknown";
-                return error(constants:GET_CONTENTS_ERROR, filterType = errorCategory);
-            }
             contents.push(convertedContent);
         };
 
-    if response is error {
-        return error(constants:GET_CONTENTS_ERROR);
-    }
     return contents;
 }
 

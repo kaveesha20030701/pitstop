@@ -25,6 +25,7 @@ import ListItemText from "@mui/material/ListItemText";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import { NavLink, LinkProps as RouterLinkProps, useLocation, matchPath, useNavigate } from "react-router-dom";
 import { Box } from "@mui/material";
+import { INVALID_ROUTE_ID } from "@config/constant";
 
 const Link = React.forwardRef<HTMLAnchorElement, RouterLinkProps>((itemProps, ref) => {
   return <NavLink ref={ref} {...itemProps} />;
@@ -109,11 +110,11 @@ const ListItemLink = (props: ListItemLinkProps) => {
       }}
     >
       <ListItem
-        component={routeId !== -1 ? Link : "div"}
-        to={routeId !== -1 ? to : undefined}
+        component={routeId !== INVALID_ROUTE_ID ? Link : "div"}
+        to={routeId !== INVALID_ROUTE_ID ? to : undefined}
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
-          if (routeId !== -1) {
+          if (routeId !== INVALID_ROUTE_ID) {
             dispatch(setNavigationLoading(true));
             handleSideBar();
           }
@@ -124,12 +125,12 @@ const ListItemLink = (props: ListItemLinkProps) => {
           height: "38px",
           width: "100%",
           pl: level > 2 ? level * 1.5 : 1,
-          pr: routeId === -1 ? 3 : 0,
+          pr: routeId === INVALID_ROUTE_ID ? 3 : 0,
           borderRadius: theme.spacing(0.5),
           margin: 0,
           padding: "0 8px",
           position: "relative",
-          cursor: (children && children.length > 0) || routeId !== -1 ? "pointer" : "default",
+          cursor: (children && children.length > 0) || routeId !== INVALID_ROUTE_ID ? "pointer" : "default",
           "&:hover": {
             background: !isTopLevel ? "transparent" : "inherit",
           },
