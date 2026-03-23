@@ -47,11 +47,12 @@ import { ListItemLinkProps, RouteResponse } from "src/types/types";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import DeleteDialogBox from "@components/dialogs/DeleteDialogBox";
+import ReparentConfirmationDialog from "@components/dialogs/ReparentConfirmationDialog";
 import AddRouteDialogBox from "@components/dialogs/PageDialogBox";
 import {
-  reparentRoutes,
   updateRoute,
   updateRouterPath,
+  reparentRoutes,
 } from "@slices/routeSlice/route";
 import { useAppDispatch, useAppSelector } from "@slices/store";
 import { RootState } from "@slices/store";
@@ -103,6 +104,8 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
   const [openAddDialogBox, setOpenAddDialogBox] = useState(false);
   const [openDeleteDialogBox, setOpenDeleteDialogBox] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isReparentConfirmDialogOpen, setIsReparentConfirmDialogOpen] = useState(false);
+  const [pendingReparentData, setPendingReparentData] = useState<{newParentId: number; routeIds: number[]; pagesToReparent: string[]; newParentName: string} | null>(null);
 
   const dispatch = useAppDispatch();
   const { pathname: locationPathname } = useLocation();
@@ -110,6 +113,7 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
 
   const reparentingState = useAppSelector((state: RootState) => state.route.reparentingState);
   const isReparenting = reparentingState === "loading";
+  const allRoutes = useAppSelector((state: RootState) => state.route.routes);
 
   const sensors = useSensors(useSensor(PointerSensor));
   const [childrenOrderRoutes, setChildrenOrderRoutes] = useState<RouteResponse[]>([]);
@@ -156,6 +160,17 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
       ids.push(...getAllChildIds(c));
     });
     return ids;
+  }, []);
+
+  const findRouteNameById = useCallback((routes: RouteResponse[], id: number): string | undefined => {
+    for (const route of routes) {
+      if (route.routeId === id) return route.menuItem;
+      if (route.children) {
+        const found = findRouteNameById(route.children, id);
+        if (found) return found;
+      }
+    }
+    return undefined;
   }, []);
 
   const isChecked =
@@ -464,7 +479,12 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
                     e.stopPropagation();
                     const newParentId = routeId;
                     const routeIds = toggledRouteIds;
-                    dispatch(reparentRoutes({ newParentId, routeIds }));
+                    const pagesToReparent = routeIds
+                      .map((id) => findRouteNameById(allRoutes, id))
+                      .filter((name): name is string => name !== undefined);
+                    const newParentName = primary;
+                    setPendingReparentData({ newParentId, routeIds, pagesToReparent, newParentName });
+                    setIsReparentConfirmDialogOpen(true);
                   }}
                 >
                   {isReparenting ? (
@@ -560,6 +580,22 @@ const ListItemLink = (props: ExtendedListItemLinkProps) => {
         open={openDeleteDialogBox}
         handleClose={() => setOpenDeleteDialogBox(false)}
         routeId={routeId}
+      />
+      <ReparentConfirmationDialog
+        open={isReparentConfirmDialogOpen}
+        pagesToReparent={pendingReparentData?.pagesToReparent}
+        newParentName={pendingReparentData?.newParentName}
+        onConfirm={() => {
+          if (pendingReparentData) {
+            dispatch(reparentRoutes(pendingReparentData));
+            setIsReparentConfirmDialogOpen(false);
+            setPendingReparentData(null);
+          }
+        }}
+        onCancel={() => {
+          setIsReparentConfirmDialogOpen(false);
+          setPendingReparentData(null);
+        }}
       />
     </Box>
   );
