@@ -457,20 +457,23 @@ isolated function getPageDataQuery(string routePath) returns sql:ParameterizedQu
 # + routeId - Route ID 
 # + return - SQL parameterized query
 isolated function deleteRoutesQuery(int routeId) returns sql:ParameterizedQuery => `
-    UPDATE route
-    SET is_deleted = TRUE
-    WHERE route_id IN (
-        WITH RECURSIVE RecursiveRouteIds AS (
-            SELECT route_id
-            FROM route
-            WHERE route_id = ${routeId}
-            
-            UNION ALL
+    WITH RECURSIVE RecursiveRouteIds AS (
+        SELECT route_id
+        FROM route
+        WHERE route_id = ${routeId}
 
-            SELECT r.route_id
-            FROM route r
-            JOIN RecursiveRouteIds rec ON r.parent_id = rec.route_id
-        )
+        UNION ALL
+
+        SELECT r.route_id
+        FROM route r
+        JOIN RecursiveRouteIds rec ON r.parent_id = rec.route_id
+    )
+    UPDATE route r
+    LEFT JOIN content c ON c.route_id = r.route_id
+    SET
+        r.is_deleted = TRUE,
+        c.is_deleted = TRUE
+    WHERE r.route_id IN (
         SELECT route_id
         FROM RecursiveRouteIds
     );
@@ -481,17 +484,23 @@ isolated function deleteRoutesQuery(int routeId) returns sql:ParameterizedQuery 
 # + routeId - Route ID 
 # + return - SQL parameterized query
 isolated function deleteSectionsByRouteIdQuery(int routeId) returns sql:ParameterizedQuery => `
-    UPDATE section
-    SET is_deleted = TRUE
-    WHERE route_id IN (
-        WITH RECURSIVE RecursiveRouteIds AS (
-            SELECT route_id
-            FROM route
-            WHERE route_id =${routeId} 
-            UNION
-            SELECT r.route_id
-            FROM route r JOIN RecursiveRouteIds rec ON r.parent_id = rec.route_id
-        )
+    WITH RECURSIVE RecursiveRouteIds AS (
+        SELECT route_id
+        FROM route
+        WHERE route_id = ${routeId}
+
+        UNION
+
+        SELECT r.route_id
+        FROM route r
+        JOIN RecursiveRouteIds rec ON r.parent_id = rec.route_id
+    )
+    UPDATE section s
+    LEFT JOIN content c ON c.section_id = s.section_id
+    SET
+        s.is_deleted = TRUE,
+        c.is_deleted = TRUE
+    WHERE s.route_id IN (
         SELECT route_id
         FROM RecursiveRouteIds
     );
@@ -742,10 +751,13 @@ isolated function getSectionByRoutePathQuery(int 'limit, int 'offset, string? ro
 # + sectionId - Section ID 
 # + return - SQL parameterized query
 isolated function deleteSectionsQuery(int sectionId) returns sql:ParameterizedQuery => `
-    UPDATE section
-    SET is_deleted = TRUE
-    WHERE section_id = ${sectionId}
-    AND is_deleted = FALSE;
+    UPDATE section s
+    LEFT JOIN content c ON c.section_id = s.section_id
+    SET
+        s.is_deleted = TRUE,
+        c.is_deleted = TRUE
+    WHERE s.section_id = ${sectionId}
+    AND s.is_deleted = FALSE;
 `;
 
 # Query to create a section.

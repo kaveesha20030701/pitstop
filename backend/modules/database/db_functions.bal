@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import pitstop.constants;
 import pitstop.entity;
 import pitstop.types;
 
@@ -241,11 +240,7 @@ public isolated function getPageDetails(string routePath) returns types:PageResp
     
     if customPageTheme is () {
     } else {
-        types:CustomTheme|error convertedCustomPageTheme = customPageTheme.fromJsonStringWithType();
-        if convertedCustomPageTheme is error {
-            log:printError(constants:GET_PAGE_DATA_ERROR, convertedCustomPageTheme, routePath = routePath);
-            return error(constants:GET_PAGE_DATA_ERROR, routePath = routePath);
-        }
+        types:CustomTheme convertedCustomPageTheme = check customPageTheme.fromJsonStringWithType();
         convertedTheme = convertedCustomPageTheme;
     }
 
@@ -342,20 +337,12 @@ public isolated function getSectionByRoutePath(int 'limit, int 'offset, string? 
 
     stream<Section, sql:Error?> resultStream = dbClient->query(getSectionByRoutePathQuery('limit, 'offset, routePath));
 
-    error? response = from Section {customSectionTheme, ...sectionRest} in resultStream
+    check from Section {customSectionTheme, ...sectionRest} in resultStream
         do {
-            types:Section|error convertedSection = transformSectionResponse(customSectionTheme, {...sectionRest});
-            if convertedSection is error {
-                log:printError(constants:GET_SECTION_ERROR, convertedSection, routePath = routePath);
-                return error(constants:GET_SECTION_ERROR, routePath = routePath);
-            }
+            types:Section convertedSection = check transformSectionResponse(customSectionTheme, {...sectionRest});
             sections.push(convertedSection);
         };
 
-    if response is error {
-        log:printError(constants:GET_ALL_SECTION_IDS_ERROR, response, routePath = routePath);
-        return error(constants:GET_ALL_SECTION_IDS_ERROR);
-    }
     return sections;
 
 }
@@ -400,14 +387,8 @@ public isolated function addUser(entity:Employee user) returns error? {
 public isolated function getCommentsByContentId(int contentId) returns types:CommentResponse[]|error {
     stream<types:CommentResponse, sql:Error?> resultStream = dbClient->query(
         getCommentsByContentIdQuery(contentId));
-    types:CommentResponse[]|error results = from types:CommentResponse result in resultStream
+    return from types:CommentResponse result in resultStream
         select result;
-
-    if results is error {
-        log:printError(constants:GET_COMMENTS_ERROR, results);
-        return error(constants:GET_COMMENTS_ERROR);
-    }
-    return results;
 }
 
 # Get all the contents that contains a particular text.
@@ -433,12 +414,8 @@ public isolated function getContentsByText(string userInput, string userEmail)
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse|error convertedContent = transformContentResponse(customContentTheme, tags, 
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags, 
                     {...contentRest});
-            if convertedContent is error {
-                log:printError(constants:GET_CONTENTS_BY_TEXT_ERROR, convertedContent);
-                return error(constants:GET_CONTENTS_BY_TEXT_ERROR);
-            }
             contents.push(convertedContent);
         };
     return contents;
@@ -466,12 +443,8 @@ public isolated function getContentsByTags(string[] inputTags, string userEmail)
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse|error convertedContent = transformContentResponse(customContentTheme, tags, 
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags, 
                     {...contentRest});
-            if convertedContent is error {
-                log:printError(constants:GET_CONTENTS_ERROR, convertedContent);
-                return error(constants:GET_CONTENTS_ERROR);
-            }
             contents.push(convertedContent);
         };
     return contents;
@@ -482,14 +455,8 @@ public isolated function getContentsByTags(string[] inputTags, string userEmail)
 # + return - Content or error
 public isolated function getContentDetails() returns types:ContentReport[]|error {
     stream<types:ContentReport, sql:Error?> resultStream = dbClient->query(getContentDetailsQuery());
-    types:ContentReport[]|error results = from types:ContentReport result in resultStream
+    return from types:ContentReport result in resultStream
         select result;
-
-    if results is error {
-        log:printError(constants:GET_CONTENT_REPORT_ERROR, results);
-        return error(constants:GET_CONTENT_REPORT_ERROR);
-    }
-    return results;
 }
 
 # Get content title by content id.
@@ -653,12 +620,8 @@ public isolated function getRecentContents(string userEmail, int 'limit, int 'of
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse|error convertedContent = transformContentResponse(customContentTheme, tags, 
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags, 
                     {...contentRest});
-            if convertedContent is error {
-                log:printError(constants:GET_RECENT_CONTENT_ERROR, convertedContent);
-                return error(constants:GET_RECENT_CONTENT_ERROR);
-            }
             contents.push(convertedContent);
         };
 
