@@ -56,6 +56,7 @@ public isolated function addContent(types:ContentPayload content, string created
 # + return - Whether content exists or error
 public isolated function checkContentExists(string? contentLink = (), string? contentType = (), int? sectionId = (),
         int? contentId = (), int? routeId = ()) returns boolean|error? {
+
     int|error result = dbClient->queryRow(getContentIdQuery(contentLink, contentType, sectionId, contentId, routeId));
 
     if result is error {
