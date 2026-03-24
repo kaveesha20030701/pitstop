@@ -22,13 +22,9 @@ import { ApiService } from "@utils/apiService";
 
 import {
   PageData,
-  ReorderRoutesPayload,
-  RouteContentItem,
-  RouteContentPayload,
   RoutePayload,
   RouteResponse,
   RouteStatuses,
-  UpdateRouteContentPayload,
   UpdateRoutePayload,
   reparentRoutesPayload,
 } from "@/types/types";
@@ -42,7 +38,6 @@ const initialState: RouteState = {
   label: "home",
   childrenRoutes: [],
   routes: [],
-  routeContents: [],
   pageData: undefined,
   isRouteVisible: 1,
   reparentingState: "idle",
@@ -57,7 +52,6 @@ interface RouteState {
   childrenRoutes: RouteResponse[];
   stateMessage: string | null;
   routes: RouteResponse[];
-  routeContents: RouteContentItem[];
   pageData?: PageData;
   isRouteVisible: number;
   reparentingState: RouteStatuses;
@@ -137,9 +131,69 @@ export const RouteSlice = createSlice({
       .addCase(updateRoute.pending, (state) => {
         state.state = "loading";
       })
-      .addCase(updateRoute.fulfilled, (state) => {
+      .addCase(updateRoute.fulfilled, (state, action) => {
         state.state = "success";
         state.stateMessage = "You have successfully updated the page";
+
+        const { reorderRoutes: reorderRoutesPayload, parentId } = action.meta.arg.page;
+
+        if (reorderRoutesPayload) {
+          const orderMap = new Map<number, number>(
+            reorderRoutesPayload.map((r) => [r.routeId, r.routeOrder]),
+          );
+
+          const sortByOrderMap = (routes: RouteResponse[]) =>
+            [...routes].sort(
+              (a, b) =>
+                (orderMap.get(a.routeId) ?? a.routeOrder) -
+                (orderMap.get(b.routeId) ?? b.routeOrder),
+            );
+
+          const updateChildrenRecursively = (routes: RouteResponse[]): RouteResponse[] =>
+            routes.map((route) => {
+              if (route.routeId === parentId) {
+                return {
+                  ...route,
+                  children: sortByOrderMap(route.children ?? []).map((child) => ({
+                    ...child,
+                    routeOrder: orderMap.get(child.routeId) ?? child.routeOrder,
+                  })),
+                };
+              } else if (route.children && route.children.length > 0) {
+                return {
+                  ...route,
+                  children: updateChildrenRecursively(route.children),
+                };
+              } else {
+                return route;
+              }
+            });
+
+          if (!parentId) {
+            const topLevelRoutes = state.routes.map((route) => ({
+              ...route,
+              routeOrder: orderMap.get(route.routeId) ?? route.routeOrder,
+            }));
+
+            state.routes = sortByOrderMap(topLevelRoutes);
+
+            if (!state.routeId || state.routeId === 1) {
+              state.childrenRoutes = state.routes.filter((route) => route.routeId !== 1);
+            }
+          } else {
+            state.routes = updateChildrenRecursively(state.routes);
+
+            if (parentId === state.routeId) {
+              const reorderedParent = state.routes.find((route) => route.routeId === parentId);
+              if (reorderedParent?.children) {
+                state.childrenRoutes = reorderedParent.children.map((child) => ({
+                  ...child,
+                  routeOrder: orderMap.get(child.routeId) ?? child.routeOrder,
+                }));
+              }
+            }
+          }
+        }
       })
       .addCase(updateRoute.rejected, (state) => {
         state.state = "failed";
@@ -158,99 +212,6 @@ export const RouteSlice = createSlice({
         state.state = "failed";
         state.stateMessage = "Something went wrong :(";
       })
-      //Reorder Routes
-      .addCase(reorderRoutes.fulfilled, (state, action) => {
-        const { parentId, reorderRoutes } = action.meta.arg;
-
-        const orderMap = new Map<number, number>(
-          reorderRoutes.map((r) => [r.routeId, r.routeOrder]),
-        );
-
-        const sortByOrderMap = (routes: RouteResponse[]) =>
-          [...routes].sort(
-            (a, b) =>
-              (orderMap.get(a.routeId) ?? a.routeOrder) - (orderMap.get(b.routeId) ?? b.routeOrder),
-          );
-
-        const updateChildrenRecursively = (routes: RouteResponse[]): RouteResponse[] =>
-          routes.map((route) => {
-            if (route.routeId === parentId) {
-              return {
-                ...route,
-                children: sortByOrderMap(route.children ?? []).map((child) => ({
-                  ...child,
-                  routeOrder: orderMap.get(child.routeId) ?? child.routeOrder,
-                })),
-              };
-            } else if (route.children && route.children.length > 0) {
-              return {
-                ...route,
-                children: updateChildrenRecursively(route.children),
-              };
-            } else {
-              return route;
-            }
-          });
-
-        if (parentId === null) {
-          const topLevelRoutes = state.routes.map((route) => ({
-            ...route,
-            routeOrder: orderMap.get(route.routeId) ?? route.routeOrder,
-          }));
-
-          state.routes = sortByOrderMap(topLevelRoutes);
-        } else {
-          state.routes = updateChildrenRecursively(state.routes);
-        }
-      })
-      // Get Route Contents
-      .addCase(getRouteContents.pending, (state) => {
-        state.state = "loading";
-      })
-      .addCase(getRouteContents.fulfilled, (state, action) => {
-        state.routeContents = action.payload;
-        state.state = "success";
-      })
-      .addCase(getRouteContents.rejected, (state) => {
-        state.state = "failed";
-        state.stateMessage = "Error while fetching route contents :(";
-      })
-      // Create Route Contents
-      .addCase(createRouteContent.pending, (state) => {
-        state.state = "loading";
-      })
-      .addCase(createRouteContent.fulfilled, (state) => {
-        state.state = "success";
-        state.stateMessage = "Route content created successfully";
-      })
-      .addCase(createRouteContent.rejected, (state) => {
-        state.state = "failed";
-        state.stateMessage = "Error while creating route content :(";
-      })
-      // Update Route Contents
-      .addCase(updateRouteContent.pending, (state) => {
-        state.state = "loading";
-      })
-      .addCase(updateRouteContent.fulfilled, (state) => {
-        state.state = "success";
-        state.stateMessage = "Route content updated successfully";
-      })
-      .addCase(updateRouteContent.rejected, (state) => {
-        state.state = "failed";
-        state.stateMessage = "Error while updating route content :(";
-      })
-      // Delete Route Contents
-      .addCase(deleteRouteContent.pending, (state) => {
-        state.state = "loading";
-      })
-      .addCase(deleteRouteContent.fulfilled, (state, action) => {
-        const { contentId } = action.meta.arg;
-        state.routeContents = state.routeContents.filter((c) => c.contentId !== contentId);
-      })
-      .addCase(deleteRouteContent.rejected, (state) => {
-        state.state = "failed";
-        state.stateMessage = "Error while deleting route content :(";
-      })
       // Reparent Route
       .addCase(reparentRoutes.pending, (state) => {
         state.state = "loading";
@@ -265,10 +226,6 @@ export const RouteSlice = createSlice({
         state.state = "failed";
         state.stateMessage = "Error while reparenting pages :(";
         state.reparentingState = "idle";
-      })
-      .addCase(toggleRouteVisibility.rejected, (state) => {
-        state.state = "failed";
-        state.stateMessage = "Error while updating route visibility :(";
       });
   },
 });
@@ -276,7 +233,7 @@ export const RouteSlice = createSlice({
 //Get new route paths
 export const getRoutesInfo = createAsyncThunk(
   "pitstop/getRoutesInfo",
-  async (routePath: string, { dispatch }) => {
+  async (_routePath: string, { dispatch }) => {
     return new Promise<{
       routesInfo: RouteResponse[];
     }>((resolve, reject) => {
@@ -284,10 +241,8 @@ export const getRoutesInfo = createAsyncThunk(
         .get(AppConfig.serviceUrls.createRouterPath)
         .then((resp) => {
           if (resp.status === 200) {
-            dispatch(getPageData(routePath)).then(() => {
-              resolve({
-                routesInfo: resp.data,
-              });
+            resolve({
+              routesInfo: resp.data,
             });
           }
         })
@@ -390,10 +345,10 @@ export const deleteRoute = createAsyncThunk(
 //Update a particular route path
 export const updateRoute = createAsyncThunk(
   "pitstop/updatePage",
-  async (payload: { page: UpdateRoutePayload; routePath: string }, { dispatch }) => {
+  async (payload: { routeId: string; page: UpdateRoutePayload; routePath: string }, { dispatch }) => {
     return new Promise<unknown>((resolve, reject) => {
       ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.updateRouterPath, payload.page)
+        .patch(AppConfig.serviceUrls.updateRouterPath(payload.routeId), payload.page)
         .then((resp) => {
           resolve({ requestResponse: resp.data });
           dispatch(
@@ -421,159 +376,11 @@ export const updateRoute = createAsyncThunk(
           reject(resp);
         })
         .finally(() => {
-          dispatch(getRoutesInfo(payload.routePath));
-        });
-    });
-  },
-);
-
-//Reordering the routes
-export const reorderRoutes = createAsyncThunk(
-  "pitstop/reorderRoutes",
-  async (payload: ReorderRoutesPayload, { dispatch }) => {
-    return new Promise<unknown>((resolve, reject) => {
-      ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.reorderRoutes, payload)
-        .then((resp) => {
-          resolve({ requestResponse: resp.data });
-        })
-        .catch((resp) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Something went wrong while reordering the routes :(",
-              type: "error",
-              anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            }),
-          );
-          reject(resp);
-        });
-    });
-  },
-);
-
-//Get Route Contents
-export const getRouteContents = createAsyncThunk(
-  "routeContent/getRouteContents",
-  async (_: void, { dispatch }) => {
-    return new Promise<RouteContentItem[]>((resolve, reject) => {
-      ApiService.getInstance()
-        .get(`${AppConfig.serviceUrls.routeContents}`)
-        .then((resp) => {
-          if (resp.status === 200) {
-            resolve(resp.data);
+          if (!payload.page.reorderRoutes?.length) {
+            dispatch(getRoutesInfo(payload.routePath)).then(() => {
+              dispatch(getPageData(payload.routePath));
+            });
           }
-        })
-        .catch((error: Error) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Error while fetching Button :(",
-              type: "error",
-              anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            }),
-          );
-          reject(error);
-        });
-    });
-  },
-);
-
-//Create Route Content
-export const createRouteContent = createAsyncThunk(
-  "routeContent/createRouteContent",
-  async (payload: { content: RouteContentPayload; routeId: number }, { dispatch }) => {
-    return new Promise<void>((resolve, reject) => {
-      ApiService.getInstance()
-        .post(AppConfig.serviceUrls.routeContents, payload.content)
-        .then((resp) => {
-          if (resp.status === 201) {
-            dispatch(
-              enqueueSnackbarMessage({
-                message: "Button created successfully",
-                type: "success",
-                anchorOrigin: { vertical: "bottom", horizontal: "right" },
-              }),
-            );
-            resolve();
-            dispatch(getRouteContents());
-          }
-        })
-        .catch((error: Error) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Error while creating Button :(",
-              type: "error",
-              anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            }),
-          );
-          reject(error);
-        });
-    });
-  },
-);
-
-//Update Route Content
-export const updateRouteContent = createAsyncThunk(
-  "routeContent/updateRouteContent",
-  async (payload: { content: UpdateRouteContentPayload; routeId: number }, { dispatch }) => {
-    return new Promise<void>((resolve, reject) => {
-      ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.routeContents, payload.content)
-        .then((resp) => {
-          if (resp.status === 200) {
-            dispatch(
-              enqueueSnackbarMessage({
-                message: "Button updated successfully",
-                type: "success",
-                anchorOrigin: { vertical: "bottom", horizontal: "right" },
-              }),
-            );
-            resolve();
-            dispatch(getRouteContents());
-          }
-        })
-        .catch((error: Error) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Error while updating Button :(",
-              type: "error",
-              anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            }),
-          );
-          reject(error);
-        });
-    });
-  },
-);
-
-//Delete Route Content
-export const deleteRouteContent = createAsyncThunk(
-  "routeContent/deleteRouteContent",
-  async (payload: { contentId: number; routeId: number }, { dispatch }) => {
-    return new Promise<void>((resolve, reject) => {
-      ApiService.getInstance()
-        .delete(`${AppConfig.serviceUrls.routeContents}/${payload.contentId}`)
-        .then((resp) => {
-          if (resp.status === 200) {
-            dispatch(
-              enqueueSnackbarMessage({
-                message: "Button deleted successfully",
-                type: "success",
-                anchorOrigin: { vertical: "bottom", horizontal: "right" },
-              }),
-            );
-            resolve();
-            dispatch(getRouteContents());
-          }
-        })
-        .catch((error: Error) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Error while deleting Button :(",
-              type: "error",
-              anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            }),
-          );
-          reject(error);
         });
     });
   },
@@ -603,48 +410,6 @@ export const reparentRoutes = createAsyncThunk(
           dispatch(
             enqueueSnackbarMessage({
               message: "Error while reparenting pages :(",
-              type: "error",
-              anchorOrigin: { vertical: "bottom", horizontal: "right" },
-            }),
-          );
-          reject(error);
-        });
-    });
-  },
-);
-
-export const toggleRouteVisibility = createAsyncThunk(
-  "pitstop/toggleRouteVisibility",
-  async (
-    payload: { routeId: number; isRouteVisible: number; currentRoutePath: string },
-    { dispatch },
-  ) => {
-    return new Promise<void>((resolve, reject) => {
-      ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.toggleRouteVisibility(String(payload.routeId)), {
-          isRouteVisible: payload.isRouteVisible,
-        })
-
-        .then((resp) => {
-          if (resp.status === 200) {
-            dispatch(
-              enqueueSnackbarMessage({
-                message: "Route visibility updated successfully.",
-                type: "success",
-                anchorOrigin: { vertical: "bottom", horizontal: "right" },
-              }),
-            );
-
-            dispatch(getRoutesInfo(payload.currentRoutePath));
-
-            window.location.href = "/";
-            resolve();
-          }
-        })
-        .catch((error: Error) => {
-          dispatch(
-            enqueueSnackbarMessage({
-              message: "Error while updating route visibility ",
               type: "error",
               anchorOrigin: { vertical: "bottom", horizontal: "right" },
             }),

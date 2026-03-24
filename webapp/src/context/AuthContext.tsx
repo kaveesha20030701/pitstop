@@ -19,7 +19,7 @@ import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
 import StatusWithAction from "@components/ui/StatusWithAction";
 import PreLoader from "@components/common/PreLoader";
 import { getEmployeeInfo } from "@slices/employeeSlice/employee";
-import { getRoutesInfo, getRouteContents } from "@slices/routeSlice/route";
+import { getRoutesInfo } from "@slices/routeSlice/route";
 import React, { useContext, useEffect, useState } from "react";
 import { Button } from "@mui/material";
 import { ApiService } from "@utils/apiService";
@@ -90,7 +90,7 @@ const AppAuthProvider = (props: { children: React.ReactNode }) => {
 
           new ApiService(idToken, refreshToken);
           await dispatch(loadPrivileges());
-          await dispatch(getRouteContents());
+
           await dispatch(getRoutesInfo(window.location.pathname));
           localStorage.setItem("signInInitiated", "false");
         }

@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-final string ROUTE_CONTENT_TYPE = "route_content";
+public final string ROUTE_CONTENT_TYPE = "route_content";
 
 const DEFAULT_CONTENTS_LIMIT = 50;
 const DEFAULT_CONTENTS_OFFSET = 0;

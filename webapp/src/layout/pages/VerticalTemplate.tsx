@@ -35,7 +35,7 @@ import { filterContent } from "@slices/pageSlice/page";
 
 export default function VerticalTemplate() {
   const routes = useAppSelector((state: RootState) => state.route.routes);
-  const searchData = useAppSelector((state: RootState) => state.page.contents);
+  const searchData = useAppSelector((state: RootState) => state.page.searchResults);
   const searchState = useAppSelector(
     (state: RootState) => state.page.searchState
   );

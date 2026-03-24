@@ -61,7 +61,8 @@ import {
 } from "@config/constant";
 import { useAppAuthContext } from "@context/AuthContext";
 import { selectUserInfo } from "@slices/authSlice";
-import { RootState, useAppSelector } from "@slices/store";
+import { RootState, useAppSelector, useAppDispatch } from "@slices/store";
+import { setNavigationLoading } from "@slices/commonSlice/common";
 import { Role } from "@utils/types";
 
 import { ColorModeContext } from "../../App";
@@ -125,6 +126,7 @@ const Header = (props: HeaderProps) => {
   const authContext = useAppAuthContext();
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const theme = useTheme();
   const routes = useAppSelector((state: RootState) => state.route.routes);
   const authorizedRoles: Role[] = useAppSelector((state: RootState) => state.auth.roles);
@@ -132,6 +134,12 @@ const Header = (props: HeaderProps) => {
 
   const scrollButtonRef = useRef<HTMLButtonElement>(null);
   const publiclyVisibleRoutes = useMemo(() => filterPubliclyVisibleRoutes(routes), [routes]);
+
+  const navigateWithLoading = useCallback((path: string) => {
+    if (path === pathname) return;
+    dispatch(setNavigationLoading(true));
+    navigate(path);
+  }, [pathname, navigate, dispatch]);
 
   const newRoutes = useMemo(() => {
     const homeItem = publiclyVisibleRoutes.find((r) => r.routeId === ROUTE_ID_HOME);
@@ -255,7 +263,7 @@ const Header = (props: HeaderProps) => {
     return () => document.removeEventListener("click", handleClick, true);
   }, [adminPanelDrawerToggle]);
 
-  const handleSearchPage = () => navigate("/search");
+  const handleSearchPage = () => navigateWithLoading("/search");
 
   const isMyBoardActive = matchPath("/my-board", pathname) !== null;
 
@@ -265,7 +273,7 @@ const Header = (props: HeaderProps) => {
         <Box>
           <CssBaseline />
           <StyledAppBar>
-            <Toolbar>
+            <Toolbar sx={{ alignItems: "center" }}>
               <IconButton
                 aria-label="open drawer"
                 edge="start"
@@ -290,28 +298,28 @@ const Header = (props: HeaderProps) => {
               <Stack direction="row" alignItems="center" spacing={1} sx={{ flexGrow: 1 }}>
                 <img
                   alt="wso2"
-                  onClick={() => navigate("/")}
+                  onClick={() => navigateWithLoading("/")}
                   style={{
                     marginRight: "10px",
                     height: "20px",
                     maxWidth: "100px",
-                    cursor: "pointer",
                   }}
                   src={theme.palette.mode === "dark" ? wso2LogoWhite : wso2Logo}
                 />
 
                 <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-                  <Typography
-                    variant="h5"
-                    noWrap
-                    component="div"
-                    sx={{
-                      fontWeight: 500,
-                      color: theme.palette.primary.contrastText,
-                      cursor: "pointer",
-                    }}
-                    onClick={() => navigate("/")}
-                  >
+                <Typography
+                  noWrap
+                  component="div"
+                  sx={{
+                    fontWeight: 500,
+                    fontSize: "1.25rem",
+                    color: theme.palette.primary.contrastText,
+                    lineHeight: 1,
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
                     {window.config?.APP_DETAILS?.NAME || ""}
                   </Typography>
 
@@ -394,7 +402,7 @@ const Header = (props: HeaderProps) => {
                     return (
                       <ListItemButton
                         key={idx}
-                        onClick={() => navigate(r.path)}
+                        onClick={() => navigateWithLoading(r.path)}
                         sx={{
                           mx: 0.5,
                           px: 1.5,

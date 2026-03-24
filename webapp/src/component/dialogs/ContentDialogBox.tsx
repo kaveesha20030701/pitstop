@@ -448,26 +448,70 @@ const ContentDialogBox = ({
                 }
                 return filtered;
               }}
-              value={formik.values.tags}
-              onChange={async (event, newValue) => {
-                const finalValue: string[] = [];
-                for (const value of newValue) {
-                  if (value.startsWith('Add "')) {
-                    const newTag = value.slice(5, -1).trim();
-                    if (newTag === "") continue;
-                    try {
-                      await dispatch(createTag({ tagName: newTag })).unwrap();
-                      await dispatch(getAllTags()).unwrap();
-                      finalValue.push(newTag);
-                    } catch (error) {
-                      console.error("Failed to create tag:", error);
-                    }
+            value={formik.values.tags}
+            onChange={async (_event, newValue) => {
+              const finalValue = new Set<string>();
+              const tagsToCreate = new Set<string>();
+
+              for (const value of newValue) {
+                if (value.startsWith('Add "')) {
+                  const newTag = value.slice(5, -1).trim();
+                  if (newTag === "") continue;
+
+                  tagsToCreate.add(newTag);
+                } else {
+                  const normalizedValue = value.trim();
+                  if (normalizedValue === "") continue;
+
+                  if (tagInfo.includes(normalizedValue)) {
+                    finalValue.add(normalizedValue);
                   } else {
-                    finalValue.push(value);
+                    tagsToCreate.add(normalizedValue);
                   }
                 }
-                formik.setFieldValue("tags", finalValue);
-              }}
+              }
+
+              let createdTagNames: string[] = [];
+              let failedTagNames: string[] = [];
+
+              if (tagsToCreate.size > 0) {
+                const tagNamesToCreate = Array.from(tagsToCreate);
+                const creationResults = await Promise.allSettled(
+                  tagNamesToCreate.map(async (tagName) => {
+                    await dispatch(createTag({ tagName })).unwrap();
+                    return tagName;
+                  }),
+                );
+
+                createdTagNames = creationResults
+                  .filter((result): result is PromiseFulfilledResult<string> =>
+                    result.status === "fulfilled",
+                  )
+                  .map((result) => result.value);
+
+                failedTagNames = creationResults
+                  .map((result, index) =>
+                    result.status === "rejected" ? tagNamesToCreate[index] : null,
+                  )
+                  .filter((tagName): tagName is string => Boolean(tagName));
+
+                createdTagNames.forEach((tagName) => finalValue.add(tagName));
+
+                if (failedTagNames.length > 0) {
+                  console.error("Failed to create tags:", failedTagNames);
+                }
+
+                if (createdTagNames.length > 0) {
+                  try {
+                    await dispatch(getAllTags()).unwrap();
+                  } catch (error) {
+                    console.error("Failed to refresh tags:", error);
+                  }
+                }
+              }
+
+              formik.setFieldValue("tags", Array.from(finalValue));
+            }}
               renderOption={(props, option) => {
                 const { key, ...rest } = props;
                 const isAddOption = option.startsWith('Add "');

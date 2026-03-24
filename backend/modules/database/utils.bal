@@ -264,6 +264,7 @@ public isolated function toContentResponseFromPinned(PinnedContentResponse row)
         commentCount: row.commentCount,
         customContentTheme: (),
         tags: (),
+        routeId: row.routeId,
         isVisible: row.isVisible,
         isReused: row.isReused
     };

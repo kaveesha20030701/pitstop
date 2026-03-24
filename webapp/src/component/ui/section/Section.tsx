@@ -53,7 +53,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import LinkIcon from "@mui/icons-material/Link";
 import AddContentDialogBox from "@components/dialogs/ContentDialogBox";
 import DeleteDialogBox from "@components/dialogs/DeleteDialogBox";
-import { getContentsInfo, reorderContents } from "@slices/pageSlice/page";
+import { getContentsInfo, updateContent } from "@slices/pageSlice/page";
 import GridSortableItem from "@components/common/GridSortableItem";
 import { useLocation } from "react-router-dom";
 import CarouselSection from "@components/ui/section/CarouselSection";
@@ -109,7 +109,11 @@ const Section = ({
   const isPitstopApp = window.config?.IS_PITSTOP_APP ?? false;
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+      useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 5,
+    },
+  }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -131,10 +135,17 @@ const Section = ({
 
       const reorderData = newItems.map((item, index) => ({
         contentId: item.contentId,
-        contentOrder: index,
+        contentOrder: newItems.length - index,
       }));
 
-      dispatch(reorderContents({ sectionId, reorderContents: reorderData }))
+      dispatch(updateContent({
+        contentId: parseInt(String(active.id), 10),
+        content: {
+          reorderContents: reorderData,
+          sectionId: sectionId,
+        },
+        routePath: window.location.pathname,
+       }))
         .unwrap()
         .catch((error: unknown) => {
           console.error("Reorder failed:", error);

@@ -173,14 +173,15 @@ const SectionDialogBox = ({
     
     dispatch(
       updateSection({
+        sectionId: sectionId.toString(),
         section: {
-          sectionId,
           title: values.title,
           description: values.description,
           sectionType: values.sectionType,
           imageUrl: values.imageUrl,
           redirectUrl: values.redirectUrl,
           tags: values.tags,
+          reorderSections: [], 
           customSectionTheme: {
             title: titleDefaultStyleConfigs,
             description: descriptionDefaultStyleConfigs,

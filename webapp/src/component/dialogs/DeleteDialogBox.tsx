@@ -17,7 +17,7 @@
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
 import { deleteContent } from "@slices/pageSlice/page";
 import { deleteSection } from "@slices/sectionSlice/section";
-import { deleteRoute, deleteRouteContent } from "@slices/routeSlice/route";
+import { deleteRoute } from "@slices/routeSlice/route";
 import { DeleteDialogBoxProps } from "@/types/types";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -118,9 +118,10 @@ const DeleteContentDialogBox = ({
         if(contentId == null) return;
         handleClose();
         dispatch(
-          deleteRouteContent({
+          deleteContent({
             routeId: route.routeId,
             contentId,
+            sectionId: 0,
           }),
         );
         break;

@@ -22,13 +22,15 @@ import { useSnackbar } from "notistack";
 import { useSelector } from "react-redux";
 import { Outlet, matchRoutes, useLocation, useNavigate } from "react-router-dom";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 
 import ConsentHandler from "@components/common/ConsentHandler";
+import PreLoader from "@components/common/PreLoader";
 import { CURRENT_YEAR } from "@config/constant";
 import ConfirmationModalContextProvider from "@context/DialogContext";
 import { selectUserInfo } from "@slices/authSlice";
-import { RootState, useAppSelector } from "@slices/store";
+import { RootState, useAppSelector, useAppDispatch } from "@slices/store";
+import { clearSnackbarMessage, setNavigationLoading } from "@slices/commonSlice/common";
 
 import pJson from "../../package.json";
 import MatomoTracker from "../analytics/MatomoTracker";
@@ -37,7 +39,9 @@ import Header from "./header";
 export default function Layout() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const dispatch = useAppDispatch();
   const common = useAppSelector((state: RootState) => state.common);
+  const prevPathnameRef = useRef<string>("");
 
   useEffect(() => {
     if (common.timestamp != null) {
@@ -46,8 +50,9 @@ export default function Layout() {
         preventDuplicate: true,
         anchorOrigin: common.anchorOrigin,
       });
+      dispatch(clearSnackbarMessage());
     }
-  }, [common.anchorOrigin, common.message, common.timestamp, common.type, enqueueSnackbar]);
+  }, [common.anchorOrigin, common.message, common.timestamp, common.type, enqueueSnackbar, dispatch]);
 
   useEffect(() => {
     if (localStorage.getItem("hris-app-redirect-url")) {
@@ -64,6 +69,16 @@ export default function Layout() {
 
   const [userConsent, setUserConsent] = useState<boolean>(true);
 
+  useEffect(() => {
+    if (prevPathnameRef.current !== location.pathname) {
+      prevPathnameRef.current = location.pathname;
+      const timer = setTimeout(() => {
+        dispatch(setNavigationLoading(false));
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [location.pathname, dispatch]);
+
   const getAppBarTitle = (): string => {
     let title: string = "";
     matches?.forEach((obj) => {
@@ -79,6 +94,7 @@ export default function Layout() {
     <ConfirmationModalContextProvider>
       <Box sx={{ display: "flex", overflowX: "hidden" }}>
         <CssBaseline />
+        <PreLoader isLoading={common.navigationLoading} />
         {userConsent ? (
           <>
             <MatomoTracker />

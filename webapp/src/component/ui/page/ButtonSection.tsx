@@ -14,50 +14,21 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Box, Button, IconButton, Menu, MenuItem, alpha } from "@mui/material";
+import { Box, Button, alpha } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-import { useState } from "react";
-
-import DeleteContentDialogBox from "@components/dialogs/DeleteDialogBox";
-import RouteContentDialogBox from "@components/dialogs/RouteContentDialogBox";
 import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
 import { getPageData } from "@slices/pageSlice/page";
-import { createRouteContent, updateRouteContent, updateRouterPath } from "@slices/routeSlice/route";
+import { updateRouterPath } from "@slices/routeSlice/route";
 import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
 import { Role } from "@utils/types";
-
-import { RouteContentItem, RouteResponse } from "@/types/types";
+import { RouteResponse,} from "@/types/types";
 
 const ButtonSection = () => {
-  const {
-    childrenRoutes,
-    routeContents,
-    routeId: currentRouteId,
-  } = useAppSelector((state: RootState) => state.route);
+  const { childrenRoutes } = useAppSelector((state: RootState) => state.route);
   const authorizedRoles = useAppSelector((state: RootState) => state.auth.roles);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedContent, setSelectedContent] = useState<RouteContentItem | null>(null);
-  const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, content: RouteContentItem) => {
-    event.stopPropagation();
-    setAnchorEl(event.currentTarget);
-    setSelectedContent(content);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
 
   const navigateToRoute = (route: RouteResponse) => {
     if (
@@ -88,17 +59,8 @@ const ButtonSection = () => {
     dispatch(getPageData(route.path));
   };
 
-  const openContent = (content: RouteContentItem) => {
-    if (content.contentLink) {
-      window.open(content.contentLink, "_blank");
-    }
-  };
-
   const combinedItems = [
     ...childrenRoutes.map((r) => ({ ...r, type: "route" })),
-    ...routeContents
-      .filter((c) => c.routeId === currentRouteId)
-      .map((c) => ({ ...c, type: "content" })),
   ];
 
   return (
@@ -118,17 +80,14 @@ const ButtonSection = () => {
         })}
       >
         {combinedItems.map((item, index) => {
-          const isContent = item.type === "content";
-          const label = "menuItem" in item ? item.menuItem : (item.description ?? "Unnamed");
+          const label = item.menuItem;
 
           return (
             <Button
               key={index}
               variant="outlined"
               onClick={() =>
-                isContent
-                  ? openContent(item as RouteContentItem)
-                  : navigateToRoute(item as RouteResponse)
+                navigateToRoute(item)
               }
               sx={(theme) => ({
                 borderRadius: 3,
@@ -138,93 +97,12 @@ const ButtonSection = () => {
                 borderColor: theme.palette.primary.main,
                 fontWeight: 600,
               })}
-              endIcon={
-                isContent && authorizedRoles.includes(Role.SALES_ADMIN) ? (
-                  <IconButton
-                    size="small"
-                    onClick={(e) => handleMenuOpen(e, item as RouteContentItem)}
-                    sx={{ padding: 0, color: "inherit" }}
-                  >
-                    <ExpandMoreIcon fontSize="small" />
-                  </IconButton>
-                ) : undefined
-              }
             >
               {label}
             </Button>
           );
         })}
-
-        {authorizedRoles.includes(Role.SALES_ADMIN) && (
-          <Button
-            variant="contained"
-            sx={{ borderRadius: 3, textTransform: "uppercase" }}
-            onClick={() => setIsCreateDialogOpen(true)}
-            startIcon={<AddIcon />}
-          >
-            Add
-          </Button>
-        )}
       </Box>
-
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <MenuItem
-          onClick={() => {
-            setIsUpdateDialogOpen(true);
-            handleMenuClose();
-          }}
-        >
-          <EditIcon fontSize="small" /> Update
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            setIsDeleteDialogOpen(true);
-            handleMenuClose();
-          }}
-        >
-          <DeleteIcon fontSize="small" /> Delete
-        </MenuItem>
-      </Menu>
-
-      {selectedContent && (
-        <RouteContentDialogBox
-          isOpen={isUpdateDialogOpen}
-          handleClose={() => setIsUpdateDialogOpen(false)}
-          mode="update"
-          contentId={selectedContent.contentId}
-          description={selectedContent.description}
-          contentLink={selectedContent.contentLink}
-          onUpdate={(payload) =>
-            dispatch(updateRouteContent({ content: payload, routeId: currentRouteId }))
-          }
-        />
-      )}
-
-      <RouteContentDialogBox
-        isOpen={isCreateDialogOpen}
-        handleClose={() => setIsCreateDialogOpen(false)}
-        mode="create"
-        routeId={currentRouteId}
-        onCreate={(payload) =>
-          dispatch(createRouteContent({ content: payload, routeId: payload.routeId }))
-        }
-      />
-
-      {selectedContent && (
-        <DeleteContentDialogBox
-          open={isDeleteDialogOpen}
-          handleClose={() => setIsDeleteDialogOpen(false)}
-          type="route_content"
-          contentId={selectedContent.contentId}
-          routeId={currentRouteId}
-        />
-      )}
     </>
   );
 };

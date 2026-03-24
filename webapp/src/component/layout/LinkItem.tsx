@@ -16,6 +16,7 @@
 
 import { useAppDispatch } from "@slices/store";
 import { updateRouteId, updateRouterPath } from "@slices/routeSlice/route";
+import { setNavigationLoading } from "@slices/commonSlice/common";
 import { RouteResponse } from "@/types/types";
 import React, { useEffect, useRef, useState } from "react";
 import { Theme } from "@mui/material/styles";
@@ -24,6 +25,7 @@ import ListItemText from "@mui/material/ListItemText";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import { NavLink, LinkProps as RouterLinkProps, useLocation, matchPath, useNavigate } from "react-router-dom";
 import { Box } from "@mui/material";
+import { INVALID_ROUTE_ID } from "@config/constant";
 
 const Link = React.forwardRef<HTMLAnchorElement, RouterLinkProps>((itemProps, ref) => {
   return <NavLink ref={ref} {...itemProps} />;
@@ -108,20 +110,27 @@ const ListItemLink = (props: ListItemLinkProps) => {
       }}
     >
       <ListItem
-        component={routeId !== -1 ? Link : "div"}
-        to={routeId !== -1 ? to : undefined}
+        component={routeId !== INVALID_ROUTE_ID ? Link : "div"}
+        to={routeId !== INVALID_ROUTE_ID ? to : undefined}
+        onClick={(e: React.MouseEvent) => {
+          e.stopPropagation();
+          if (routeId !== INVALID_ROUTE_ID) {
+            dispatch(setNavigationLoading(true));
+            handleSideBar();
+          }
+        }}
         sx={{
           display: "flex",
           alignItems: "center",
           height: "38px",
           width: "100%",
           pl: level > 2 ? level * 1.5 : 1,
-          pr: routeId === -1 ? 3 : 0,
+          pr: routeId === INVALID_ROUTE_ID ? 3 : 0,
           borderRadius: theme.spacing(0.5),
           margin: 0,
           padding: "0 8px",
           position: "relative",
-          cursor: (children && children.length > 0) || routeId !== -1 ? "pointer" : "default",
+          cursor: (children && children.length > 0) || routeId !== INVALID_ROUTE_ID ? "pointer" : "default",
           "&:hover": {
             background: !isTopLevel ? "transparent" : "inherit",
           },
@@ -205,6 +214,8 @@ const ListItemLink = (props: ListItemLinkProps) => {
             <Box
               key={component.routeId}
               onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
                 if (component.path && component.path.includes("#")) {
                   const boxElement = e.currentTarget as HTMLElement;
                   const linkElement = boxElement.querySelector('a');
@@ -217,7 +228,7 @@ const ListItemLink = (props: ListItemLinkProps) => {
                 if ((!component.children || component.children.length === 0) && 
                     component.path && 
                     component.path !== "#") {
-                  e.preventDefault();
+                  dispatch(setNavigationLoading(true));
                   navigate(component.path);
                   handleSideBar();
                 }

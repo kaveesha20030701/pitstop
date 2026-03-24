@@ -516,7 +516,10 @@ const ComponentCard = ({
     dispatch(
       updateContent({
         contentId,
-        content: { isVisible: newVisibility },
+        content: {
+          isVisible: newVisibility,
+          reorderContents: []
+        },
         routePath: location.pathname,
       }),
     )

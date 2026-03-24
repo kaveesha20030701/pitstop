@@ -29,8 +29,8 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import {
-  RouteContentPayload,
-  UpdateRouteContentPayload,
+  ContentPayload,
+  UpdateContentPayload,
 } from "@/types/types";
 import CloseIcon from "@mui/icons-material/Close";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -44,8 +44,8 @@ interface RouteContentDialogBoxProps {
   contentId?: number;
   description?: string;
   contentLink?: string;
-  onCreate?: (payload: RouteContentPayload) => void;
-  onUpdate?: (payload: UpdateRouteContentPayload) => void;
+  onCreate?: (payload: ContentPayload) => void;
+  onUpdate?: (payload: UpdateContentPayload) => void;
 }
 
 const RouteContentDialogBox = ({
@@ -88,11 +88,17 @@ const RouteContentDialogBox = ({
       if (!hasDesc || !hasLink) return;
 
       if (routeId && onCreate) {
-        onCreate({ routeId, description: desc, contentLink: link });
+        onCreate({ 
+          routeId,
+          description: desc,
+          contentLink: link,
+          contentType: "button",
+          isReused: false,
+        });
         handleClose();
       }
     } else if (mode === "update" && contentId !== undefined && onUpdate) {
-      onUpdate({ contentId, description: desc, contentLink: link });
+      onUpdate({ description: desc, contentLink: link, reorderContents: [] });
       handleClose();
     }
   };

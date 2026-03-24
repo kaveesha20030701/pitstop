@@ -46,7 +46,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Role } from "@utils/types";
-import { reorderRoutes } from "@slices/routeSlice/route";
+import { updateRoute } from "@slices/routeSlice/route";
 
 const INITIAL_SIDEBAR_WIDTH = 450;
 
@@ -84,22 +84,26 @@ const AdminPanelSideBar = (props: SidebarProps) => {
       newOrder.splice(newIdx, 0, moved);
       setOrderRoutes(newOrder);
       dispatch(
-        reorderRoutes({
-          parentId: null,
-          reorderRoutes: newOrder.map((r, i) => ({
-            routeId: r.routeId,
-            routeOrder: i + 1,
-            isRouteVisible: Number(r.isRouteVisible ?? 1), 
-          })),
+        updateRoute({
+          routeId: String(moved.routeId),
+          page: {
+            reorderRoutes: newOrder.map((r, i) => ({
+              routeId: r.routeId,
+              routeOrder: i + 1,
+              isRouteVisible: Number(r.isRouteVisible ?? 1),
+            })),
+          },
+          routePath: pathname,
         })
       );
     },
-    [orderRoutes, dispatch]
+    [orderRoutes, dispatch, pathname]
   );
 
   const [sidebarWidth, setSidebarWidth] = useState(INITIAL_SIDEBAR_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
   const handleMouseDown = (e: React.MouseEvent) => {
+
     e.preventDefault();
     e.stopPropagation();
     setIsResizing(true);

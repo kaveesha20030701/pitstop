@@ -230,7 +230,8 @@ export interface SectionPayload {
 }
 
 export interface ContentPayload {
-  sectionId: number;
+  routeId?: number;
+  sectionId?: number;
   contentLink: string;
   contentType: string;
   contentSubtype?: CONTENT_SUBTYPE;
@@ -242,18 +243,18 @@ export interface ContentPayload {
 }
 
 export interface UpdateRoutePayload {
-  routeId: number;
   title?: string;
   description?: string;
   thumbnail?: string;
   menuItem?: string;
   customPageTheme?: CustomTheme;
-  isVisible: boolean;
-  isRouteVisible?: boolean; 
+  isVisible?: boolean;
+  isRouteVisible?: boolean;
+  parentId?: number | null;
+  reorderRoutes?: ReorderRouteItem[];
 }
 
 export interface UpdateSectionPayload {
-  sectionId: number;
   title?: string;
   description?: string;
   sectionType?: string;
@@ -261,6 +262,7 @@ export interface UpdateSectionPayload {
   redirectUrl?: string;
   customSectionTheme?: CustomTheme;
   tags?: string;
+  reorderSections?: ReorderSectionItem[];
 }
 
 export interface UpdateContentPayload {
@@ -275,6 +277,9 @@ export interface UpdateContentPayload {
   customButtons?: CustomButton[];
   isVisible?: boolean;
   isReused?: boolean;
+  reorderContents: ReorderContentItem[];
+  sectionId?: number;
+  routeId?: number;
 }
 
 export interface TagPayload {
@@ -285,12 +290,6 @@ export interface RouteContentPayload {
   routeId: number;
   contentLink: string;
   description: string;
-}
-
-export interface UpdateRouteContentPayload {
-  contentId: number;
-  contentLink?: string;
-  description?: string;
 }
 
 export interface UpdateCommentPayload {
@@ -353,21 +352,10 @@ export type ReorderSectionItem = {
   sectionOrder: number;
 };
 
-// Reordering multiple section items
-export type ReorderSectionsPayload = {
-  reorderSections: ReorderSectionItem[];
-};
-
 // Single content item to be reordered
 export type ReorderContentItem = {
   contentId: number;
   contentOrder: number;
-};
-
-// Reordering multiple content items
-export type ReorderContentsPayload = {
-  sectionId: number;
-  reorderContents: ReorderContentItem[];
 };
 
 // Single route item to be reordered
@@ -375,12 +363,6 @@ export interface ReorderRouteItem {
   routeId: number;
   routeOrder: number;
   isRouteVisible: number;
-}
-
-// Reordering multiple route items
-export interface ReorderRoutesPayload {
-  parentId: number | null;
-  reorderRoutes: ReorderRouteItem[];
 }
 
 //Response interfaces
@@ -413,6 +395,7 @@ export interface RouteResponse extends NonIndexRouteObject {
 export interface ContentResponse {
   contentId: number;
   sectionId: number;
+  routeId?: number;
   contentLink: string;
   contentType: string;
   description: string;
@@ -469,6 +452,7 @@ export interface PageState {
   comments: CommentsResponse[];
   sectionOffset: number;
   contents: ContentResponse[];
+  searchResults: ContentResponse[];
   contentReport: ContentReportResponse[];
   tagData: TagResponse[];
   blockedIframeUrls: string[];
@@ -530,6 +514,7 @@ export interface GridSortableItemProps {
   id: string;
   children: React.ReactNode;
   disabled?: boolean;
+  dragHandlePosition?: 'top-left' | 'center-top';
 }
 
 export interface VerticalSortableItemProps {
@@ -561,6 +546,7 @@ export interface RouteContentItem {
   contentLink: string;
   description: string;
   contentType: string;
+  contentOrder: number;
 }
 
 export interface reparentRoutesPayload {

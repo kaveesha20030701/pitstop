@@ -20,7 +20,7 @@ import { Box, IconButton } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { GridSortableItemProps } from "@/types/types";
 
-const GridSortableItem = ({ id, children, disabled = false }: GridSortableItemProps) => {
+const GridSortableItem = ({ id, children, disabled = false, dragHandlePosition = 'center-top' }: GridSortableItemProps) => {
   const {
     attributes,
     listeners,
@@ -29,6 +29,21 @@ const GridSortableItem = ({ id, children, disabled = false }: GridSortableItemPr
     transition,
     isDragging,
   } = useSortable({ id, disabled });
+
+    const getDragHandleStyles = () => {
+    if (dragHandlePosition === 'top-left') {
+      return {
+        position: 'absolute' as const,
+        top: 6,
+        left: 6,
+      };
+    }
+    return {
+      position: 'absolute' as const,
+      transform: 'translateY(-10px)',
+      left: 56,
+    };
+  };
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -56,9 +71,7 @@ const GridSortableItem = ({ id, children, disabled = false }: GridSortableItemPr
           {...attributes}
           {...listeners}
           sx={{
-            position: "absolute",
-            transform: "translateY(-10px)",
-            left: 56,
+            ...getDragHandleStyles(),
             zIndex: 15,
             cursor: "grab",
             "&:active": { cursor: "grabbing" },

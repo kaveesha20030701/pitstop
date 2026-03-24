@@ -14,7 +14,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import pitstop.constants;
 import pitstop.entity;
 import pitstop.types;
 
@@ -38,7 +37,7 @@ public isolated function getAllRoutesFlat() returns types:Route[]|error {
         select result;
 }
 
-# Add a new content.
+# Add a new content that can be either section content or route content.
 #
 # + createdBy - Created by user email
 # + content - Content details
@@ -53,10 +52,12 @@ public isolated function addContent(types:ContentPayload content, string created
 # + contentType - Type of the content
 # + sectionId - Section ID of the content
 # + contentId - Content ID of the content
+# + routeId - Route ID of the content
 # + return - Whether content exists or error
 public isolated function checkContentExists(string? contentLink = (), string? contentType = (), int? sectionId = (),
-        int? contentId = ()) returns boolean|error? {
-    int|error result = dbClient->queryRow(getContentIdQuery(contentLink, contentType, sectionId, contentId));
+        int? contentId = (), int? routeId = ()) returns boolean|error? {
+
+    int|error result = dbClient->queryRow(getContentIdQuery(contentLink, contentType, sectionId, contentId, routeId));
 
     if result is error {
         if result is sql:NoRowsError {
@@ -96,36 +97,29 @@ public isolated function addComment(types:Comment comment) returns error? {
     _ = check dbClient->execute(addCommentQuery(comment));
 }
 
-# Get all contents under a given section.
+# Get contents by section ID or route ID using a unified query.
 #
 # + isUser - Whether the requester is from a normal user
-# + sectionId - Section ID
-# + userEmail - User email
 # + 'limit - Number of records to retrieve
 # + 'offset - Number of records to offset
+# + sectionId - Section ID
+# + routeId - Route ID
+# + userEmail - User email
 # + return - Contents or error
-public isolated function getContentsBySectionId(boolean isUser, int sectionId, string userEmail, int 'limit,
-        int 'offset) returns types:ContentResponse[]|error {
+public isolated function getContents(boolean isUser, int 'limit, int 'offset, int? sectionId = (), int? routeId = (), 
+    string? userEmail = ()) returns types:ContentResponse[]|error {
 
     types:ContentResponse[] contents = [];
     stream<ContentResponse, sql:Error?> resultStream = dbClient->query(
-    getContentsBySectionIdQuery(isUser, sectionId, userEmail, 'limit, 'offset));
+        getContentsQuery(isUser, sectionId, routeId, userEmail, 'limit, 'offset));
 
-    error? response = from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
+    check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse|error convertedContent = transformContentResponse(customContentTheme, tags, 
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags, 
                     {...contentRest});
-            if convertedContent is error {
-                log:printError(constants:GET_CONTENTS_ERROR, convertedContent, sectionId = sectionId);
-                return error(constants:GET_CONTENTS_ERROR, sectionId = sectionId);
-            }
             contents.push(convertedContent);
         };
 
-    if response is error {
-        log:printError(constants:GET_CONTENTS_ERROR, response, sectionId = sectionId);
-        return error(constants:GET_CONTENTS_ERROR, sectionId = sectionId);
-    }
     return contents;
 }
 
@@ -188,11 +182,26 @@ public isolated function deleteRoute(int routeId) returns int|error? {
 
 # Update route.
 #
+# + routeId - Route ID
 # + updateRoutePayload - New route details
 # + return - Error or nil
-public isolated function updateRoute(types:UpdateRoutePayload updateRoutePayload) returns int|error? {
-    sql:ExecutionResult result = check dbClient->execute(updateRouteQuery(updateRoutePayload));
-    return result.affectedRowCount;
+public isolated function updateRoute(int routeId, types:UpdateRoutePayload updateRoutePayload) returns int|error? {
+    sql:ParameterizedQuery[] queries = updateRouteQuery(routeId, updateRoutePayload);
+    int totalAffectedRows = 0;
+
+    transaction {
+        foreach sql:ParameterizedQuery query in queries {
+            sql:ExecutionResult result = check dbClient->execute(query);
+            int? rowCount = result.affectedRowCount;
+            
+            if rowCount is int {
+                totalAffectedRows += rowCount;
+            }
+        }
+        check commit;
+    }
+
+    return totalAffectedRows;
 }
 
 # Get route details of a given path.
@@ -226,16 +235,23 @@ public isolated function getPageDetails(string routePath) returns types:PageResp
         return result;
     }
 
-    PageResponse {customPageTheme, ...pageRest} = result;
+    PageResponse {customPageTheme, routeId, ...pageRest} = result;
+    types:CustomTheme? convertedTheme = ();
+    
     if customPageTheme is () {
-        return {...pageRest};
+    } else {
+        types:CustomTheme convertedCustomPageTheme = check customPageTheme.fromJsonStringWithType();
+        convertedTheme = convertedCustomPageTheme;
     }
-    types:CustomTheme|error convertedCustomPageTheme = customPageTheme.fromJsonStringWithType();
-    if convertedCustomPageTheme is error {
-        log:printError(constants:GET_PAGE_DATA_ERROR, convertedCustomPageTheme, routePath = routePath);
-        return error(constants:GET_PAGE_DATA_ERROR, routePath = routePath);
+
+    types:ContentResponse[]|error routeContents = getContents(false, DEFAULT_CONTENTS_LIMIT, 
+        DEFAULT_CONTENTS_OFFSET, (), routeId, "");
+    if routeContents is error {
+        log:printWarn("Could not fetch route contents", routeId = routeId);
+        return {...pageRest, routeId: routeId, customPageTheme: convertedTheme, routeContents: []};
     }
-    return {...pageRest, customPageTheme: convertedCustomPageTheme};
+
+    return {...pageRest, routeId: routeId, customPageTheme: convertedTheme, routeContents: routeContents};
 }
 
 # Update content.
@@ -245,11 +261,24 @@ public isolated function getPageDetails(string routePath) returns types:PageResp
 # + userEmail - Email of the user for last verified by / updated by
 # + return - Error or nil
 public isolated function updateContent(int contentId, types:UpdateContentPayload updateContentPayload, string userEmail)
-    returns int|error? {
+    returns int?|error {
 
-    sql:ExecutionResult result =
-        check dbClient->execute(updateContentQuery(contentId, updateContentPayload, userEmail));
-    return result.affectedRowCount;
+    sql:ParameterizedQuery[] queries = updateContentQuery(contentId, updateContentPayload, userEmail);
+    int totalAffectedRows = 0;
+
+    transaction {
+        foreach sql:ParameterizedQuery query in queries {
+            sql:ExecutionResult result = check dbClient->execute(query);
+            int? rowCount = result.affectedRowCount;
+            
+            if rowCount is int {
+                totalAffectedRows += rowCount;
+            }
+        }
+        check commit;
+    }
+
+    return totalAffectedRows;
 }
 
 # Get section data using section ID.
@@ -270,11 +299,28 @@ public isolated function getSectionById(int sectionId) returns types:SectionPayl
 
 # Update section.
 #
+# + sectionId - Section ID
 # + updateSectionPayload - New section details
 # + return - Error or nil
-public isolated function updateSection(types:UpdateSectionPayload updateSectionPayload) returns int|error? {
-    sql:ExecutionResult result = check dbClient->execute(updateSectionQuery(updateSectionPayload));
-    return result.affectedRowCount;
+public isolated function updateSection(int sectionId, types:UpdateSectionPayload updateSectionPayload) 
+    returns int|error? {
+        
+    sql:ParameterizedQuery[] queries = updateSectionQuery(sectionId, updateSectionPayload);
+    int totalAffectedRows = 0;
+
+    transaction {
+        foreach sql:ParameterizedQuery query in queries {
+            sql:ExecutionResult result = check dbClient->execute(query);
+            int? rowCount = result.affectedRowCount;
+            
+            if rowCount is int {
+                totalAffectedRows += rowCount;
+            }
+        }
+        check commit;
+    }
+
+    return totalAffectedRows;
 }
 
 # Get section data of a given route path.
@@ -291,20 +337,12 @@ public isolated function getSectionByRoutePath(int 'limit, int 'offset, string? 
 
     stream<Section, sql:Error?> resultStream = dbClient->query(getSectionByRoutePathQuery('limit, 'offset, routePath));
 
-    error? response = from Section {customSectionTheme, ...sectionRest} in resultStream
+    check from Section {customSectionTheme, ...sectionRest} in resultStream
         do {
-            types:Section|error convertedSection = transformSectionResponse(customSectionTheme, {...sectionRest});
-            if convertedSection is error {
-                log:printError(constants:GET_SECTION_ERROR, convertedSection, routePath = routePath);
-                return error(constants:GET_SECTION_ERROR, routePath = routePath);
-            }
+            types:Section convertedSection = check transformSectionResponse(customSectionTheme, {...sectionRest});
             sections.push(convertedSection);
         };
 
-    if response is error {
-        log:printError(constants:GET_ALL_SECTION_IDS_ERROR, response, routePath = routePath);
-        return error(constants:GET_ALL_SECTION_IDS_ERROR);
-    }
     return sections;
 
 }
@@ -349,14 +387,8 @@ public isolated function addUser(entity:Employee user) returns error? {
 public isolated function getCommentsByContentId(int contentId) returns types:CommentResponse[]|error {
     stream<types:CommentResponse, sql:Error?> resultStream = dbClient->query(
         getCommentsByContentIdQuery(contentId));
-    types:CommentResponse[]|error results = from types:CommentResponse result in resultStream
+    return from types:CommentResponse result in resultStream
         select result;
-
-    if results is error {
-        log:printError(constants:GET_COMMENTS_ERROR, results);
-        return error(constants:GET_COMMENTS_ERROR);
-    }
-    return results;
 }
 
 # Get all the contents that contains a particular text.
@@ -382,12 +414,8 @@ public isolated function getContentsByText(string userInput, string userEmail)
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse|error convertedContent = transformContentResponse(customContentTheme, tags, 
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags, 
                     {...contentRest});
-            if convertedContent is error {
-                log:printError(constants:GET_CONTENTS_BY_TEXT_ERROR, convertedContent);
-                return error(constants:GET_CONTENTS_BY_TEXT_ERROR);
-            }
             contents.push(convertedContent);
         };
     return contents;
@@ -415,66 +443,11 @@ public isolated function getContentsByTags(string[] inputTags, string userEmail)
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse|error convertedContent = transformContentResponse(customContentTheme, tags, 
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags, 
                     {...contentRest});
-            if convertedContent is error {
-                log:printError(constants:GET_CONTENTS_ERROR, convertedContent);
-                return error(constants:GET_CONTENTS_ERROR);
-            }
             contents.push(convertedContent);
         };
     return contents;
-}
-
-# Reorder contents in the database.
-#
-# + reorderPayload - Reorder content payload
-# + return - Error or nil
-public isolated function reorderContents(types:ReorderContentPayload reorderPayload) returns error? {
-
-    if reorderPayload.reorderContents.length() == 0 {
-        return;
-    }
-
-    transaction {
-        sql:ParameterizedQuery query = reorderContentsQuery(reorderPayload);
-        _ = check dbClient->execute(query);
-        check commit;
-    }
-    return;
-}
-
-# Reorder sections in the database.
-#
-# + reorderPayload - Reorder section payload
-# + return - Error or nil
-public isolated function reorderSections(types:ReorderSectionPayload reorderPayload) returns error? {
-    if reorderPayload.reorderSections.length() == 0 {
-        return;
-    }
-
-    transaction {
-        sql:ParameterizedQuery query = reorderSectionsQuery(reorderPayload);
-        _ = check dbClient->execute(query);
-        check commit;
-    }
-    return;
-}
-
-# Reorder routes in the database.
-#
-# + reorderRoutesPayload - Reorder routes payload
-# + return - Error or nil
-public isolated function reorderRoutes(types:ReorderRoutesPayload reorderRoutesPayload) returns error? {
-    if reorderRoutesPayload.reorderRoutes.length() == 0 {
-        return;
-    }
-
-    transaction {
-        sql:ParameterizedQuery query = reorderRoutesQuery(reorderRoutesPayload);
-        _ = check dbClient->execute(query);
-        check commit;
-    }
 }
 
 # Get content details for content report.
@@ -482,14 +455,8 @@ public isolated function reorderRoutes(types:ReorderRoutesPayload reorderRoutesP
 # + return - Content or error
 public isolated function getContentDetails() returns types:ContentReport[]|error {
     stream<types:ContentReport, sql:Error?> resultStream = dbClient->query(getContentDetailsQuery());
-    types:ContentReport[]|error results = from types:ContentReport result in resultStream
+    return from types:ContentReport result in resultStream
         select result;
-
-    if results is error {
-        log:printError(constants:GET_CONTENT_REPORT_ERROR, results);
-        return error(constants:GET_CONTENT_REPORT_ERROR);
-    }
-    return results;
 }
 
 # Get content title by content id.
@@ -531,40 +498,6 @@ public isolated function addTag(types:TagPayload tag) returns error? {
 public isolated function deleteTag(string tagName) returns int|error? {
     sql:ExecutionResult result = check dbClient->execute(deleteTagQuery(tagName));
     return result.affectedRowCount;
-}
-
-# Get route content details by route ID.
-#
-# + return - Array of route content items or error
-public isolated function getRouteContentDetails() returns types:RouteContentItem[]|error {
-    stream<types:RouteContentItem, sql:Error?> resultStream = dbClient->query(getRouteContentByRouteIdQuery());
-    return from types:RouteContentItem result in resultStream
-        select result;
-}
-
-# Add a new content for a route ID.
-#
-# + content - Content details
-# + return - Error or nil
-public isolated function addRouteContent(types:RouteContentPayload content) returns error? {
-    _ = check dbClient->execute(addRouteContentQuery(content));
-}
-
-# Update content for a given content ID.
-#
-# + content - Update content details
-# + return - Error or nil
-public isolated function updateRouteContent(types:UpdateRouteContentPayload content) returns int|error? {
-    sql:ExecutionResult result = check dbClient->execute(updateRouteContentQuery(content));
-    return result.affectedRowCount;
-}
-
-# Delete a content in a route.
-#
-# + contentId - Content ID
-# + return - Error or nil
-public isolated function DeleteRouteContent(int contentId) returns error? {
-    _ = check dbClient->execute(DeleteRouteContentQuery(contentId));
 }
 
 # Reparent routes to a new parent route.
@@ -616,16 +549,6 @@ public isolated function getCommentData(int commentId, string email) returns typ
         }
     }
     return result;
-}
-
-# Update the visibility of a route by ID.
-#
-# + routeId - Route ID to update visibility
-# + payload - Route ID to update visibility
-# + return - error? if operation fails
-public isolated function updateRouteVisibility(int routeId, types:Routes payload) returns int|error? {
-    sql:ExecutionResult result = check dbClient->execute(updateRouteVisibilityQuery(routeId, payload));
-    return result.affectedRowCount;
 }
 
 # Add a new custom button.
@@ -697,12 +620,8 @@ public isolated function getRecentContents(string userEmail, int 'limit, int 'of
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse|error convertedContent = transformContentResponse(customContentTheme, tags, 
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags, 
                     {...contentRest});
-            if convertedContent is error {
-                log:printError(constants:GET_RECENT_CONTENT_ERROR, convertedContent);
-                return error(constants:GET_RECENT_CONTENT_ERROR);
-            }
             contents.push(convertedContent);
         };
 
