@@ -23,3 +23,6 @@ const RECENT_CONTENT_ORDER = 0;
 const PINNED_CONTENT_SECTION_TYPE = "pinned_content";
 const SUGGESTED_CONTENT_SECTION_TYPE = "suggested_content";
 const RECENT_CONTENT_SECTION_TYPE = "recent_content";
+
+const DEFAULT_CONTENTS_LIMIT = 50;
+const DEFAULT_CONTENTS_OFFSET = 0;

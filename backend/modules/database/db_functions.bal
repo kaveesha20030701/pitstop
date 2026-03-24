@@ -106,8 +106,7 @@ public isolated function addComment(types:Comment comment) returns error? {
 # + userEmail - User email
 # + return - Contents or error
 public isolated function getContents(boolean isUser, int 'limit, int 'offset, int? sectionId = (), int? routeId = (), 
-    string? userEmail = ())
-        returns types:ContentResponse[]|error {
+    string? userEmail = ()) returns types:ContentResponse[]|error {
 
     types:ContentResponse[] contents = [];
     stream<ContentResponse, sql:Error?> resultStream = dbClient->query(

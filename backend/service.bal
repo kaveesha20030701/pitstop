@@ -211,7 +211,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if (contentPayload.sectionId is int && contentPayload.routeId is int) {
+        if contentPayload.sectionId is int && contentPayload.routeId is int {
             string customError = "Both section and route is not allowed to create a content";
             log:printWarn(customError);
             return <http:BadRequest>{
@@ -220,7 +220,7 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         if contentPayload.routeId is int {
-            contentPayload.contentType = "route_content";
+            contentPayload.contentType = database:ROUTE_CONTENT_TYPE;
         }
 
         boolean|error? isContentExistsResult = database:checkContentExists(
@@ -514,7 +514,8 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + limit - Number of contents to retrieve
     # + offset - Number of contents to offset
     # + return - Contents or error responses
-    resource function get contents(http:RequestContext ctx, int? sectionId = (), int? routeId = (), int 'limit = 10, int 'offset = 0)
+    resource function get contents(http:RequestContext ctx, int? sectionId = (), int? routeId = (), 
+        int 'limit = DEFAULT_CONTENTS_LIMIT, int 'offset = DEFAULT_CONTENTS_OFFSET)
         returns types:ContentResponse[]|http:NotFound|http:Forbidden|http:BadRequest|http:InternalServerError {
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
@@ -535,7 +536,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if (sectionId is () && routeId is ()) {
+        if sectionId is () && routeId is () {
             string customError = "Either section or route is required to create a content";
             log:printWarn(customError);
             return <http:BadRequest>{
@@ -543,7 +544,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if (sectionId is int && routeId is int) {
+        if sectionId is int && routeId is int {
             string customError = "Both section and route is not allowed to create a content";
             log:printWarn(customError);
             return <http:BadRequest>{
@@ -559,7 +560,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             } else if sectionId == PINNED_CONTENT_SECTION_ID {
                 contents = database:getPinnedContents(userEmail, 'limit, 'offset);
             } else if sectionId == SUGGESTED_CONTENT_SECTION_ID {
-                analytics:VisitSummary|error visitSummary = trap analytics:processRecentActivityForUser(userEmail);
+                analytics:VisitSummary|error visitSummary = analytics:processRecentActivityForUser(userEmail);
                 if visitSummary is error {
                     log:printWarn("Analytics unavailable. Using fallback suggestions", userEmail = userEmail);
                     contents = database:getSuggestionsFromPinnedContents(userEmail, suggestedContentsLimit, 0);
