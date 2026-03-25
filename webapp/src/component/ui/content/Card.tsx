@@ -530,8 +530,11 @@ const ComponentCard = ({
   const getCardContentOrder = (): string[] => {
     const defaultOrder = ["customButtons", "title", "note", "tags"];
     try {
-      if (window.config?.CARD_CONTENT_ORDER && Array.isArray(window.config.CARD_CONTENT_ORDER)) {
-        return window.config.CARD_CONTENT_ORDER;
+      const configuredOrder = window.config?.CARD_CONTENT_ORDER;
+      if (Array.isArray(configuredOrder)) {
+        const allowed = new Set(defaultOrder);
+        const normalized = configuredOrder.filter((section) => allowed.has(section));
+        return [...new Set([...normalized, ...defaultOrder])];
       }
     } catch (error) {
       console.warn("Error reading CARD_CONTENT_ORDER from config:", error);
@@ -566,6 +569,7 @@ const ComponentCard = ({
           />
         );
       case "note":
+        if (!note?.trim() && !customContentTheme?.note?.htmlContent?.trim()) return null;
         return (
           <Box
             key="note"
@@ -583,6 +587,7 @@ const ComponentCard = ({
           </Box>
         );
       case "tags":
+        if (!tags?.some((tag) => tag.trim())) return null;
         return (
           <Box
             key="tags"
@@ -1102,6 +1107,9 @@ const ComponentCard = ({
                   <Box sx={{ display: "flex", justifyContent: "center", py: 0.25, flexShrink: 0 }}>
                     {hasOverflow && (
                       <IconButton
+                        aria-label={isOverflowExpanded ? "Collapse content" : "Expand content"}
+                        aria-expanded={isOverflowExpanded}
+                        aria-controls="card-overflow-content"
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={() => setIsOverflowExpanded((prev) => !prev)}
                         sx={{
@@ -1126,6 +1134,9 @@ const ComponentCard = ({
                 {!hasVisibleCustomButtons && hasOverflow && (
                   <Box sx={{ display: "flex", justifyContent: "center", py: 0.75, flexShrink: 0 }}>
                     <IconButton
+                      aria-label={isOverflowExpanded ? "Collapse content" : "Expand content"}
+                      aria-expanded={isOverflowExpanded}
+                      aria-controls="card-overflow-content"
                       onMouseDown={(e) => e.stopPropagation()}
                       onClick={() => setIsOverflowExpanded((prev) => !prev)}
                       sx={{
@@ -1369,6 +1380,7 @@ const ComponentCard = ({
            />
          )}
          <Box
+           id="card-overflow-content"
            sx={{
              position: "absolute",
              top: `${PREVIEW_H - 30}px`,
@@ -1405,6 +1417,9 @@ const ComponentCard = ({
                 <Box sx={{ display: "flex", justifyContent: "center", mb: 0.5 }}>
                   <IconButton
                     size="small"
+                    aria-label="Collapse content"
+                    aria-expanded={true}
+                    aria-controls="card-overflow-content"
                     onClick={() => setIsOverflowExpanded(false)}
                     sx={{
                       color: "rgba(255,255,255,0.45)",
