@@ -19,7 +19,7 @@ import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { Box, IconButton, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 
 import { ContentResponse } from "@/types/types";
 
@@ -54,26 +54,55 @@ const Carousel: React.FC<CarouselProps> = ({
   const [isTransitioning, setIsTransitioning] = useState(false);
   const arrowRefPrev = useRef<HTMLButtonElement>(null);
   const arrowRefNext = useRef<HTMLButtonElement>(null);
+  const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoScrollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isMountedRef = useRef(true);
 
   const current = useMemo(() => (count ? index % count : 0), [index, count]);
 
   useEffect(() => setIndex(0), [count]);
+
+  const setTransitionTimeout = useCallback((callback: () => void, delay: number) => {
+    if (transitionTimerRef.current) {
+      clearTimeout(transitionTimerRef.current);
+    }
+    transitionTimerRef.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        callback();
+      }
+    }, delay);
+  }, []);
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      if (transitionTimerRef.current) {
+        clearTimeout(transitionTimerRef.current);
+      }
+      if (autoScrollTimerRef.current) {
+        clearTimeout(autoScrollTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!autoScroll || count <= 1 || hover) return;
     const id = setInterval(() => {
       setIsTransitioning(true);
       setIndex((i) => (i + 1) % count);
-      setTimeout(() => setIsTransitioning(false), 600);
+      setTransitionTimeout(() => setIsTransitioning(false), 600);
     }, autoScrollInterval);
-    return () => clearInterval(id);
-  }, [autoScroll, autoScrollInterval, count, hover]);
+    autoScrollTimerRef.current = id;
+    return () => {
+      clearInterval(id);
+      autoScrollTimerRef.current = null;
+    };
+  }, [autoScroll, autoScrollInterval, count, hover, setTransitionTimeout]);
 
   const onPrev = () => {
     if (count > 1 && !isTransitioning) {
       setIsTransitioning(true);
       setIndex((i) => (i - 1 + count) % count);
-      setTimeout(() => setIsTransitioning(false), 600);
+      setTransitionTimeout(() => setIsTransitioning(false), 600);
     }
   };
 
@@ -81,7 +110,7 @@ const Carousel: React.FC<CarouselProps> = ({
     if (count > 1 && !isTransitioning) {
       setIsTransitioning(true);
       setIndex((i) => (i + 1) % count);
-      setTimeout(() => setIsTransitioning(false), 600);
+      setTransitionTimeout(() => setIsTransitioning(false), 600);
     }
   };
 
@@ -264,7 +293,7 @@ const Carousel: React.FC<CarouselProps> = ({
                 if (!isTransitioning) {
                   setIsTransitioning(true);
                   setIndex(i);
-                  setTimeout(() => setIsTransitioning(false), 600);
+                  setTransitionTimeout(() => setIsTransitioning(false), 600);
                 }
               }}
               sx={{

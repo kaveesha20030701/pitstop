@@ -22,12 +22,9 @@ import { safeParseHtml } from "@utils/safeHtml";
 interface CardNoteProps {
   note?: string;
   customContentTheme?: CustomTheme;
-  hasOverflow: boolean;
-  isOverflowExpanded: boolean;
   onReadMore: () => void;
   isInOverlay?: boolean;
 }
-
 const CardNote: React.FC<CardNoteProps> = ({
   note,
   customContentTheme,

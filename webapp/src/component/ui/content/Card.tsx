@@ -578,8 +578,6 @@ const ComponentCard = ({
             <CardNote
               note={note}
               customContentTheme={customContentTheme}
-              hasOverflow={hasOverflow}
-              isOverflowExpanded={isOverflowExpanded}
               onReadMore={toggleInfoModal}
             />
           </Box>
@@ -652,8 +650,6 @@ const ComponentCard = ({
             key="note-overlay"
             note={note}
             customContentTheme={customContentTheme}
-            hasOverflow={hasOverflow}
-            isOverflowExpanded={isOverflowExpanded}
             onReadMore={() => setIsOverflowExpanded((prev) => !prev)}
             isInOverlay={true}
           />
@@ -1101,36 +1097,6 @@ const ComponentCard = ({
                 >
                   {contentOrder.map((sectionName) => renderContentSection(sectionName, hasVisibleCustomButtons))}
                 </Box>
-
-                {/* Menu */}
-                <Menu
-                  elevation={theme.palette.mode === "light" ? 6 : 0}
-                  id="long-menu"
-                  MenuListProps={{ "aria-labelledby": "long-button" }}
-                  open={isMenuItemsOpen}
-                  anchorEl={anchorEl}
-                  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                  transformOrigin={{ vertical: "top", horizontal: "right" }}
-                  sx={{ ml: 3 }}
-                  onClose={() => setAnchorEl(null)}
-                >
-                  <MenuItem
-                    key={"update"}
-                    onClick={() => setIsUpdateDialogOpen(true)}
-                    sx={{ minWidth: 140 }}
-                  >
-                    <UpdateIcon sx={{ mr: 1 }} />
-                    <Typography>Update</Typography>
-                  </MenuItem>
-                  <MenuItem
-                    key={"delete"}
-                    onClick={() => setIsDeleteDialogOpen(true)}
-                    sx={{ minWidth: 140 }}
-                  >
-                    <DeleteIcon sx={{ mr: 1 }} />
-                    <Typography>Delete</Typography>
-                  </MenuItem>
-                </Menu>
 
                 {hasVisibleCustomButtons && (
                   <Box sx={{ display: "flex", justifyContent: "center", py: 0.25, flexShrink: 0 }}>
