@@ -244,7 +244,7 @@ const ComponentCard = ({
     const ro = new ResizeObserver(detect);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [note, tags, localCustomButtons, localIsVisible]);
+  }, [description, createdOn, customContentTheme, note, tags, localCustomButtons, localIsVisible]);
 
   const handleSaveCustomButtons = async (buttons: CustomButton[]) => {
     const reorderedButtons = buttons.map((button, index) => ({
@@ -1109,7 +1109,7 @@ const ComponentCard = ({
                       <IconButton
                         aria-label={isOverflowExpanded ? "Collapse content" : "Expand content"}
                         aria-expanded={isOverflowExpanded}
-                        aria-controls="card-overflow-content"
+                        aria-controls={`card-overflow-content-${contentId}`}
                         onMouseDown={(e) => e.stopPropagation()}
                         onClick={() => setIsOverflowExpanded((prev) => !prev)}
                         sx={{
@@ -1136,7 +1136,7 @@ const ComponentCard = ({
                     <IconButton
                       aria-label={isOverflowExpanded ? "Collapse content" : "Expand content"}
                       aria-expanded={isOverflowExpanded}
-                      aria-controls="card-overflow-content"
+                      aria-controls={`card-overflow-content-${contentId}`}
                       onMouseDown={(e) => e.stopPropagation()}
                       onClick={() => setIsOverflowExpanded((prev) => !prev)}
                       sx={{
@@ -1380,7 +1380,7 @@ const ComponentCard = ({
            />
          )}
          <Box
-           id="card-overflow-content"
+           id={`card-overflow-content-${contentId}`}
            sx={{
              position: "absolute",
              top: `${PREVIEW_H - 30}px`,
@@ -1419,7 +1419,7 @@ const ComponentCard = ({
                     size="small"
                     aria-label="Collapse content"
                     aria-expanded={true}
-                    aria-controls="card-overflow-content"
+                    aria-controls={`card-overflow-content-${contentId}`}
                     onClick={() => setIsOverflowExpanded(false)}
                     sx={{
                       color: "rgba(255,255,255,0.45)",
