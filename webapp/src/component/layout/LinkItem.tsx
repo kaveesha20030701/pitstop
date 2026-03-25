@@ -107,6 +107,7 @@ const ListItemLink = (props: ListItemLinkProps) => {
         position: "relative",
         display: "inline-block",
         margin: 0,
+        flexShrink: 0,
       }}
     >
       <ListItem
@@ -124,6 +125,7 @@ const ListItemLink = (props: ListItemLinkProps) => {
           alignItems: "center",
           height: "38px",
           width: "100%",
+          whiteSpace: "nowrap", 
           pl: level > 2 ? level * 1.5 : 1,
           pr: routeId === INVALID_ROUTE_ID ? 3 : 0,
           borderRadius: theme.spacing(0.5),

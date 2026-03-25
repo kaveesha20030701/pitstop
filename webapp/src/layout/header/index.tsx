@@ -25,7 +25,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import {
   Avatar,
   Box,
-  Button,
   CssBaseline,
   List,
   ListItemButton,
@@ -52,6 +51,7 @@ import wso2LogoWhite from "@assets/images/wso2-logo-white.png";
 import AdminPanelSideBar from "@components/adminPanel/AdminDrawer";
 import ListItemLink from "@components/layout/LinkItem";
 import {
+  INVALID_ROUTE_ID,
   ROUTE_ID_ADMIN_EDIT_MENU,
   ROUTE_ID_ADMIN_PANEL,
   ROUTE_ID_ADMIN_REPORT,
@@ -298,7 +298,6 @@ const Header = (props: HeaderProps) => {
               <Stack direction="row" alignItems="center" spacing={1} sx={{ flexGrow: 1 }}>
                 <img
                   alt="wso2"
-                  onClick={() => navigateWithLoading("/")}
                   style={{
                     marginRight: "10px",
                     height: "20px",
@@ -341,7 +340,6 @@ const Header = (props: HeaderProps) => {
                         sx={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 0.5,
                           px: 1.5,
                           py: 0.5,
                           fontWeight: 500,
@@ -395,6 +393,7 @@ const Header = (props: HeaderProps) => {
                   },
                   flexDirection: "row",
                   alignItems: "center",
+                  flexShrink: 0, 
                 }}
               >
                 {newRoutes.map((r, idx) => {
@@ -409,6 +408,7 @@ const Header = (props: HeaderProps) => {
                           py: 0.5,
                           borderRadius: "8px",
                           minWidth: "auto",
+                          whiteSpace: "nowrap",
                           position: "relative",
                           "&:hover": {
                             backgroundColor:
@@ -451,6 +451,24 @@ const Header = (props: HeaderProps) => {
                     );
                   }
 
+                  if (r.routeId === ROUTE_ID_ADMIN_PANEL) {
+                    return (
+                      <ListItemLink
+                        key={idx}
+                        theme={props.theme}
+                        to={"#"}
+                        label={r.menuItem}
+                        routeId={INVALID_ROUTE_ID}
+                        primary={r.menuItem}
+                        isActive={false}
+                        children={r.children}
+                        level={1}
+                        handleSideBar={handleCloseSideBar}
+                        isRouteVisible={r.isRouteVisible ? 1 : 0}
+                      />
+                    );
+                  }
+
                   return (
                     <ListItemLink
                       key={idx}
@@ -470,7 +488,16 @@ const Header = (props: HeaderProps) => {
               </List>
 
               {/* Right-side utility icons */}
-              <Stack flexDirection="row" gap={2} sx={{ marginLeft: theme.spacing(2) }}>
+              <Stack
+                flexDirection="row"
+                gap={0.8}
+                sx={{
+                  marginLeft: theme.spacing(2),
+                  marginRight: -0.5,
+                  alignItems: "center",
+                  flexShrink: 0,
+                }}
+              >
                 <Tooltip title={theme.palette.mode === "light" ? "Dark mode" : "Light mode"}>
                   <IconButton
                     aria-label="toggle theme mode"
@@ -510,30 +537,26 @@ const Header = (props: HeaderProps) => {
 
                 {userInfo && userInfo.email && (
                   <>
-                    <Button
+                    <IconButton
                       onClick={handleOpenUserMenu}
                       id="long-button"
-                      startIcon={
-                        <Avatar
-                          sx={{
-                            width: 35,
-                            height: 35,
-                            border: 1,
-                            borderColor: "primary.main",
-                          }}
-                          alt={userInfo.name}
-                          src={user?.employeeThumbnail}
-                        />
-                      }
+                      aria-label="open user menu"
                       sx={{
-                        textTransform: "none",
-                        color: theme.palette.primary.contrastText,
-                        fontSize: "0.9rem",
-                        gap: 1,
+                        p: 0,
+                        ml: 0.5,
                       }}
                     >
-                      {userInfo?.name}
-                    </Button>
+                      <Avatar
+                        sx={{
+                          width: 35,
+                          height: 35,
+                          border: 1,
+                          borderColor: "primary.main",
+                        }}
+                        alt={userInfo?.name}
+                        src={user?.employeeThumbnail}
+                      />
+                    </IconButton>
 
                     {/*DropDown When User clicks on user thumbnail*/}
                     <Menu
