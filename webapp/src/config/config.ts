@@ -38,6 +38,7 @@ declare global {
       IS_PITSTOP_APP: boolean;
       SALES_PITSTOP_URL: string;
       SE_WIKI_URL: string;
+      CARD_CONTENT_ORDER: string[];
     };
   }
 }

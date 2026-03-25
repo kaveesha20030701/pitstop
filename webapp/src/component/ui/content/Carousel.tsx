@@ -14,13 +14,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useEffect, useMemo, useState, useRef } from "react";
-import { Box, IconButton, useTheme } from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
-import ComponentCard from "./Card";
+import { Box, IconButton, useTheme } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+
+import React, { useEffect, useMemo, useRef, useState } from "react";
+
 import { ContentResponse } from "@/types/types";
+
+import ComponentCard from "./Card";
 
 interface CarouselProps {
   contentData: ContentResponse[];
@@ -41,7 +44,7 @@ const Carousel: React.FC<CarouselProps> = ({
   contentData,
   isInPinnedSection = false,
   autoScroll = true,
-  autoScrollInterval = 5000, 
+  autoScrollInterval = 5000,
 }) => {
   const theme = useTheme();
   const count = contentData.length;
@@ -61,7 +64,7 @@ const Carousel: React.FC<CarouselProps> = ({
     const id = setInterval(() => {
       setIsTransitioning(true);
       setIndex((i) => (i + 1) % count);
-      setTimeout(() => setIsTransitioning(false), 600); 
+      setTimeout(() => setIsTransitioning(false), 600);
     }, autoScrollInterval);
     return () => clearInterval(id);
   }, [autoScroll, autoScrollInterval, count, hover]);
@@ -70,7 +73,7 @@ const Carousel: React.FC<CarouselProps> = ({
     if (count > 1 && !isTransitioning) {
       setIsTransitioning(true);
       setIndex((i) => (i - 1 + count) % count);
-      setTimeout(() => setIsTransitioning(false), 600); 
+      setTimeout(() => setIsTransitioning(false), 600);
     }
   };
 
@@ -78,7 +81,7 @@ const Carousel: React.FC<CarouselProps> = ({
     if (count > 1 && !isTransitioning) {
       setIsTransitioning(true);
       setIndex((i) => (i + 1) % count);
-      setTimeout(() => setIsTransitioning(false), 600); 
+      setTimeout(() => setIsTransitioning(false), 600);
     }
   };
 
@@ -90,7 +93,7 @@ const Carousel: React.FC<CarouselProps> = ({
 
   const getCardStyle = (offset: number) => {
     const absOffset = Math.abs(offset);
-    
+
     if (offset === 0) {
       // Center card - optimized for clarity
       return {
@@ -99,7 +102,7 @@ const Carousel: React.FC<CarouselProps> = ({
         left: "50%",
         zIndex: 10,
         transform: `translateX(-50%) scale(${CENTER_SCALE})`,
-        transition: "all 700ms cubic-bezier(0.25, 0.46, 0.45, 0.94)", 
+        transition: "all 700ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
         filter: "none",
         opacity: 1,
         pointerEvents: "auto" as const,
@@ -114,7 +117,7 @@ const Carousel: React.FC<CarouselProps> = ({
         left: "50%",
         zIndex: 5,
         transform: `translateX(calc(-50% + ${offset * SIDE_OFFSET_X}px)) translateY(10px) scale(${SIDE_SCALE})`,
-        transition: "all 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94)", 
+        transition: "all 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
         filter: "brightness(0.7) saturate(0.9)",
         opacity: 0.5,
         pointerEvents: "none" as const,
@@ -130,7 +133,7 @@ const Carousel: React.FC<CarouselProps> = ({
         left: "50%",
         zIndex: 0,
         transform: `translateX(calc(-50% + ${offset > 0 ? 300 : -300}px)) scale(0.5)`,
-        transition: "all 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94)", 
+        transition: "all 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94)",
         opacity: 0,
         pointerEvents: "none" as const,
         visibility: "hidden" as const,
@@ -155,19 +158,18 @@ const Carousel: React.FC<CarouselProps> = ({
         }}
       >
         {/* Render all cards in circular arrangement */}
-        {count > 0 && Array.from({ length: count }).map((_, i) => {
-          const offset = i - current;
-          const wrappedOffset = offset > count / 2 ? offset - count : offset < -count / 2 ? offset + count : offset;
-          
-          return (
-            <Box
-              key={`card-${i}`}
-              sx={getCardStyle(wrappedOffset)}
-            >
-              {renderCard(contentData[i])}
-            </Box>
-          );
-        })}
+        {count > 0 &&
+          Array.from({ length: count }).map((_, i) => {
+            const offset = i - current;
+            const wrappedOffset =
+              offset > count / 2 ? offset - count : offset < -count / 2 ? offset + count : offset;
+
+            return (
+              <Box key={`card-${i}`} sx={getCardStyle(wrappedOffset)}>
+                {renderCard(contentData[i])}
+              </Box>
+            );
+          })}
       </Box>
 
       {/* Navigation Arrows - Only visible on hover */}
@@ -190,16 +192,17 @@ const Carousel: React.FC<CarouselProps> = ({
               bgcolor: alpha(theme.palette.background.paper, 0.9),
               backdropFilter: "blur(6px)",
               boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-              opacity: hover ? 1 : 0, 
+              opacity: hover ? 1 : 0,
               visibility: hover ? "visible" : "hidden",
-              "&:hover": { 
+              "&:hover": {
                 bgcolor: alpha(theme.palette.background.paper, 0.98),
                 transform: "translateY(-50%) scale(1.1)",
               },
               "&:disabled": {
                 opacity: 0.5,
               },
-              transition: "opacity 0.3s ease, visibility 0.3s ease, transform 0.2s ease, background-color 0.2s ease",
+              transition:
+                "opacity 0.3s ease, visibility 0.3s ease, transform 0.2s ease, background-color 0.2s ease",
             }}
           >
             <ArrowBackIosIcon fontSize="small" sx={{ ml: 0.5 }} />
@@ -222,16 +225,17 @@ const Carousel: React.FC<CarouselProps> = ({
               bgcolor: alpha(theme.palette.background.paper, 0.9),
               backdropFilter: "blur(6px)",
               boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-              opacity: hover ? 1 : 0, 
+              opacity: hover ? 1 : 0,
               visibility: hover ? "visible" : "hidden",
-              "&:hover": { 
+              "&:hover": {
                 bgcolor: alpha(theme.palette.background.paper, 0.98),
                 transform: "translateY(-50%) scale(1.1)",
               },
               "&:disabled": {
                 opacity: 0.5,
               },
-              transition: "opacity 0.3s ease, visibility 0.3s ease, transform 0.2s ease, background-color 0.2s ease",
+              transition:
+                "opacity 0.3s ease, visibility 0.3s ease, transform 0.2s ease, background-color 0.2s ease",
             }}
           >
             <ArrowForwardIosIcon fontSize="small" />
@@ -244,6 +248,7 @@ const Carousel: React.FC<CarouselProps> = ({
         <Box
           sx={{
             mt: 2,
+            mb: 2,
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
@@ -259,7 +264,7 @@ const Carousel: React.FC<CarouselProps> = ({
                 if (!isTransitioning) {
                   setIsTransitioning(true);
                   setIndex(i);
-                  setTimeout(() => setIsTransitioning(false), 600); 
+                  setTimeout(() => setIsTransitioning(false), 600);
                 }
               }}
               sx={{

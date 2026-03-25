@@ -14,31 +14,20 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import ArticleIcon from "@mui/icons-material/Article";
 import BrokenImageIcon from "@mui/icons-material/BrokenImage";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import DeleteIcon from "@mui/icons-material/Delete";
-import DescriptionIcon from "@mui/icons-material/Description";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
-import LinkIcon from "@mui/icons-material/Link";
-import MenuBookIcon from "@mui/icons-material/MenuBook";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PushPinIcon from "@mui/icons-material/PushPin";
 import PushPinOutlinedIcon from "@mui/icons-material/PushPinOutlined";
-import SlideshowIcon from "@mui/icons-material/Slideshow";
 import UpdateIcon from "@mui/icons-material/Update";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import {
   Box,
   Button,
-  CardContent,
-  CardHeader,
   CardMedia,
-  Chip,
   Divider,
   Fade,
   Grow,
@@ -52,11 +41,10 @@ import {
 import Card from "@mui/material/Card";
 import CardActions from "@mui/material/CardActions";
 import IconButton from "@mui/material/IconButton";
-import dayjs from "dayjs";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+
 import { useLocation, useNavigate } from "react-router-dom";
 import { CustomButton, CustomTheme } from "src/types/types";
-
-import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import wso2LogoWhite from "@assets/images/wso2-logo-white.png";
 import { GOOGLE_DOCS_DOMAIN, GOOGLE_DRIVE_DOMAIN } from "@config/constant";
@@ -84,6 +72,10 @@ import { getEmbedUrl, getGoogleDocsDownloadUrl } from "@utils/utils";
 import UpdateContentDialogBox from "@components/dialogs/ContentDialogBox";
 import CustomButtonConfigDialog from "@components/dialogs/CustomButtonConfigDialog";
 import ExpandedContentCard from "./ExpandedContent";
+import CardCustomButtons from "./CardCustomButtons";
+import CardTitle from "./CardTitle";
+import CardNote from "./CardNote";
+import CardTags from "./CardTags";
 
 interface ComponentCardProps {
   contentId: number;
@@ -116,7 +108,7 @@ if (typeof window !== "undefined" && typeof _paq === "undefined") {
 }
 
 const PREVIEW_W = 323;
-const PREVIEW_H = 161;
+const PREVIEW_H = 220;
 const CARD_W = 399;
 const CARD_H = 424;
 
@@ -168,27 +160,13 @@ const ComponentCard = ({
   const urlCheckDone = useRef(false);
   const [urlProcessed, setUrlProcessed] = useState(false);
 
+  const cardRef = useRef<HTMLDivElement>(null);
+  const contentBodyRef = useRef<HTMLDivElement>(null);
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const [isOverflowExpanded, setIsOverflowExpanded] = useState(false);
+
   const toggleInfoModal = () => {
     setIsInfoModalOpen((prev) => !prev);
-  };
-
-  const getButtonIcon = (iconName?: string) => {
-    switch (iconName) {
-      case "link":
-        return <LinkIcon />;
-      case "record":
-        return <PlayArrowIcon />;
-      case "document":
-        return <DescriptionIcon />;
-      case "presentation":
-        return <SlideshowIcon />;
-      case "brochure":
-        return <MenuBookIcon />;
-      case "article":
-        return <ArticleIcon />;
-      default:
-        return null;
-    }
   };
 
   const handleCustomButtonAction = (button: CustomButton) => {
@@ -257,6 +235,16 @@ const ComponentCard = ({
   useEffect(() => {
     setLocalCustomButtons(customButtonsFromStore);
   }, [customButtonsFromStore]);
+
+  useEffect(() => {
+    const el = contentBodyRef.current;
+    if (!el) return;
+    const detect = () => setHasOverflow(el.scrollHeight > el.clientHeight + 2);
+    detect();
+    const ro = new ResizeObserver(detect);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [note, tags, localCustomButtons, localIsVisible]);
 
   const handleSaveCustomButtons = async (buttons: CustomButton[]) => {
     const reorderedButtons = buttons.map((button, index) => ({
@@ -539,11 +527,145 @@ const ComponentCard = ({
       });
   };
 
+  const getCardContentOrder = (): string[] => {
+    const defaultOrder = ["customButtons", "title", "note", "tags"];
+    try {
+      if (window.config?.CARD_CONTENT_ORDER && Array.isArray(window.config.CARD_CONTENT_ORDER)) {
+        return window.config.CARD_CONTENT_ORDER;
+      }
+    } catch (error) {
+      console.warn("Error reading CARD_CONTENT_ORDER from config:", error);
+    }
+    return defaultOrder;
+  };
+
+  const renderContentSection = (sectionName: string, hasVisibleCustomButtons: boolean) => {
+    switch (sectionName) {
+      case "customButtons":
+        return (
+          <CardCustomButtons
+            key="customButtons"
+            buttons={localCustomButtons}
+            isVisible={localIsVisible}
+            hasVisibleCustomButtons={hasVisibleCustomButtons}
+            onButtonAction={handleCustomButtonAction}
+          />
+        );
+      case "title":
+        return (
+          <CardTitle
+            key="title"
+            description={description}
+            createdOn={createdOn}
+            customContentTheme={customContentTheme}
+            hasVisibleCustomButtons={hasVisibleCustomButtons}
+            isVisible={localIsVisible}
+            authorizedRoles={authorizedRoles}
+            onMoreClick={(e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget)}
+            onVisibilityToggle={toggleVisibility}
+          />
+        );
+      case "note":
+        return (
+          <Box
+            key="note"
+            sx={{
+              px: 2.5,
+              pt: hasVisibleCustomButtons ? 1.5 : 2.5,
+              pb: 0,
+            }}
+          >
+            <CardNote
+              note={note}
+              customContentTheme={customContentTheme}
+              hasOverflow={hasOverflow}
+              isOverflowExpanded={isOverflowExpanded}
+              onReadMore={toggleInfoModal}
+            />
+          </Box>
+        );
+      case "tags":
+        return (
+          <Box
+            key="tags"
+            sx={{
+              px: 2.5,
+              pt: hasVisibleCustomButtons ? 1.5 : 2.5,
+              pb: 0,
+            }}
+          >
+            <CardTags tags={tags} />
+          </Box>
+        );
+      default:
+        return null;
+    }
+  };
+
   const shouldShowIframe = () => {
     if (contentType === FILETYPE.External_Link) {
       return contentSubtype && contentSubtype !== CONTENT_SUBTYPE.Generic;
     }
     return [FILETYPE.Slide, FILETYPE.GSheet, FILETYPE.Youtube].includes(contentType as FILETYPE);
+  };
+
+  const renderOverlaySection = (sectionName: string) => {
+    const hasVisibleCustomButtons = (localCustomButtons || []).some((b) => b.isVisible) && localIsVisible;
+    
+    switch (sectionName) {
+      case "title": {
+        return (
+          <CardTitle
+            key="title-overlay"
+            description={description}
+            createdOn={createdOn}
+            customContentTheme={customContentTheme}
+            hasVisibleCustomButtons={hasVisibleCustomButtons}
+            isVisible={localIsVisible}
+            authorizedRoles={authorizedRoles}
+            onMoreClick={(e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget)}
+            onVisibilityToggle={toggleVisibility}
+            isInOverlay={true}
+          />
+        );
+      }
+      case "customButtons": {
+        if (!localCustomButtons || localCustomButtons.length === 0) return null;
+        const visibleButtons = localCustomButtons.filter((b) => b.isVisible);
+        if (visibleButtons.length === 0) return null;
+        return (
+          <Box key="customButtons-overlay" sx={{ mb: 1.5, px: 2 }}>
+            <CardCustomButtons
+              buttons={localCustomButtons}
+              isVisible={localIsVisible}
+              hasVisibleCustomButtons={true}
+              onButtonAction={handleCustomButtonAction}
+              isInOverlay={true}
+            />
+          </Box>
+        );
+      }
+      case "note": {
+        if (!note?.trim() && !customContentTheme?.note?.htmlContent?.trim()) return null;
+        return (
+          <CardNote
+            key="note-overlay"
+            note={note}
+            customContentTheme={customContentTheme}
+            hasOverflow={hasOverflow}
+            isOverflowExpanded={isOverflowExpanded}
+            onReadMore={() => setIsOverflowExpanded((prev) => !prev)}
+            isInOverlay={true}
+          />
+        );
+      }
+      case "tags": {
+        if (!tags?.filter((t) => t.trim()).length) return null;
+        return <CardTags key="tags-overlay" tags={tags} isInOverlay={true} />;
+      }
+      default:
+        return null;
+    }
   };
 
   const shouldShowWSO2Placeholder = () => {
@@ -610,6 +732,7 @@ const ComponentCard = ({
       {...(contentIndex ? { timeout: contentIndex * 200 } : {})}
     >
       <Card
+        ref={cardRef}
         elevation={3}
         sx={{
           mx: 1.25,
@@ -952,279 +1075,118 @@ const ComponentCard = ({
             position: "relative",
             zIndex: 2,
             transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            ...(isOverflowExpanded ? { filter: "blur(3px)", pointerEvents: "none" } : {}),
           }}
         >
-          <CardHeader
-            action={
-              authorizedRoles.includes(Role.SALES_ADMIN) ? (
-                <Box sx={{ display: "flex", gap: 0.5 }}>
-                  <Tooltip title={localIsVisible ? "Hide Content" : "Show Content"} arrow>
-                    <IconButton
-                      size="small"
-                      aria-label={localIsVisible ? "Hide Content" : "Show Content"}
-                      onClick={toggleVisibility}
-                      sx={{
-                        color: "#fff",
-                        backgroundColor: "rgba(255,255,255,0.2)",
-                        backdropFilter: "blur(20px)",
-                        "&:hover": { backgroundColor: "rgba(255,255,255,0.3)" },
-                        mr: 0.5,
-                      }}
-                    >
-                      {localIsVisible ? (
-                        <VisibilityIcon sx={{ width: 20, height: 18 }} />
-                      ) : (
-                        <VisibilityOffIcon sx={{ width: 18, height: 18 }} />
-                      )}
-                    </IconButton>
-                  </Tooltip>
-                  <IconButton
-                    onClick={(e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget)}
-                    aria-label="more"
-                    id="long-button"
-                    aria-controls={isMenuItemsOpen ? "long-menu" : undefined}
-                    aria-expanded={isMenuItemsOpen ? "true" : undefined}
-                    aria-haspopup="true"
-                    size="small"
-                    sx={{
-                      color: "rgba(255,255,255,0.7)",
-                      "&:hover": { color: "#fff" },
-                    }}
-                  >
-                    <MoreVertIcon sx={{ fontSize: 20 }} />
-                  </IconButton>
-                </Box>
-              ) : null
-            }
-            title={
-              <Typography
-                variant="h6"
-                sx={{
-                  ...customContentTheme?.title,
-                  fontSize: "1.1rem",
-                  fontWeight: 700,
-                  lineHeight: 1.3,
-                  color: "#fff",
-                  display: "-webkit-box",
-                  wordWrap: "break-word",
-                  WebkitBoxOrient: "vertical",
-                  whiteSpace: "normal",
-                  overflow: "hidden",
-                }}
-              >
-                {description}
-              </Typography>
-            }
-            subheader={
-              <Typography
-                variant="caption"
-                sx={{
-                  fontSize: "0.8rem",
-                  color: "rgba(255,255,255,0.5)",
-                  fontWeight: 400,
-                }}
-              >
-                {dayjs(createdOn).format("DD MMM YYYY")}
-              </Typography>
-            }
-            sx={{
-              pt: 2.5,
-              pb: 0.5,
-              px: 2.5,
-            }}
-          />
+          {(() => {
+            const hasVisibleCustomButtons = (localCustomButtons || []).some((b) => b.isVisible) && localIsVisible;
+            const contentOrder = getCardContentOrder();
 
-          <CardContent
-            sx={{
-              pt: 1,
-              px: 2.5,
-              pb: 1.5,
-              flexGrow: 1,
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-            }}
-          >
-            {/* Note + Tags */}
-            <Box sx={{ mb: 1.5 }}>
-              {note && (
-                <Typography
-                  variant="body2"
+            return (
+              <>
+                {/*for scroll detection*/}
+                <Box
+                  ref={contentBodyRef}
                   sx={{
-                    color: "rgba(255,255,255,0.8)",
-                    fontSize: "0.7rem",
-                    lineHeight: 1,
-                    mb: 1,
-                    display: "-webkit-box",
-                    WebkitBoxOrient: "vertical",
+                    display: "flex",
+                    flexDirection: "column",
+                    flexGrow: 1,
                     overflow: "hidden",
+                    position: "relative",
+                    minHeight: 0,
+                    ...(hasOverflow && !isOverflowExpanded
+                      ? { maskImage: "linear-gradient(to bottom, black 60%, transparent 100%)" }
+                      : {}),
                   }}
                 >
-                  {note.length > 100 ? (
-                    <>
-                      {note.slice(0, 100)}…{" "}
-                      <Typography
-                        variant="caption"
-                        component="span"
-                        sx={{
-                          color: "#667eea",
-                          cursor: "pointer",
-                          textDecoration: "underline",
-                          fontSize: "0.8rem",
-                        }}
-                        onClick={toggleInfoModal}
-                      >
-                        Read more
-                      </Typography>
-                    </>
-                  ) : (
-                    note
-                  )}
-                </Typography>
-              )}
-
-              {tags?.filter((t) => t.trim()).length > 0 && (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
-                  {tags
-                    .filter((t) => t.trim())
-                    .slice(0, 5)
-                    .map((tag, i) => (
-                      <Chip
-                        key={i}
-                        label={tag.length > 12 ? `${tag.slice(0, 12)}…` : tag}
-                        size="small"
-                        sx={{
-                          backgroundColor: "rgba(255,255,255,0.15)",
-                          color: "rgba(255,255,255,0.7)",
-                          fontSize: "0.75rem",
-                          height: 22,
-                          borderRadius: 1.5,
-                          "& .MuiChip-label": { px: 1, py: 0 },
-                        }}
-                      />
-                    ))}
+                  {contentOrder.map((sectionName) => renderContentSection(sectionName, hasVisibleCustomButtons))}
                 </Box>
-              )}
-            </Box>
 
-            <Box sx={{ flexGrow: 1 }} />
+                {/* Menu */}
+                <Menu
+                  elevation={theme.palette.mode === "light" ? 6 : 0}
+                  id="long-menu"
+                  MenuListProps={{ "aria-labelledby": "long-button" }}
+                  open={isMenuItemsOpen}
+                  anchorEl={anchorEl}
+                  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                  transformOrigin={{ vertical: "top", horizontal: "right" }}
+                  sx={{ ml: 3 }}
+                  onClose={() => setAnchorEl(null)}
+                >
+                  <MenuItem
+                    key={"update"}
+                    onClick={() => setIsUpdateDialogOpen(true)}
+                    sx={{ minWidth: 140 }}
+                  >
+                    <UpdateIcon sx={{ mr: 1 }} />
+                    <Typography>Update</Typography>
+                  </MenuItem>
+                  <MenuItem
+                    key={"delete"}
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                    sx={{ minWidth: 140 }}
+                  >
+                    <DeleteIcon sx={{ mr: 1 }} />
+                    <Typography>Delete</Typography>
+                  </MenuItem>
+                </Menu>
 
-            {/* Custom buttons - ALL IN ONE ROW */}
-            <Box sx={{ mb: 1 }}>
-              {(() => {
-                const base = (localCustomButtons || [])
-                  .filter((b) => b.isVisible)
-                  .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
-                const configured = base.slice(0, 4);
-                const has = configured.length > 0;
-
-                return (
-                  <Box sx={{ width: "100%" }}>
-                    {has && localIsVisible && (
-                      <Box
+                {hasVisibleCustomButtons && (
+                  <Box sx={{ display: "flex", justifyContent: "center", py: 0.25, flexShrink: 0 }}>
+                    {hasOverflow && (
+                      <IconButton
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={() => setIsOverflowExpanded((prev) => !prev)}
                         sx={{
-                          display: "flex",
-                          gap: 0.75,
-                          width: "100%",
-                          flexWrap: "nowrap",
-                          mb: 2,
+                          color: "rgba(255,255,255,0.8)",
+                          p: 0.75,
+                          backgroundColor: "rgba(255,255,255,0.12)",
+                          border: "1px solid rgba(255,255,255,0.25)",
+                          transition: "transform 0.3s ease, color 0.2s ease, background-color 0.2s ease",
+                          transform: isOverflowExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                          "&:hover": {
+                            color: "rgba(255,255,255,1)",
+                            backgroundColor: "rgba(255,255,255,0.2)",
+                          },
                         }}
                       >
-                        {configured.map((button, i) => (
-                          <Tooltip
-                            key={button.id || `button-${i}`}
-                            title={button.label || ""}
-                            arrow
-                            placement="top"
-                          >
-                            <Button
-                              variant="outlined"
-                              color="secondary"
-                              size="small"
-                              startIcon={
-                                button.icon && button.icon !== "none"
-                                  ? getButtonIcon(button.icon)
-                                  : undefined
-                              }
-                              onClick={() => handleCustomButtonAction(button)}
-                              sx={{
-                                minHeight: 31,
-                                fontSize: "0.8rem",
-                                textTransform: "none",
-                                fontWeight: 600,
-                                px: 1.5,
-                                py: 0.6,
-                                flex: 1,
-                                minWidth: 0,
-                                borderRadius: 8,
-                                borderColor: theme.palette.primary.dark,
-                                color: theme.palette.primary.dark,
-                                backgroundColor: "transparent",
-                                "&:hover": {
-                                  color: theme.palette.common.white,
-                                  borderColor: theme.palette.common.white,
-                                },
-                                "& .MuiButton-startIcon": {
-                                  marginRight: "4px",
-                                  marginLeft: "-2px",
-                                },
-                                "& .MuiButton-startIcon > svg": {
-                                  fontSize: 16,
-                                },
-                              }}
-                            >
-                              <Box
-                                component="span"
-                                sx={{
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {button.label}
-                              </Box>
-                            </Button>
-                          </Tooltip>
-                        ))}
-                      </Box>
-                    )}
-
-                    {authorizedRoles.includes(Role.SALES_ADMIN) && (
-                      <Box sx={{ textAlign: "center", mt: has ? 0 : 1 }}>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => setIsCustomButtonDialogOpen(true)}
-                          sx={{
-                            minHeight: 26,
-                            fontSize: "0.7rem",
-                            borderStyle: "dashed",
-                            color: "rgba(255,255,255,0.5)",
-                            borderColor: "rgba(255,255,255,0.2)",
-                            px: 1.5,
-                            py: 0.25,
-                            borderRadius: 1.5,
-                            textTransform: "none",
-                            "&:hover": {
-                              borderStyle: "solid",
-                              borderColor: "rgba(255,255,255,0.4)",
-                              color: "rgba(255,255,255,0.7)",
-                              backgroundColor: "rgba(0, 0, 0, 0.05)",
-                            },
-                          }}
-                        >
-                          + Customize Buttons
-                        </Button>
-                      </Box>
+                        <ExpandMoreIcon sx={{ fontSize: 28 }} />
+                      </IconButton>
                     )}
                   </Box>
-                );
-              })()}
-            </Box>
-          </CardContent>
-          <Modal open={isInfoModalOpen} onClose={toggleInfoModal} closeAfterTransition>
-            <Fade in={isInfoModalOpen}>
+                )}
+
+                {!hasVisibleCustomButtons && hasOverflow && (
+                  <Box sx={{ display: "flex", justifyContent: "center", py: 0.75, flexShrink: 0 }}>
+                    <IconButton
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onClick={() => setIsOverflowExpanded((prev) => !prev)}
+                      sx={{
+                        color: "rgba(255,255,255,0.8)",
+                        p: 0.75,
+                        backgroundColor: "rgba(255,255,255,0.12)",
+                        border: "1px solid rgba(255,255,255,0.25)",
+                        transition: "transform 0.3s ease, color 0.2s ease, background-color 0.2s ease",
+                        transform: isOverflowExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                        "&:hover": {
+                          color: "rgba(255,255,255,1)",
+                          backgroundColor: "rgba(255,255,255,0.2)",
+                        },
+                      }}
+                    >
+                      <ExpandMoreIcon sx={{ fontSize: 28 }} />
+                    </IconButton>
+                  </Box>
+                )}
+              </>
+            );
+          })()}
+        </Box>
+
+        {/* Info Modal */}
+        <Modal open={isInfoModalOpen} onClose={toggleInfoModal} closeAfterTransition>
+          <Fade in={isInfoModalOpen}>
               <Box
                 sx={{
                   position: "absolute",
@@ -1269,17 +1231,18 @@ const ComponentCard = ({
             </Fade>
           </Modal>
 
-          <Divider sx={{ borderColor: "rgba(255,255,255,0.03)" }} />
+          <Divider sx={{ borderColor: "rgba(255,255,255,0.03)", flexShrink: 0 }} />
 
           <CardActions
             disableSpacing
             sx={{
-              pt: 0.75,
-              pb: 1,
+              pt: 0.5,
+              pb: 0.75,
               px: 2.5,
               minHeight: 44,
               justifyContent: "flex-start",
               gap: 1.5,
+              flexShrink: 0,
             }}
           >
             <IconButton
@@ -1325,8 +1288,35 @@ const ComponentCard = ({
                 </Typography>
               </IconButton>
             )}
+
+            {authorizedRoles.includes(Role.SALES_ADMIN) && (
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setIsCustomButtonDialogOpen(true)}
+                sx={{
+                  minHeight: 26,
+                  fontSize: "0.7rem",
+                  borderStyle: "dashed",
+                  color: "rgba(255,255,255,0.5)",
+                  borderColor: "rgba(255,255,255,0.2)",
+                  px: 1.5,
+                  py: 0.25,
+                  borderRadius: 1.5,
+                  textTransform: "none",
+                  ml: 2.5,
+                  "&:hover": {
+                    borderStyle: "solid",
+                    borderColor: "rgba(255,255,255,0.4)",
+                    color: "rgba(255,255,255,0.7)",
+                    backgroundColor: "rgba(0, 0, 0, 0.05)",
+                  },
+                }}
+              >
+                + Customize Buttons
+              </Button>
+            )}
           </CardActions>
-        </Box>
 
         {/* Dialogs / drawers */}
         <UpdateContentDialogBox
@@ -1397,6 +1387,78 @@ const ComponentCard = ({
           initialButtons={localCustomButtons}
           onSave={handleSaveCustomButtons}
         />
+
+         {isOverflowExpanded && (
+           <Box
+             sx={{
+               position: "absolute",
+               top: 0,
+               left: 0,
+               right: 0,
+               bottom: 0,
+               zIndex: 19,
+               borderRadius: "inherit",
+             }}
+             onClick={() => setIsOverflowExpanded(false)}
+           />
+         )}
+         <Box
+           sx={{
+             position: "absolute",
+             top: `${PREVIEW_H - 30}px`,
+             left: 0,
+             right: 0,
+             bottom: 0,
+             zIndex: 20,
+             borderRadius: "0 0 40px 40px",
+             overflow: "hidden",
+             display: "flex",
+             flexDirection: "column",
+             backgroundColor: "rgba(20,21,27,0.97)",
+             backdropFilter: "blur(20px)",
+             border: "1px solid rgba(255,255,255,0.1)",
+             borderTop: "none",
+             opacity: isOverflowExpanded ? 1 : 0,
+             pointerEvents: isOverflowExpanded ? "auto" : "none",
+             transition: "opacity 0.25s ease",
+           }}
+           onClick={(e) => e.stopPropagation()}
+         >
+               <Box
+                sx={{
+                  flexGrow: 1,
+                  overflowY: "auto",
+                  p: 2,
+                  pt: 1.5,
+                  "&::-webkit-scrollbar": { width: 4 },
+                  "&::-webkit-scrollbar-track": { background: "rgba(255,255,255,0.05)", borderRadius: 2 },
+                  "&::-webkit-scrollbar-thumb": { background: "rgba(255,255,255,0.2)", borderRadius: 2 },
+                }}
+              >
+               {/* Close chevron at top */}
+                <Box sx={{ display: "flex", justifyContent: "center", mb: 0.5 }}>
+                  <IconButton
+                    size="small"
+                    onClick={() => setIsOverflowExpanded(false)}
+                    sx={{
+                      color: "rgba(255,255,255,0.45)",
+                      p: 0.25,
+                      transition: "transform 0.3s ease",
+                      transform: "rotate(180deg)",
+                      "&:hover": { color: "rgba(255,255,255,0.9)" },
+                    }}
+                  >
+                    <ExpandMoreIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </Box>
+
+                {(() => {
+                  const contentOrder = getCardContentOrder();
+                  return contentOrder.map((sectionName) => renderOverlaySection(sectionName));
+                })()}
+
+              </Box>
+         </Box>
       </Card>
     </Grow>
   );
