@@ -89,7 +89,7 @@ export const tokens = (mode: PaletteMode) => ({
         // Brand blue scale for SE Paddock
         blue: {
           100: "#3b82f6",
-          200: "#2564ebc5",
+          200: "#5a74ba",
           300: "#5a74ba", // primary main for SE Paddock
         },
         // Error/red accent
