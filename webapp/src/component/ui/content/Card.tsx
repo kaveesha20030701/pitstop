@@ -62,6 +62,7 @@ import {
 } from "@slices/customButtonSlice/customButton";
 import {
   getAllComments,
+  getLikers,
   likeContent,
   pinContent,
   unpinContent,
@@ -76,6 +77,7 @@ import CardCustomButtons from "./CardCustomButtons";
 import CardTitle from "./CardTitle";
 import CardNote from "./CardNote";
 import CardTags from "./CardTags";
+import LikersModal from "./LikersModal";
 
 interface ComponentCardProps {
   contentId: number;
@@ -150,6 +152,10 @@ const ComponentCard = ({
   const [isCustomButtonDialogOpen, setIsCustomButtonDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [imageError, setImageError] = useState(false);
+  const [isLikersModalOpen, setIsLikersModalOpen] = useState(false);
+  const likers = useAppSelector(
+    (state: RootState) => state.page.likers[contentId] || []
+  );
   const isMenuItemsOpen = Boolean(anchorEl);
   const liked = useAppSelector((state: RootState) => state.page.likeState);
   const navigate = useNavigate();
@@ -235,6 +241,12 @@ const ComponentCard = ({
   useEffect(() => {
     setLocalCustomButtons(customButtonsFromStore);
   }, [customButtonsFromStore]);
+
+  useEffect(() => {
+    if (contentId) {
+      dispatch(getLikers({ contentId }));
+    }
+  }, [contentId, dispatch]);
 
   useEffect(() => {
     const el = contentBodyRef.current;
@@ -460,6 +472,9 @@ const ComponentCard = ({
         }
         return next;
       });
+      setTimeout(() => {
+        dispatch(getLikers({ contentId }));
+      }, 300);
     }
   };
 
@@ -1222,28 +1237,65 @@ const ComponentCard = ({
               flexShrink: 0,
             }}
           >
-            <IconButton
-              aria-label="like"
-              onClick={toggleLike}
-              size="small"
-              sx={{
-                color: like ? "#ff6b9d" : "rgba(255,255,255,0.7)",
-                p: 0.5,
-                "&:hover": {
-                  transform: "scale(1.1)",
-                  color: "#ff6b9d",
-                },
-              }}
+            <Tooltip
+              title={
+                likers.length > 0 ? (
+                  <Box sx={{ maxWidth: 250 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                      Likes:
+                    </Typography>
+                    <Box sx={{ maxHeight: 200, overflowY: "auto" }}>
+                      {likers.map((liker, index) => (
+                        <Typography key={index} variant="body2" sx={{ mb: 0.5 }}>
+                          {liker.firstName && liker.lastName
+                            ? `${liker.firstName} ${liker.lastName}`
+                            : liker.email}
+                        </Typography>
+                      ))}
+                    </Box>
+                  </Box>
+                ) : (
+                  "No likes yet"
+                )
+              }
+              arrow
+              placement="top"
             >
-              {like ? (
-                <FavoriteIcon sx={{ fontSize: 18 }} />
-              ) : (
-                <FavoriteBorderIcon sx={{ fontSize: 18 }} />
-              )}
-              <Typography sx={{ ml: 0.5, fontSize: 11, color: "inherit" }}>
-                {localLikesCount}
-              </Typography>
-            </IconButton>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <IconButton
+                  aria-label="like"
+                  onClick={toggleLike}
+                  size="small"
+                  sx={{
+                    color: like ? "#ff6b9d" : "rgba(255,255,255,0.7)",
+                    p: 0.5,
+                    "&:hover": {
+                      transform: "scale(1.1)",
+                      color: "#ff6b9d",
+                    },
+                  }}
+                >
+                  {like ? (
+                    <FavoriteIcon sx={{ fontSize: 18 }} />
+                  ) : (
+                    <FavoriteBorderIcon sx={{ fontSize: 18 }} />
+                  )}
+                </IconButton>
+                <Typography
+                  onClick={() => localLikesCount > 0 && setIsLikersModalOpen(true)}
+                  sx={{
+                    fontSize: 11,
+                    color: theme.palette.common.white,
+                    cursor: localLikesCount > 0 ? "pointer" : "default",
+                    paddingRight: 0.5,
+                    fontWeight: 500,
+                    "&:hover": localLikesCount > 0 ? { textDecoration: "underline" } : {},
+                  }}
+                >
+                  {localLikesCount}
+                </Typography>
+              </Box>
+            </Tooltip>
 
             {!isExpanded && (
               <IconButton
@@ -1363,6 +1415,12 @@ const ComponentCard = ({
           sectionId={sectionId}
           initialButtons={localCustomButtons}
           onSave={handleSaveCustomButtons}
+        />
+
+        <LikersModal
+          open={isLikersModalOpen}
+          onClose={() => setIsLikersModalOpen(false)}
+          likers={likers}
         />
 
          {isOverflowExpanded && (

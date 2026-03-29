@@ -91,6 +91,7 @@ export const AppConfig = {
     updateCustomButton: (contentId: number) => ServiceBaseUrl + "/contents/" + contentId + "/custom-buttons",
     deleteCustomButton: (buttonId: number) => ServiceBaseUrl + "/custom-buttons/" + buttonId,
     getTrendingContents: ServiceBaseUrl + "/trending-contents",
+    getLikers: (contentId: number) => ServiceBaseUrl + "/contents/" + contentId + "/likes",
     testimonials: ServiceBaseUrl + "/testimonials",
     createTestimonial: ServiceBaseUrl + "/testimonials",
     updateTestimonial: (testimonialId: number) => ServiceBaseUrl + "/testimonials/" + testimonialId,

@@ -730,6 +730,25 @@ service http:InterceptableService / on new http:Listener(9090) {
         return http:CREATED;
     }
 
+    # Get all users who liked a content.
+    #
+    # + contentId - Content ID
+    # + return - Array of likers or error responses
+    resource function get contents/[int contentId]/likes()
+        returns types:LikerResponse[]|http:InternalServerError {
+
+        types:LikerResponse[]|error likers = database:getLikers(contentId);
+        if likers is error {
+            string customErr = "Failed to fetch likers";
+            log:printError(customErr, likers);
+            return <http:InternalServerError>{
+                body: {message: customErr}
+            };
+        }
+
+        return likers;
+    }
+
     # Pin a content item.
     #
     # + pinPayload - Pin content payload containing contentId

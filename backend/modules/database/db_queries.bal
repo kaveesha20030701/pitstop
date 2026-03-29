@@ -433,6 +433,28 @@ isolated function addLikeQuery(types:LikeContent likeContent) returns sql:Parame
         status = NOT status;
 `;
 
+# Query to get all users who liked a content.
+#
+# + contentId - Content ID
+# + return - SQL parameterized query
+isolated function getLikersQuery(int contentId) returns sql:ParameterizedQuery => `
+    SELECT 
+        u.user_id,
+        u.email,
+        u.first_name,
+        u.last_name,
+        u.thumbnail
+    FROM 
+        user u
+    INNER JOIN 
+        content_like cl ON u.user_id = cl.user_id
+    WHERE 
+        cl.content_id = ${contentId}
+        AND cl.status = 1
+    ORDER BY 
+        u.first_name, u.last_name, u.email
+`;
+
 # Query to get basic information of a page.
 #
 # + routePath - Route path to find route details

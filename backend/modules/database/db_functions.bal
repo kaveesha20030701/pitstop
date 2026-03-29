@@ -160,6 +160,16 @@ public isolated function addLike(types:LikeContent likeContent) returns error? {
     _ = check dbClient->execute(addLikeQuery(likeContent));
 }
 
+# Get all users who liked a content.
+#
+# + contentId - Content ID
+# + return - Array of LikerResponse or error
+public isolated function getLikers(int contentId) returns types:LikerResponse[]|error {
+    stream<types:LikerResponse, sql:Error?> resultStream = dbClient->query(getLikersQuery(contentId));
+    return from types:LikerResponse liker in resultStream
+        select liker;
+}
+
 # Delete route path and corresponding sections of a given route ID.
 #
 # + routeId - Route ID
