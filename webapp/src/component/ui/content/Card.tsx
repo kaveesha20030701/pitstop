@@ -243,12 +243,6 @@ const ComponentCard = ({
   }, [customButtonsFromStore]);
 
   useEffect(() => {
-    if (contentId) {
-      dispatch(getLikers({ contentId }));
-    }
-  }, [contentId, dispatch]);
-
-  useEffect(() => {
     const el = contentBodyRef.current;
     if (!el) return;
     const detect = () => setHasOverflow(el.scrollHeight > el.clientHeight + 2);
@@ -257,6 +251,12 @@ const ComponentCard = ({
     ro.observe(el);
     return () => ro.disconnect();
   }, [description, createdOn, customContentTheme, note, tags, localCustomButtons, localIsVisible]);
+
+  const fetchLikersIfNeeded = useCallback(() => {
+    if (!likers || likers.length === 0) {
+      dispatch(getLikers({ contentId }));
+    }
+  }, [likers, contentId, dispatch]);
 
   const handleSaveCustomButtons = async (buttons: CustomButton[]) => {
     const reorderedButtons = buttons.map((button, index) => ({
@@ -1263,7 +1263,7 @@ const ComponentCard = ({
               arrow
               placement="top"
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }} onMouseEnter={fetchLikersIfNeeded}>
                 <IconButton
                   aria-label="like"
                   onClick={toggleLike}
@@ -1284,13 +1284,38 @@ const ComponentCard = ({
                   )}
                 </IconButton>
                 <Typography
-                  onClick={() => localLikesCount > 0 && setIsLikersModalOpen(true)}
+                  component="button"
+                  onClick={() => {
+                    if (localLikesCount > 0) {
+                      fetchLikersIfNeeded();
+                      setIsLikersModalOpen(true);
+                    }
+                  }}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    if (localLikesCount > 0 && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
+                      fetchLikersIfNeeded();
+                      setIsLikersModalOpen(true);
+                    }
+                  }}
+                  tabIndex={localLikesCount > 0 ? 0 : -1}
+                  role="button"
+                  aria-label={`View ${localLikesCount} liker${localLikesCount !== 1 ? "s" : ""}`}
                   sx={{
                     fontSize: 11,
                     color: theme.palette.common.white,
                     cursor: localLikesCount > 0 ? "pointer" : "default",
                     paddingRight: 0.5,
                     fontWeight: 500,
+                    border: "none",
+                    background: "none",
+                    padding: 0,
+                    font: "inherit",
+                    "&:focus-visible": {
+                      outline: "2px solid rgba(255,255,255,0.5)",
+                      borderRadius: "2px",
+                      outlineOffset: "2px",
+                    },
                     "&:hover": localLikesCount > 0 ? { textDecoration: "underline" } : {},
                   }}
                 >

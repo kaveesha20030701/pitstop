@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import { Box, Fade, IconButton, Modal, Typography, useTheme } from "@mui/material";
+import { Avatar, Box, Fade, IconButton, Modal, Typography, useTheme } from "@mui/material";
 import { LikerResponse } from "src/types/types";
 
 import React from "react";
@@ -32,6 +32,7 @@ const LikersModal: React.FC<LikersModalProps> = ({ open, onClose, likers }) => {
     <Modal
       open={open}
       onClose={onClose}
+      aria-labelledby="likers-modal-title"
       closeAfterTransition
       slotProps={{
         backdrop: {
@@ -67,6 +68,7 @@ const LikersModal: React.FC<LikersModalProps> = ({ open, onClose, likers }) => {
             }}
           >
             <Typography
+              id="likers-modal-title"
               variant="h6"
               sx={{
                 fontWeight: 600,
@@ -80,6 +82,7 @@ const LikersModal: React.FC<LikersModalProps> = ({ open, onClose, likers }) => {
             </Typography>
             <IconButton
               onClick={onClose}
+              aria-label="Close likes modal"
               size="small"
               sx={{
                 color:
@@ -116,7 +119,10 @@ const LikersModal: React.FC<LikersModalProps> = ({ open, onClose, likers }) => {
                         theme.palette.mode === "light"
                           ? theme.palette.common.white
                           : "rgba(43, 45, 54, 0.94)",
-                      border: theme.palette.common.black,
+                      border:
+                        theme.palette.mode === "light"
+                          ? "1px solid rgba(0,0,0,0.12)"
+                          : "1px solid rgba(255,255,255,0.2)",
                       "&:hover": {
                         backgroundColor:
                           theme.palette.mode === "light"
@@ -129,49 +135,28 @@ const LikersModal: React.FC<LikersModalProps> = ({ open, onClose, likers }) => {
                       },
                     }}
                   >
-                    {liker.thumbnail ? (
-                      <Box
-                        component="img"
-                        src={liker.thumbnail}
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                          backgroundColor: theme.palette.common.black,
-                          flexShrink: 0,
-                        }}
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: "50%",
-                          backgroundColor: theme.palette.common.black,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: 14,
-                          fontWeight: 700,
-                          color:
-                            theme.palette.mode === "light"
-                              ? "rgba(0,0,0,0.6)"
-                              : "rgba(255,255,255,0.5)",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {(
-                          liker.firstName?.[0] ||
-                          liker.lastName?.[0] ||
-                          liker.email?.[0] ||
-                          "?"
-                        ).toUpperCase()}
-                      </Box>
-                    )}
+                    <Avatar
+                      src={liker.thumbnail}
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        backgroundColor: theme.palette.common.black,
+                        flexShrink: 0,
+                        fontSize: 14,
+                        fontWeight: 700,
+                        color:
+                          theme.palette.mode === "light"
+                            ? "rgba(0,0,0,0.6)"
+                            : "rgba(255,255,255,0.5)",
+                      }}
+                    >
+                      {(
+                        liker.firstName?.[0] ||
+                        liker.lastName?.[0] ||
+                        liker.email?.[0] ||
+                        "?"
+                      ).toUpperCase()}
+                    </Avatar>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Typography
                         sx={{
