@@ -1240,18 +1240,20 @@ const ComponentCard = ({
             <Tooltip
               title={
                 likers.length > 0 ? (
-                  <Box sx={{ maxWidth: 250 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
-                      Likes:
-                    </Typography>
+                    <Box sx={{ maxWidth: 250 }}>
                     <Box sx={{ maxHeight: 200, overflowY: "auto" }}>
-                      {likers.map((liker, index) => (
-                        <Typography key={index} variant="body2" sx={{ mb: 0.5 }}>
-                          {liker.firstName && liker.lastName
-                            ? `${liker.firstName} ${liker.lastName}`
-                            : liker.email}
-                        </Typography>
+                      {likers.slice(0, 20).map((liker, index) => (
+                      <Typography key={index} variant="body2">
+                        {liker.firstName && liker.lastName
+                        ? `${liker.firstName} ${liker.lastName}`
+                        : liker.email}
+                      </Typography>
                       ))}
+                      {likers.length > 20 && (
+                      <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 500 }}>
+                        +{likers.length - 20} more
+                      </Typography>
+                      )}
                     </Box>
                   </Box>
                 ) : (

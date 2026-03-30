@@ -51,7 +51,7 @@ const LikersModal: React.FC<LikersModalProps> = ({ open, onClose, likers }) => {
             backgroundColor:
               theme.palette.mode === "light"
                 ? theme.palette.common.white
-                : theme.palette.background.paper,
+                : "rgb(42, 45, 58)",
             borderRadius: 4,
             display: "flex",
             flexDirection: "column",
@@ -115,7 +115,7 @@ const LikersModal: React.FC<LikersModalProps> = ({ open, onClose, likers }) => {
                       backgroundColor:
                         theme.palette.mode === "light"
                           ? theme.palette.common.white
-                          : theme.palette.common.black,
+                          : "rgba(43, 45, 54, 0.94)",
                       border: theme.palette.common.black,
                       "&:hover": {
                         backgroundColor:
