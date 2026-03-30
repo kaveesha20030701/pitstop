@@ -736,7 +736,7 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + ctx - Request context
     # + return - Array of likes or error responses
     resource function get contents/[int contentId]/likes(http:RequestContext ctx)
-        returns types:LikerResponse[]|http:NotFound|http:Forbidden|http:InternalServerError {
+        returns types:LikeResponse[]|http:NotFound|http:Forbidden|http:InternalServerError {
 
         string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
         if userEmail is error {
@@ -762,7 +762,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        types:LikerResponse[]|error likes = database:getLikes(contentId);
+        types:LikeResponse[]|error likes = database:getLikes(contentId);
         if likes is error {
             string customErr = "Failed to fetch likes";
             log:printError(customErr, likes);

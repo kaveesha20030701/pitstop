@@ -28,7 +28,7 @@ import {
   TagResponse,
   UpdateCommentPayload,
   CustomTheme,
-  LikerResponse,
+  LikeResponse,
 } from "@/types/types";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { 
@@ -1283,7 +1283,7 @@ export const getAllComments = createAsyncThunk(
 export const getLikes = createAsyncThunk(
   "pitstop/fetchlikes",
   async (payload: { contentId: number }, { dispatch }) => {
-    return new Promise<{ contentId: number; likes: LikerResponse[] }>(
+    return new Promise<{ contentId: number; likes: LikeResponse[] }>(
       (resolve, reject) => {
         ApiService.getInstance()
           .get(AppConfig.serviceUrls.getLikes(payload.contentId))

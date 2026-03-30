@@ -309,7 +309,7 @@ public type TagResponse record {|
 |};
 
 # Liker response.
-public type LikerResponse record {|
+public type LikeResponse record {|
     # User ID
     @sql:Column {name: "user_id"}
     int userId;

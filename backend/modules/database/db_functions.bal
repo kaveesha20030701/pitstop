@@ -163,10 +163,10 @@ public isolated function addLike(types:LikeContent likeContent) returns error? {
 # Get all users who liked a content.
 #
 # + contentId - Content ID
-# + return - Array of LikerResponse or error
-public isolated function getLikes(int contentId) returns types:LikerResponse[]|error {
-    stream<types:LikerResponse, sql:Error?> resultStream = dbClient->query(getLikesQuery(contentId));
-    return from types:LikerResponse liker in resultStream
+# + return - Array of LikeResponse or error
+public isolated function getLikes(int contentId) returns types:LikeResponse[]|error {
+    stream<types:LikeResponse, sql:Error?> resultStream = dbClient->query(getLikesQuery(contentId));
+    return from types:LikeResponse liker in resultStream
         select liker;
 }
 

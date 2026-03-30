@@ -451,7 +451,7 @@ export interface PageState {
   sectionData: Section[];
   verticalData: Section[];
   comments: CommentsResponse[];
-  likes: { [contentId: number]: LikerResponse[] };
+  likes: { [contentId: number]: LikeResponse[] };
   sectionOffset: number;
   contents: ContentResponse[];
   searchResults: ContentResponse[];
@@ -463,7 +463,7 @@ export interface PageState {
   trendingContents: ContentResponse[];
 }
 
-export interface LikerResponse {
+export interface LikeResponse {
   userId: number;
   email: string;
   firstName?: string;

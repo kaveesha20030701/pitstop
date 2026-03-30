@@ -15,14 +15,14 @@
 // under the License.
 
 import { Avatar, Box, Fade, IconButton, Modal, Typography, useTheme } from "@mui/material";
-import { LikerResponse } from "src/types/types";
+import { LikeResponse } from "src/types/types";
 
 import React from "react";
 
 interface LikesModalProps {
   open: boolean;
   onClose: () => void;
-  likes: LikerResponse[];
+  likes: LikeResponse[];
 }
 
 const LikesModal: React.FC<LikesModalProps> = ({ open, onClose, likes }) => {
