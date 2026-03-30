@@ -437,7 +437,7 @@ isolated function addLikeQuery(types:LikeContent likeContent) returns sql:Parame
 #
 # + contentId - Content ID
 # + return - SQL parameterized query
-isolated function getLikersQuery(int contentId) returns sql:ParameterizedQuery => `
+isolated function getLikesQuery(int contentId) returns sql:ParameterizedQuery => `
     SELECT 
         u.user_id,
         u.email,

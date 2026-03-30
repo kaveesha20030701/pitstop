@@ -62,7 +62,7 @@ import {
 } from "@slices/customButtonSlice/customButton";
 import {
   getAllComments,
-  getLikers,
+  getLikes,
   likeContent,
   pinContent,
   unpinContent,
@@ -77,7 +77,7 @@ import CardCustomButtons from "./CardCustomButtons";
 import CardTitle from "./CardTitle";
 import CardNote from "./CardNote";
 import CardTags from "./CardTags";
-import LikersModal from "./LikersModal";
+import LikesModal from "./LikesModal";
 
 interface ComponentCardProps {
   contentId: number;
@@ -152,9 +152,9 @@ const ComponentCard = ({
   const [isCustomButtonDialogOpen, setIsCustomButtonDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [imageError, setImageError] = useState(false);
-  const [isLikersModalOpen, setIsLikersModalOpen] = useState(false);
-  const likers = useAppSelector(
-    (state: RootState) => state.page.likers[contentId] || []
+  const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
+  const likes = useAppSelector(
+    (state: RootState) => state.page.likes[contentId] || []
   );
   const isMenuItemsOpen = Boolean(anchorEl);
   const liked = useAppSelector((state: RootState) => state.page.likeState);
@@ -252,11 +252,11 @@ const ComponentCard = ({
     return () => ro.disconnect();
   }, [description, createdOn, customContentTheme, note, tags, localCustomButtons, localIsVisible]);
 
-  const fetchLikersIfNeeded = useCallback(() => {
-    if (!likers || likers.length === 0) {
-      dispatch(getLikers({ contentId }));
+  const fetchLikesIfNeeded = useCallback(() => {
+    if (!likes || likes.length === 0) {
+      dispatch(getLikes({ contentId }));
     }
-  }, [likers, contentId, dispatch]);
+  }, [likes, contentId, dispatch]);
 
   const handleSaveCustomButtons = async (buttons: CustomButton[]) => {
     const reorderedButtons = buttons.map((button, index) => ({
@@ -473,7 +473,7 @@ const ComponentCard = ({
         return next;
       });
       setTimeout(() => {
-        dispatch(getLikers({ contentId }));
+        dispatch(getLikes({ contentId }));
       }, 300);
     }
   };
@@ -1239,19 +1239,19 @@ const ComponentCard = ({
           >
             <Tooltip
               title={
-                likers.length > 0 ? (
+                likes.length > 0 ? (
                     <Box sx={{ maxWidth: 250 }}>
                     <Box sx={{ maxHeight: 200, overflowY: "auto" }}>
-                      {likers.slice(0, 20).map((liker, index) => (
+                      {likes.slice(0, 20).map((liker, index) => (
                       <Typography key={index} variant="body2">
                         {liker.firstName && liker.lastName
                         ? `${liker.firstName} ${liker.lastName}`
                         : liker.email}
                       </Typography>
                       ))}
-                      {likers.length > 20 && (
+                      {likes.length > 20 && (
                       <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 500 }}>
-                        +{likers.length - 20} more
+                        +{likes.length - 20} more
                       </Typography>
                       )}
                     </Box>
@@ -1263,7 +1263,7 @@ const ComponentCard = ({
               arrow
               placement="top"
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }} onMouseEnter={fetchLikersIfNeeded}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }} onMouseEnter={fetchLikesIfNeeded}>
                 <IconButton
                   aria-label="like"
                   onClick={toggleLike}
@@ -1287,15 +1287,15 @@ const ComponentCard = ({
                   component="button"
                   onClick={() => {
                     if (localLikesCount > 0) {
-                      fetchLikersIfNeeded();
-                      setIsLikersModalOpen(true);
+                      fetchLikesIfNeeded();
+                      setIsLikesModalOpen(true);
                     }
                   }}
                   onKeyDown={(e: React.KeyboardEvent) => {
                     if (localLikesCount > 0 && (e.key === "Enter" || e.key === " ")) {
                       e.preventDefault();
-                      fetchLikersIfNeeded();
-                      setIsLikersModalOpen(true);
+                      fetchLikesIfNeeded();
+                      setIsLikesModalOpen(true);
                     }
                   }}
                   tabIndex={localLikesCount > 0 ? 0 : -1}
@@ -1444,10 +1444,10 @@ const ComponentCard = ({
           onSave={handleSaveCustomButtons}
         />
 
-        <LikersModal
-          open={isLikersModalOpen}
-          onClose={() => setIsLikersModalOpen(false)}
-          likers={likers}
+        <LikesModal
+          open={isLikesModalOpen}
+          onClose={() => setIsLikesModalOpen(false)}
+          likes={likes}
         />
 
          {isOverflowExpanded && (

@@ -19,20 +19,20 @@ import { LikerResponse } from "src/types/types";
 
 import React from "react";
 
-interface LikersModalProps {
+interface LikesModalProps {
   open: boolean;
   onClose: () => void;
-  likers: LikerResponse[];
+  likes: LikerResponse[];
 }
 
-const LikersModal: React.FC<LikersModalProps> = ({ open, onClose, likers }) => {
+const LikesModal: React.FC<LikesModalProps> = ({ open, onClose, likes }) => {
   const theme = useTheme();
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      aria-labelledby="likers-modal-title"
+      aria-labelledby="likes-modal-title"
       closeAfterTransition
       slotProps={{
         backdrop: {
@@ -68,7 +68,7 @@ const LikersModal: React.FC<LikersModalProps> = ({ open, onClose, likers }) => {
             }}
           >
             <Typography
-              id="likers-modal-title"
+              id="likes-modal-title"
               variant="h6"
               sx={{
                 fontWeight: 600,
@@ -78,7 +78,7 @@ const LikersModal: React.FC<LikersModalProps> = ({ open, onClose, likers }) => {
                     : theme.palette.common.white,
               }}
             >
-              Likes ({likers.length})
+              Likes ({likes.length})
             </Typography>
             <IconButton
               onClick={onClose}
@@ -104,9 +104,9 @@ const LikersModal: React.FC<LikersModalProps> = ({ open, onClose, likers }) => {
               "&::-webkit-scrollbar": { width: 6 },
             }}
           >
-            {likers.length > 0 ? (
+            {likes.length > 0 ? (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
-                {likers.map((liker, index) => (
+                {likes.map((liker, index) => (
                   <Box
                     key={index}
                     sx={{
@@ -216,4 +216,4 @@ const LikersModal: React.FC<LikersModalProps> = ({ open, onClose, likers }) => {
   );
 };
 
-export default LikersModal;
+export default LikesModal;

@@ -95,13 +95,13 @@ const initialState: PageStateWithMyBoard = {
   swapSectionsState: CONTENT_STATE_IDLE,
   sectionOffset: 0,
   likeState: CONTENT_STATE_IDLE,
-  likersState: CONTENT_STATE_IDLE,
+  likesState: CONTENT_STATE_IDLE,
   pinState: CONTENT_STATE_IDLE,
   contentReportState: CONTENT_STATE_LOADING,
   tagState: CONTENT_STATE_IDLE,
   blockedUrlsState: CONTENT_STATE_IDLE,
   comments: [],
-  likers: {},
+  likes: {},
   contents: [],
   searchResults: [],
   contentReport: [],
@@ -550,17 +550,17 @@ export const PageSlice = createSlice({
         state.stateMessage = "Something went wrong :(";
       })
 
-      //Get all likers
-      .addCase(getLikers.pending, (state) => {
-        state.likersState = CONTENT_STATE_LOADING;
+      //Get all likes
+      .addCase(getLikes.pending, (state) => {
+        state.likesState = CONTENT_STATE_LOADING;
       })
-      .addCase(getLikers.fulfilled, (state, action) => {
-        state.likersState = CONTENT_STATE_SUCCESS;
-        state.likers[action.payload.contentId] = action.payload.likers;
+      .addCase(getLikes.fulfilled, (state, action) => {
+        state.likesState = CONTENT_STATE_SUCCESS;
+        state.likes[action.payload.contentId] = action.payload.likes;
       })
-      .addCase(getLikers.rejected, (state) => {
-        state.likersState = CONTENT_STATE_FAILED;
-        state.stateMessage = "Failed to fetch likers";
+      .addCase(getLikes.rejected, (state) => {
+        state.likesState = CONTENT_STATE_FAILED;
+        state.stateMessage = "Failed to fetch likes";
       })
 
       //Get all tags
@@ -1279,24 +1279,24 @@ export const getAllComments = createAsyncThunk(
   }
 );
 
-//Get all likers of a particular content
-export const getLikers = createAsyncThunk(
-  "pitstop/fetchLikers",
+// Get all likes of a particular content
+export const getLikes = createAsyncThunk(
+  "pitstop/fetchlikes",
   async (payload: { contentId: number }, { dispatch }) => {
-    return new Promise<{ contentId: number; likers: LikerResponse[] }>(
+    return new Promise<{ contentId: number; likes: LikerResponse[] }>(
       (resolve, reject) => {
         ApiService.getInstance()
-          .get(AppConfig.serviceUrls.getLikers(payload.contentId))
+          .get(AppConfig.serviceUrls.getLikes(payload.contentId))
           .then((resp) => {
             resolve({
               contentId: payload.contentId,
-              likers: resp.data,
+              likes: resp.data,
             });
           })
           .catch((resp) => {
             dispatch(
               enqueueSnackbarMessage({
-                message: "Failed to fetch likers",
+                message: "Failed to fetch likes",
                 type: "error",
                 anchorOrigin: {
                   vertical: "bottom",

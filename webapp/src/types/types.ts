@@ -447,11 +447,11 @@ export interface PageState {
   contentReportState: RouteStatuses;
   tagState: RouteStatuses;
   blockedUrlsState: RouteStatuses;
-  likersState: RouteStatuses;
+  likesState: RouteStatuses;
   sectionData: Section[];
   verticalData: Section[];
   comments: CommentsResponse[];
-  likers: { [contentId: number]: LikerResponse[] };
+  likes: { [contentId: number]: LikerResponse[] };
   sectionOffset: number;
   contents: ContentResponse[];
   searchResults: ContentResponse[];

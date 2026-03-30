@@ -734,7 +734,7 @@ service http:InterceptableService / on new http:Listener(9090) {
     #
     # + contentId - Content ID
     # + ctx - Request context
-    # + return - Array of likers or error responses
+    # + return - Array of likes or error responses
     resource function get contents/[int contentId]/likes(http:RequestContext ctx)
         returns types:LikerResponse[]|http:NotFound|http:Forbidden|http:InternalServerError {
 
@@ -762,16 +762,16 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        types:LikerResponse[]|error likers = database:getLikers(contentId);
-        if likers is error {
-            string customErr = "Failed to fetch likers";
-            log:printError(customErr, likers);
+        types:LikerResponse[]|error likes = database:getLikes(contentId);
+        if likes is error {
+            string customErr = "Failed to fetch likes";
+            log:printError(customErr, likes);
             return <http:InternalServerError>{
                 body: customErr
             };
         }
 
-        return likers;
+        return likes;
     }
 
     # Pin a content item.
