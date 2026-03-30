@@ -308,7 +308,7 @@ public type TagResponse record {|
     string color;
 |};
 
-# Liker response.
+# Like response.
 public type LikeResponse record {|
     # User ID
     @sql:Column {name: "user_id"}
