@@ -20,68 +20,131 @@ import ballerina/log;
 
 # JWT Configurations.
 public configurable AppRoles authorizedRoles = ?;
+configurable TokenValidatorConfig tokenValidatorConfig = ?;
+configurable boolean isTokenValidatorEnabled = true;
 
-# To handle authorization for each resource function invocation.
+final jwt:ValidatorConfig & readonly jwtConfig = {
+    issuer: tokenValidatorConfig.issuer,
+    audience: tokenValidatorConfig.audience,
+    clockSkew: tokenValidatorConfig.clockSkew,
+    signatureConfig: {
+        jwksConfig: {url: tokenValidatorConfig.jwksEndPoint}
+    }
+};
+
+# Extracts and validates user info from JWT headers in an HTTP request.
+# This function is used by both the HTTP interceptor and the WebSocket upgrade resource.
+#
+# + req - The HTTP request containing JWT headers
+# + return - UserInfoPayload on success or error on validation failure
+public isolated function getUserInfoFromRequest(http:Request req) returns UserInfoPayload|error {
+    string|error idToken = req.getHeader(JWT_ASSERTION);
+    if idToken is error {
+        string errorMsg = "Missing invoker info header!";
+        log:printError(errorMsg, idToken);
+        return error(errorMsg);
+    }
+
+    string|error userIdToken = req.getHeader(USER_ID_TOKEN_HEADER);
+    if userIdToken is error {
+        string errorMsg = "Missing user id token info header!";
+        log:printError(errorMsg, userIdToken);
+        return error(errorMsg);
+    }
+
+    if !isTokenValidatorEnabled {
+        [jwt:Header, jwt:Payload]|jwt:Error result = jwt:decode(idToken);
+        if result is jwt:Error {
+            string errorMsg = "Error while reading the Invoker info!";
+            log:printError(errorMsg, result);
+            return error(errorMsg);
+        }
+
+        CustomJwtPayload|error payloadData = result[1].cloneWithType(CustomJwtPayload);
+        if payloadData is error {
+            string errorMsg = "Malformed JWT payload!";
+            log:printError(errorMsg, payloadData);
+            return error(errorMsg);
+        }
+
+        return {
+            email: payloadData.email,
+            groups: payloadData.groups,
+            userId: payloadData.userid,
+            idToken: userIdToken
+        };
+    }
+
+    jwt:Payload|error payload = jwt:validate(idToken, jwtConfig.cloneReadOnly());
+    if payload is error {
+        string errorMsg = "Invalid or expired token!";
+        log:printError(errorMsg, payload);
+        return error(errorMsg);
+    }
+
+    CustomJwtPayload|error payloadData = payload.cloneWithType(CustomJwtPayload);
+    if payloadData is error {
+        string errorMsg = "Malformed JWT payload!";
+        log:printError(errorMsg, payloadData);
+        return error(errorMsg);
+    }
+
+    return {
+        email: payloadData.email,
+        groups: payloadData.groups,
+        userId: payloadData.userid,
+        idToken: userIdToken
+    };
+}
+
+# Extracts user info from the user ID token.
+# Used when tokens are received outside of standard HTTP headers (e.g., via Sec-WebSocket-Protocol).
+# The token authenticity is guaranteed by Choreo gateway having validated the access token during the handshake.
+#
+# + userIdToken - The user ID token (x-user-id-token)
+# + return - UserInfoPayload on success or error on extraction failure
+public isolated function getUserInfoFromTokens(string userIdToken) returns UserInfoPayload|error {
+    [jwt:Header, jwt:Payload]|jwt:Error result = jwt:decode(userIdToken);
+    if result is jwt:Error {
+        string errorMsg = "Error while decoding the user ID token!";
+        log:printError(errorMsg, result);
+        return error(errorMsg);
+    }
+
+    CustomJwtPayload|error payloadData = result[1].cloneWithType(CustomJwtPayload);
+    if payloadData is error {
+        string errorMsg = "Malformed JWT payload!";
+        log:printError(errorMsg, payloadData);
+        return error(errorMsg);
+    }
+
+    return {
+        email: payloadData.email,
+        groups: payloadData.groups,
+        userId: payloadData.userid,
+        idToken: userIdToken
+    };
+}
+
+# To handle authentication for each resource function invocation.
 public isolated service class JwtInterceptor {
+
     *http:RequestInterceptor;
 
     isolated resource function default [string... path](http:RequestContext ctx, http:Request req)
-            returns http:NextService|http:Forbidden|http:InternalServerError|error? {
+            returns http:NextService|http:Unauthorized|http:InternalServerError|error? {
 
-        if req.method == http:HTTP_OPTIONS {
-            return ctx.next();
-        }
-
-        string|error idToken = req.getHeader(JWT_ASSERTION);
-        if idToken is error {
-            string errorMsg = "Missing invoker info header!";
-            log:printError(errorMsg, idToken);
-            return <http:InternalServerError>{
-                body: {
-                    message: errorMsg
-                }
-            };
-        }
-
-        [jwt:Header, jwt:Payload]|jwt:Error decoded = jwt:decode(idToken);
-        if decoded is jwt:Error {
-            string errorMsg = "Error while reading the invoker info!";
-            log:printError(errorMsg, decoded);
-            return <http:InternalServerError>{
-                body: {
-                    message: errorMsg
-                }
-            };
-        }
-
-        AsgardeoJwt|error userInfo = decoded[1].cloneWithType(AsgardeoJwt);
+        UserInfoPayload|error userInfo = getUserInfoFromRequest(req);
         if userInfo is error {
-            string errorMsg = "Malformed invoker info object!";
-            log:printError(errorMsg, userInfo);
-            return <http:InternalServerError>{
-                body: {
-                    message: errorMsg
-                }
-            };
+            return <http:InternalServerError>{body: {message: userInfo.message()}};
         }
 
-        // Authorization check
-        foreach anydata role in authorizedRoles.toArray() {
-            if userInfo.groups.some(r => r === role) {
-                ctx.set(REQUESTED_BY_USER_EMAIL, userInfo.email);
-                ctx.set(REQUESTED_BY_USER_ROLES, userInfo.groups);
-
-                return ctx.next();
-            }
+        ctx.set(HEADER_USER_INFO, userInfo);
+        ctx.set(REQUESTED_BY_USER_EMAIL, userInfo.email);
+        if userInfo.groups !is () {
+            ctx.set(REQUESTED_BY_USER_ROLES, userInfo.groups);
         }
 
-        log:printError(string `${userInfo.email} is missing required permissions, only has ${
-                userInfo.groups.toBalString()}`);
-
-        return <http:Forbidden>{
-            body: {
-                message: "Insufficient privileges!"
-            }
-        };
+        return ctx.next();
     }
 }

@@ -18,6 +18,8 @@
 public const REQUESTED_BY_USER_EMAIL = "requestedByUserEmail";
 public const REQUESTED_BY_USER_ROLES = "requestedByUserRoles";
 public const JWT_ASSERTION = "x-jwt-assertion";
+public const USER_ID_TOKEN_HEADER = "x-user-id-token";
+public const HEADER_USER_INFO = "user-info";
 
 // Application Privileges.
 public const EMPLOYEE_PRIVILEGE = 987;
