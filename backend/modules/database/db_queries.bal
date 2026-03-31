@@ -889,11 +889,11 @@ isolated function getContentDetailsByIdQuery(int contentId) returns sql:Paramete
         c.content_id AS contentId,
         c.section_id AS sectionId,
         c.description AS description,
-        r.route_path AS routePath
+        COALESCE(r.route_path, '') AS routePath
     FROM
         content c
         INNER JOIN section s ON s.section_id = c.section_id
-        INNER JOIN route r ON r.route_id = s.route_id
+        LEFT JOIN route r ON r.route_id = s.route_id
     WHERE
         c.content_id = ${contentId}
         AND c.is_deleted = FALSE;
