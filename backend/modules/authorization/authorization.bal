@@ -134,6 +134,10 @@ public isolated service class JwtInterceptor {
     isolated resource function default [string... path](http:RequestContext ctx, http:Request req)
             returns http:NextService|http:Unauthorized|http:InternalServerError|error? {
 
+        if req.method == http:HTTP_OPTIONS {
+            return ctx.next();
+        }
+
         UserInfoPayload|error userInfo = getUserInfoFromRequest(req);
         if userInfo is error {
             return <http:InternalServerError>{body: {message: userInfo.message()}};
@@ -141,9 +145,8 @@ public isolated service class JwtInterceptor {
 
         ctx.set(HEADER_USER_INFO, userInfo);
         ctx.set(REQUESTED_BY_USER_EMAIL, userInfo.email);
-        if userInfo.groups !is () {
-            ctx.set(REQUESTED_BY_USER_ROLES, userInfo.groups);
-        }
+        string[] userRoles = userInfo.groups ?: [];
+        ctx.set(REQUESTED_BY_USER_ROLES, userRoles);
 
         return ctx.next();
     }
