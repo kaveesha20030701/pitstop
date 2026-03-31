@@ -558,8 +558,10 @@ export const PageSlice = createSlice({
         state.likesState = CONTENT_STATE_SUCCESS;
         state.likes[action.payload.contentId] = action.payload.likes;
       })
-      .addCase(getLikes.rejected, (state) => {
+      .addCase(getLikes.rejected, (state, action) => {
         state.likesState = CONTENT_STATE_FAILED;
+        const contentId = action.meta.arg.contentId;
+        state.likes[contentId] = [];
         state.stateMessage = "Failed to fetch likes";
       })
 
@@ -1096,6 +1098,13 @@ export const likeContent = createAsyncThunk(
           resolve({ requestResponse: resp.data });
         })
         .catch((resp) => {
+          if (resp?.response?.status === 404) {
+            resolve({
+              contentId: payload.contentId,
+              likes: []
+            });
+            return;
+          }
           dispatch(
             enqueueSnackbarMessage({
               message: "Something went wrong while adding like to content :(",

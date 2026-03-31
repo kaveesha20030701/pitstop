@@ -106,9 +106,9 @@ const LikesModal: React.FC<LikesModalProps> = ({ open, onClose, likes }) => {
           >
             {likes.length > 0 ? (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
-                {likes.map((liker, index) => (
+                {likes.map((liker) => (
                   <Box
-                    key={index}
+                    key={liker.userId}
                     sx={{
                       display: "flex",
                       alignItems: "center",
