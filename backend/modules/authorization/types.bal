@@ -14,16 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-# User info custom type for Asgardeo token.
-public type CustomJwtPayload record {|
-    # User email
-    string email;
-    # User ID
-    string sub;
-    # Groups
-    string[]? groups;
-    json...;
-|};
+import ballerina/jwt;
 
 # [Configurable] Token validator configuration.
 public type TokenValidatorConfig record {|
@@ -37,17 +28,21 @@ public type TokenValidatorConfig record {|
     decimal clockSkew;
 |};
 
-# User info custom payload.
-public type UserInfoPayload record {|
+# User info custom type for Asgardeo token.
+public type CustomJwtPayload record {|
     # User email
     string email;
-    # User ID
-    string userId;
-    # ID token
-    string idToken;
-    # User groups
-    string[] groups?;
-    json...;
+    # Groups
+    string[] groups;
+|};
+
+# Asgardeo JWT token, if Asgardeo is configured as Choreo Key Manager, this JWT token will be used.
+type AsgardeoJwt record {|
+    *jwt:Payload;
+    # Email address of the user
+    string email;
+    # Groups of the user
+    string[] groups;
 |};
 
 # Application roles.
