@@ -16,6 +16,18 @@
 
 import ballerina/jwt;
 
+# [Configurable] Token validator configuration.
+public type TokenValidatorConfig record {|
+    # Issuer
+    string issuer;
+    # Audience  
+    string|string[] audience;
+    # JWKS EndPoint 
+    string jwksEndPoint;
+    # Clock skew
+    decimal clockSkew;
+|};
+
 # User info custom type for Asgardeo token.
 public type CustomJwtPayload record {|
     # User email

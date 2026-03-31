@@ -20,6 +20,17 @@ import ballerina/log;
 
 # JWT Configurations.
 public configurable AppRoles authorizedRoles = ?;
+configurable TokenValidatorConfig tokenValidatorConfig = ?;
+configurable boolean isTokenValidatorEnabled = true;
+
+final jwt:ValidatorConfig & readonly jwtConfig = {
+    issuer: tokenValidatorConfig.issuer,
+    audience: tokenValidatorConfig.audience,
+    clockSkew: tokenValidatorConfig.clockSkew,
+    signatureConfig: {
+        jwksConfig: {url: tokenValidatorConfig.jwksEndPoint}
+    }
+};
 
 # To handle authorization for each resource function invocation.
 public isolated service class JwtInterceptor {
@@ -52,6 +63,19 @@ public isolated service class JwtInterceptor {
                     message: errorMsg
                 }
             };
+        }
+        
+        if isTokenValidatorEnabled {
+            jwt:Payload|jwt:Error validated = jwt:validate(idToken, jwtConfig);
+            if validated is jwt:Error {
+                string errorMsg = "JWT validation failed!";
+                log:printError(errorMsg, validated);
+                return <http:InternalServerError>{
+                    body: {
+                        message: errorMsg
+                    }
+                };
+            }
         }
 
         AsgardeoJwt|error userInfo = decoded[1].cloneWithType(AsgardeoJwt);
