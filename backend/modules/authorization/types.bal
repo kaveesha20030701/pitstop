@@ -19,9 +19,10 @@ public type CustomJwtPayload record {|
     # User email
     string email;
     # User ID
-    string userid;
+    string sub;
     # Groups
     string[] groups;
+    json...;
 |};
 
 # [Configurable] Token validator configuration.

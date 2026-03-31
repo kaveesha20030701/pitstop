@@ -70,7 +70,7 @@ public isolated function getUserInfoFromRequest(http:Request req) returns UserIn
         return {
             email: payloadData.email,
             groups: payloadData.groups,
-            userId: payloadData.userid,
+            userId: payloadData.sub,
             idToken: userIdToken
         };
     }
@@ -92,7 +92,7 @@ public isolated function getUserInfoFromRequest(http:Request req) returns UserIn
     return {
         email: payloadData.email,
         groups: payloadData.groups,
-        userId: payloadData.userid,
+        userId: payloadData.sub, 
         idToken: userIdToken
     };
 }
@@ -121,7 +121,7 @@ public isolated function getUserInfoFromTokens(string userIdToken) returns UserI
     return {
         email: payloadData.email,
         groups: payloadData.groups,
-        userId: payloadData.userid,
+        userId: payloadData.sub,
         idToken: userIdToken
     };
 }
