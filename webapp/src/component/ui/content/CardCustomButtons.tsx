@@ -112,7 +112,7 @@ const CardCustomButtons: React.FC<CardCustomButtonsProps> = ({
                 minHeight: isInOverlay ? 36 : 31,
                 fontSize: isInOverlay ? "0.75rem" : "0.8rem",
                 textTransform: "none",
-                fontWeight: 600,
+                fontWeight: 800,
                 px: !button.label && button.icon ? 0.75 : 1.5,
                 py: 0.6,
                 flex: 1,
@@ -131,7 +131,7 @@ const CardCustomButtons: React.FC<CardCustomButtonsProps> = ({
                   marginLeft: !button.label ? 0 : "-2px",
                 },
                 "& .MuiButton-startIcon > svg": {
-                  fontSize: 16,
+                  fontSize: 20,
                 },
               }}
             >

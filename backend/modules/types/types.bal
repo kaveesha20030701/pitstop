@@ -308,6 +308,23 @@ public type TagResponse record {|
     string color;
 |};
 
+# Like response.
+public type LikeResponse record {|
+    # User ID
+    @sql:Column {name: "user_id"}
+    int userId;
+    # User email
+    string email;
+    # User first name
+    @sql:Column {name: "first_name"}
+    string? firstName;
+    # User last name
+    @sql:Column {name: "last_name"}
+    string? lastName;
+    # User thumbnail
+    string? thumbnail;
+|};
+
 # Route helper.
 public type Route record {|
     # Route ID

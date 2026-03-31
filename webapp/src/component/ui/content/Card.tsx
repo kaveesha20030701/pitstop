@@ -62,6 +62,7 @@ import {
 } from "@slices/customButtonSlice/customButton";
 import {
   getAllComments,
+  getLikes,
   likeContent,
   pinContent,
   unpinContent,
@@ -76,6 +77,7 @@ import CardCustomButtons from "./CardCustomButtons";
 import CardTitle from "./CardTitle";
 import CardNote from "./CardNote";
 import CardTags from "./CardTags";
+import LikesModal from "./LikesModal";
 
 interface ComponentCardProps {
   contentId: number;
@@ -150,6 +152,10 @@ const ComponentCard = ({
   const [isCustomButtonDialogOpen, setIsCustomButtonDialogOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [imageError, setImageError] = useState(false);
+  const [isLikesModalOpen, setIsLikesModalOpen] = useState(false);
+  const likes = useAppSelector(
+    (state: RootState) => state.page.likes[contentId] || []
+  );
   const isMenuItemsOpen = Boolean(anchorEl);
   const liked = useAppSelector((state: RootState) => state.page.likeState);
   const navigate = useNavigate();
@@ -245,6 +251,12 @@ const ComponentCard = ({
     ro.observe(el);
     return () => ro.disconnect();
   }, [description, createdOn, customContentTheme, note, tags, localCustomButtons, localIsVisible]);
+
+  const fetchLikesIfNeeded = useCallback(() => {
+    if (!likes || likes.length === 0) {
+      dispatch(getLikes({ contentId }));
+    }
+  }, [likes, contentId, dispatch]);
 
   const handleSaveCustomButtons = async (buttons: CustomButton[]) => {
     const reorderedButtons = buttons.map((button, index) => ({
@@ -460,6 +472,9 @@ const ComponentCard = ({
         }
         return next;
       });
+      setTimeout(() => {
+        dispatch(getLikes({ contentId }));
+      }, 300);
     }
   };
 
@@ -1222,28 +1237,92 @@ const ComponentCard = ({
               flexShrink: 0,
             }}
           >
-            <IconButton
-              aria-label="like"
-              onClick={toggleLike}
-              size="small"
-              sx={{
-                color: like ? "#ff6b9d" : "rgba(255,255,255,0.7)",
-                p: 0.5,
-                "&:hover": {
-                  transform: "scale(1.1)",
-                  color: "#ff6b9d",
-                },
-              }}
+            <Tooltip
+              title={
+                likes.length > 0 ? (
+                    <Box sx={{ maxWidth: 250 }}>
+                    <Box sx={{ maxHeight: 200, overflowY: "auto" }}>
+                      {likes.slice(0, 20).map((liker, index) => (
+                      <Typography key={index} variant="body2">
+                        {liker.firstName && liker.lastName
+                        ? `${liker.firstName} ${liker.lastName}`
+                        : liker.email}
+                      </Typography>
+                      ))}
+                      {likes.length > 20 && (
+                      <Typography variant="body2" sx={{ mt: 0.5, fontWeight: 500 }}>
+                        +{likes.length - 20} more
+                      </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                ) : (
+                  "No likes yet"
+                )
+              }
+              arrow
+              placement="top"
             >
-              {like ? (
-                <FavoriteIcon sx={{ fontSize: 18 }} />
-              ) : (
-                <FavoriteBorderIcon sx={{ fontSize: 18 }} />
-              )}
-              <Typography sx={{ ml: 0.5, fontSize: 11, color: "inherit" }}>
-                {localLikesCount}
-              </Typography>
-            </IconButton>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }} onMouseEnter={fetchLikesIfNeeded}>
+                <IconButton
+                  aria-label="like"
+                  onClick={toggleLike}
+                  size="small"
+                  sx={{
+                    color: like ? "#ff6b9d" : "rgba(255,255,255,0.7)",
+                    p: 0.5,
+                    "&:hover": {
+                      transform: "scale(1.1)",
+                      color: "#ff6b9d",
+                    },
+                  }}
+                >
+                  {like ? (
+                    <FavoriteIcon sx={{ fontSize: 18 }} />
+                  ) : (
+                    <FavoriteBorderIcon sx={{ fontSize: 18 }} />
+                  )}
+                </IconButton>
+                <Typography
+                  component="button"
+                  onClick={() => {
+                    if (localLikesCount > 0) {
+                      fetchLikesIfNeeded();
+                      setIsLikesModalOpen(true);
+                    }
+                  }}
+                  onKeyDown={(e: React.KeyboardEvent) => {
+                    if (localLikesCount > 0 && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
+                      fetchLikesIfNeeded();
+                      setIsLikesModalOpen(true);
+                    }
+                  }}
+                  tabIndex={localLikesCount > 0 ? 0 : -1}
+                  role="button"
+                  aria-label={`View ${localLikesCount} liker${localLikesCount !== 1 ? "s" : ""}`}
+                  sx={{
+                    fontSize: 11,
+                    color: theme.palette.common.white,
+                    cursor: localLikesCount > 0 ? "pointer" : "default",
+                    paddingRight: 0.5,
+                    fontWeight: 500,
+                    border: "none",
+                    background: "none",
+                    padding: 0,
+                    font: "inherit",
+                    "&:focus-visible": {
+                      outline: "2px solid rgba(255,255,255,0.5)",
+                      borderRadius: "2px",
+                      outlineOffset: "2px",
+                    },
+                    "&:hover": localLikesCount > 0 ? { textDecoration: "underline" } : {},
+                  }}
+                >
+                  {localLikesCount}
+                </Typography>
+              </Box>
+            </Tooltip>
 
             {!isExpanded && (
               <IconButton
@@ -1363,6 +1442,12 @@ const ComponentCard = ({
           sectionId={sectionId}
           initialButtons={localCustomButtons}
           onSave={handleSaveCustomButtons}
+        />
+
+        <LikesModal
+          open={isLikesModalOpen}
+          onClose={() => setIsLikesModalOpen(false)}
+          likes={likes}
         />
 
          {isOverflowExpanded && (

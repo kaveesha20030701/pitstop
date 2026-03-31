@@ -730,6 +730,50 @@ service http:InterceptableService / on new http:Listener(9090) {
         return http:CREATED;
     }
 
+    # Get all users who liked a content.
+    #
+    # + contentId - Content ID
+    # + ctx - Request context
+    # + return - Array of likes or error responses
+    resource function get contents/[int contentId]/likes(http:RequestContext ctx)
+        returns types:LikeResponse[]|http:NotFound|http:Forbidden|http:InternalServerError {
+
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
+
+        types:ContentResponseById|error? contentResponse = database:getContentDetailById(contentId);
+        if contentResponse is error {
+            string customError = "Error while fetching content";
+            log:printError(customError, contentResponse);
+            return <http:InternalServerError>{
+                body: customError
+            };
+        }
+
+        if contentResponse is () {
+            string notFoundError = "Content not found";
+            return <http:NotFound>{
+                body: notFoundError
+            };
+        }
+
+        types:LikeResponse[]|error likes = database:getLikes(contentId);
+        if likes is error {
+            string customErr = "Failed to fetch likes";
+            log:printError(customErr, likes);
+            return <http:InternalServerError>{
+                body: customErr
+            };
+        }
+
+        return likes;
+    }
+
     # Pin a content item.
     #
     # + pinPayload - Pin content payload containing contentId

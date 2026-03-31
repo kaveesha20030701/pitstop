@@ -28,6 +28,7 @@ import {
   TagResponse,
   UpdateCommentPayload,
   CustomTheme,
+  LikeResponse,
 } from "@/types/types";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { 
@@ -94,11 +95,13 @@ const initialState: PageStateWithMyBoard = {
   swapSectionsState: CONTENT_STATE_IDLE,
   sectionOffset: 0,
   likeState: CONTENT_STATE_IDLE,
+  likesState: CONTENT_STATE_IDLE,
   pinState: CONTENT_STATE_IDLE,
   contentReportState: CONTENT_STATE_LOADING,
   tagState: CONTENT_STATE_IDLE,
   blockedUrlsState: CONTENT_STATE_IDLE,
   comments: [],
+  likes: {},
   contents: [],
   searchResults: [],
   contentReport: [],
@@ -545,6 +548,21 @@ export const PageSlice = createSlice({
       .addCase(getAllComments.rejected, (state) => {
         state.commentState = CONTENT_STATE_FAILED;
         state.stateMessage = "Something went wrong :(";
+      })
+
+      //Get all likes
+      .addCase(getLikes.pending, (state) => {
+        state.likesState = CONTENT_STATE_LOADING;
+      })
+      .addCase(getLikes.fulfilled, (state, action) => {
+        state.likesState = CONTENT_STATE_SUCCESS;
+        state.likes[action.payload.contentId] = action.payload.likes;
+      })
+      .addCase(getLikes.rejected, (state, action) => {
+        state.likesState = CONTENT_STATE_FAILED;
+        const contentId = action.meta.arg.contentId;
+        state.likes[contentId] = [];
+        state.stateMessage = "Failed to fetch likes";
       })
 
       //Get all tags
@@ -1080,6 +1098,13 @@ export const likeContent = createAsyncThunk(
           resolve({ requestResponse: resp.data });
         })
         .catch((resp) => {
+          if (resp?.response?.status === 404) {
+            resolve({
+              contentId: payload.contentId,
+              likes: []
+            });
+            return;
+          }
           dispatch(
             enqueueSnackbarMessage({
               message: "Something went wrong while adding like to content :(",
@@ -1249,6 +1274,38 @@ export const getAllComments = createAsyncThunk(
             dispatch(
               enqueueSnackbarMessage({
                 message: "Something went wrong while adding like to content :(",
+                type: "error",
+                anchorOrigin: {
+                  vertical: "bottom",
+                  horizontal: "right",
+                },
+              })
+            );
+            reject(resp);
+          });
+      }
+    );
+  }
+);
+
+// Get all likes of a particular content
+export const getLikes = createAsyncThunk(
+  "pitstop/fetchlikes",
+  async (payload: { contentId: number }, { dispatch }) => {
+    return new Promise<{ contentId: number; likes: LikeResponse[] }>(
+      (resolve, reject) => {
+        ApiService.getInstance()
+          .get(AppConfig.serviceUrls.getLikes(payload.contentId))
+          .then((resp) => {
+            resolve({
+              contentId: payload.contentId,
+              likes: resp.data,
+            });
+          })
+          .catch((resp) => {
+            dispatch(
+              enqueueSnackbarMessage({
+                message: "Failed to fetch likes",
                 type: "error",
                 anchorOrigin: {
                   vertical: "bottom",

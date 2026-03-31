@@ -447,9 +447,11 @@ export interface PageState {
   contentReportState: RouteStatuses;
   tagState: RouteStatuses;
   blockedUrlsState: RouteStatuses;
+  likesState: RouteStatuses;
   sectionData: Section[];
   verticalData: Section[];
   comments: CommentsResponse[];
+  likes: { [contentId: number]: LikeResponse[] };
   sectionOffset: number;
   contents: ContentResponse[];
   searchResults: ContentResponse[];
@@ -459,6 +461,14 @@ export interface PageState {
   pinnedContentIds: number[];
   trendingState: string;
   trendingContents: ContentResponse[];
+}
+
+export interface LikeResponse {
+  userId: number;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  thumbnail?: string;
 }
 
 export interface CommentResponse {
