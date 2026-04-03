@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Box,
   TextField,
@@ -37,8 +37,8 @@ import AlternateEmailIcon from "@mui/icons-material/AlternateEmail";
 import CloseIcon from "@mui/icons-material/Close";
 import { useAppDispatch, useAppSelector, RootState } from "@slices/store";
 import { addComment } from "@slices/pageSlice/page";
+import { fetchMentionSuggestions } from "@slices/pageSlice/page";
 import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
-import { useMentions } from "@root/src/slices/useMentions";
 import { EmployeeSuggestion, MentionedUser } from "@/types/types";
 
 interface CommentInputProps {
@@ -54,22 +54,89 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
   const theme = useTheme();
   const [text, setText] = useState("");
   const [isPosting, setIsPosting] = useState(false);
+  const [suggestions, setSuggestions] = useState<EmployeeSuggestion[]>([]);
+  const [mentionedUsers, setMentionedUsers] = useState<MentionedUser[]>([]);
+  const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+
   const userThumbnail = useAppSelector(
     (state: RootState) => state.employee.employeeInfo?.employeeThumbnail
   );
-  const {
-    suggestions,
-    mentionedUsers,
-    handleCommentChange,
-    selectMention,
-    setMentionedUsers,
-    clearSuggestions,
-  } = useMentions();
+  const currentUserEmail = useAppSelector(
+    (state: RootState) => state.auth.userInfo?.email ?? ""
+  );
+
+  const handleCommentChange = useCallback(
+    (newText: string) => {
+      setText(newText);
+
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+
+      const mentionMatch = newText.match(/@([\w]*)$/);
+
+      if (mentionMatch) {
+        const query = mentionMatch[1];
+
+        const timer = setTimeout(() => {
+          if (query.length >= 2) {
+            dispatch(fetchMentionSuggestions({ query }))
+              .then((result) => {
+                const payload = result.payload as EmployeeSuggestion[] | undefined;
+                if (payload) {
+                  const filteredSuggestions = payload.filter(
+                    (suggestion) => suggestion.workEmail !== currentUserEmail
+                  );
+                  setSuggestions(filteredSuggestions);
+                }
+              })
+              .catch(() => {
+                setSuggestions([]);
+              });
+          } else if (query.length === 0) {
+            setSuggestions([]);
+          }
+        }, 300);
+
+        setDebounceTimer(timer);
+      } else {
+        setSuggestions([]);
+      }
+    },
+    [dispatch, debounceTimer, currentUserEmail]
+  );
+
+  const selectMention = useCallback(
+    (suggestion: EmployeeSuggestion) => {
+      const textWithoutQuery = text.replace(/@[\w]*$/, "");
+      const displayName = `${suggestion.firstName} ${suggestion.lastName} `;
+      const newText = textWithoutQuery + displayName;
+
+      const mentionedUser: MentionedUser = {
+        name: `${suggestion.firstName} ${suggestion.lastName}`,
+        email: suggestion.workEmail,
+        thumbnail: suggestion.employeeThumbnail,
+      };
+
+      setMentionedUsers((prev) => {
+        if (!prev.some((u) => u.email === mentionedUser.email)) {
+          return [...prev, mentionedUser];
+        }
+        return prev;
+      });
+
+      setText(newText);
+      setSuggestions([]);
+    },
+    [text]
+  );
+
+  const clearSuggestions = useCallback(() => {
+    setSuggestions([]);
+  }, []);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newText = e.target.value;
-    setText(newText);
-    handleCommentChange(newText);
+    handleCommentChange(e.target.value);
   };
 
   const handleSendComment = async () => {
@@ -127,7 +194,7 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
   };
 
   const handleSuggestionClick = (suggestion: EmployeeSuggestion) => {
-    selectMention(suggestion, text, setText);
+    selectMention(suggestion);
   };
 
   const handleRemoveMention = (email: string) => {
@@ -151,7 +218,6 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
   return (
     <Box sx={{ position: "relative", width: "100%" }}>
       <Stack spacing={1}>
-
         {/* Mentioned user chips*/}
         {mentionedUsers.length > 0 && (
           <Box

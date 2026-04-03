@@ -188,7 +188,7 @@ const CommentCard: React.FC<CommentCardProps> = ({
             whiteSpace: "pre-wrap",
             lineHeight: 1.5,
             wordBreak: "break-word",
-            maxWidth: "50%",
+            maxWidth: "90%",
           }}
         >
           {renderCommentText(commentResponse.comment)}
