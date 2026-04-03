@@ -66,3 +66,21 @@ public isolated function buildRouteTree(types:Route[] allRoutes) returns types:R
 
     return rootNodes;
 }
+
+# Extract and deduplicate mentioned emails from comment payload.
+#
+# + commentText - The comment text (not used for parsing, just for reference)
+# + mentionedEmails - The list of mentioned emails from the payload
+# + return - Deduplicated list of mentioned emails
+isolated function extractMentionedEmails(string commentText, string[]? mentionedEmails) returns string[] {
+    if mentionedEmails is () { return []; }
+    map<boolean> seen = {};
+    string[] result = [];
+    foreach string email in mentionedEmails {
+        if !seen.hasKey(email) {
+            seen[email] = true;
+            result.push(email);
+        }
+    }
+    return result;
+}

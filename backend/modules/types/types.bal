@@ -103,6 +103,8 @@ public type CommentPayload record {|
     int contentId;
     # Provided comment for the post
     string comment;
+    # List of mentioned user emails
+    string[]? mentionedEmails = ();
 |};
 
 # Update route payload.
@@ -384,6 +386,8 @@ public type Comment record {|
     int userId;
     # Provided comment for the post
     string comment;
+    # Comma-separated mentioned emails
+    string? mentionedEmails = ();
 |};
 
 # Like helper record.

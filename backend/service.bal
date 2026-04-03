@@ -91,6 +91,31 @@ service http:InterceptableService / on new http:Listener(9090) {
         return employee;
     }
 
+    # Search for employees by partial name for @mention autocomplete.
+    #
+    # + partialName - Partial name query (minimum 2 characters)
+    # + return - Array of matching employees or error responses
+    resource function get employees/search(string? partialName) 
+        returns entity:Employee[]|http:BadRequest|http:InternalServerError {
+            
+        if partialName is () || partialName.length() < 2 {
+            string customError = "Search query must be at least 2 characters long";
+            return <http:BadRequest>{
+                body: customError
+            };
+        }
+
+        entity:Employee[]|error employees = entity:searchEmployeesByName(partialName);
+        if employees is error {
+            string customError = "Error while searching for employees";
+            log:printError(customError, employees);
+            return <http:InternalServerError>{
+                body: customError
+            };
+        }
+        return employees;
+    }
+
     # Get all routePaths from database.
     #
     # + routePath - Route path
@@ -301,7 +326,12 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: customError
             };
         }
-        error? comment = database:addComment({...commentPayload, userId});
+ 
+        string[] mentionedEmails = extractMentionedEmails(commentPayload.comment, commentPayload.mentionedEmails);
+        string? mentionedEmailsStr = mentionedEmails.length() > 0 ? string:'join(",", ...mentionedEmails) : ();
+        
+        error? comment = database:addComment({contentId: commentPayload.contentId, userId, 
+            comment: commentPayload.comment, mentionedEmails: mentionedEmailsStr});
         if comment is error {
             string customError = "Error while adding comment";
             log:printError(customError, comment);
@@ -353,15 +383,47 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        error? emailError = email:sendEmail(
+        error? emailErr = email:sendEmail(
             {
             to: email:emailServiceConfig.to,
             'from: email:emailServiceConfig.'from,
             subject: emailSubject,
             template: content
         });
-        if emailError is error {
-            log:printError("Error occurred while sending the email !", emailError);
+        if emailErr is error {
+            log:printError("Error occurred while sending the email!", emailErr);
+        }
+
+        foreach string mentionedEmail in mentionedEmails {
+            string mentionEmailSubject = string `[${appName}] You have been mentioned in a content`;
+            
+            string mentionRenderedTemplate = renderAppName(email:mentionNotificationTemplate, appName);
+            
+            string|error mentionContent = email:bindKeyValues(mentionRenderedTemplate,
+                {
+                    "COMMENTER_NAME": string `${employeeInfo.firstName} ${employeeInfo.lastName}`,
+                    "CONTENT_NAME": contentResponse.description,
+                    "COMMENT": commentPayload.comment,
+                    "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?contentId=${
+                        commentPayload.contentId}&sectionId=${contentResponse.sectionId}`
+                }
+            );
+
+            if mentionContent is error {
+                log:printError("Error with mention email template!", mentionContent);
+                continue;
+            }
+
+            error? mentionEmailErr = email:sendEmail(
+                {
+                to: [mentionedEmail],
+                'from: email:emailServiceConfig.'from,
+                subject: mentionEmailSubject,
+                template: mentionContent
+            });
+            if mentionEmailErr is error {
+                log:printError("Error occurred while sending mention email!", mentionEmailErr);
+            }
         }
 
         return http:CREATED;

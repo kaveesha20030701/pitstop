@@ -19,6 +19,7 @@ import UpdateContentDialogBox from "@components/dialogs/ContentDialogBox";
 import DeleteContentDialogBox from "@components/dialogs/DeleteDialogBox";
 import ComponentCard from "@components/ui/content/Card";
 import CommentCard from "@components/ui/CommentCard";
+import CommentInput from "@components/ui/CommentInput";
 import React, { useState } from "react";
 import {
   Dialog,
@@ -28,20 +29,10 @@ import {
   Divider,
   Typography,
   alpha,
-  Avatar,
-  IconButton,
-  TextField,
-  InputAdornment,
-  CircularProgress,
 } from "@mui/material";
-import SendIcon from "@mui/icons-material/Send";
 import { CustomButton, CustomTheme, CommentsResponse } from "@/types/types";
-import { RootState, useAppSelector, useAppDispatch } from "@slices/store";
-import { addComment } from "@slices/pageSlice/page";
-import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
+import { RootState, useAppSelector } from "@slices/store";
 
-// For matomo integration
-declare let _paq: unknown[];
 
 interface ComponentCardProps {
   expandCard: boolean;
@@ -89,59 +80,8 @@ const ExpandedContentCard: React.FC<ComponentCardProps> = ({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
   const [isFullScreenDrawerOpen, setIsFullScreenDrawerOpen] = useState(false);
-  const [comment, setComment] = useState("");
-  const [isPosting, setIsPosting] = useState(false);
 
   const comments = useAppSelector((s: RootState) => s.page.comments as CommentsResponse[]) ?? [];
-  const userThumbnail = useAppSelector(
-    (state: RootState) => state.employee.employeeInfo?.employeeThumbnail,
-  );
-
-  const dispatch = useAppDispatch();
-
-  const sendCommentHandler = async () => {
-    const commentText = comment.trim();
-    if (!commentText || isPosting) return;
-
-    setIsPosting(true);
-
-    try {
-      await dispatch(addComment({ contentId, comment: commentText })).unwrap();
-
-      setComment("");
-
-      if (window.config?.IS_MATOMO_ENABLED) {
-        _paq.push([
-          "trackEvent",
-          "User Interaction",
-          "Add Comment",
-          `Content: ${description}`,
-        ]);
-      }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      setComment(commentText);
-      dispatch(
-        enqueueSnackbarMessage({
-          message: "Failed to add comment. Please try again.",
-          type: "error",
-          anchorOrigin: {
-            vertical: "bottom",
-            horizontal: "right",
-          },
-        }),
-      );
-    } finally {
-      setIsPosting(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendCommentHandler();
-    }
-  };
 
   return (
     <Dialog
@@ -255,7 +195,7 @@ const ExpandedContentCard: React.FC<ComponentCardProps> = ({
                 },
               }}
             >
-              {comments.length === 0 && !isPosting ? (
+              {comments.length === 0 ? (
                 <Box
                   sx={{
                     textAlign: "center",
@@ -278,42 +218,6 @@ const ExpandedContentCard: React.FC<ComponentCardProps> = ({
                       />
                     </Box>
                   ))}
-                  {isPosting && (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1.5,
-                        p: 2,
-                        mb: 1.5,
-                        borderRadius: 2,
-                        background: (t) =>
-                          alpha(t.palette.background.paper, 0.3),
-                        border: (t) =>
-                          `1px solid ${alpha(t.palette.common.white, 0.05)}`,
-                      }}
-                    >
-                      <Avatar
-                        sx={{
-                          width: 36,
-                          height: 36,
-                          border: (t) =>
-                            `2px solid ${alpha(t.palette.primary.main, 0.2)}`,
-                        }}
-                        src={userThumbnail}
-                      />
-                      <Box sx={{ flex: 1 }}>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <CircularProgress size={16} thickness={4} />
-                          <Typography variant="body2" sx={{ opacity: 0.6 }}>
-                            Posting your comment...
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Box>
-                  )}
                 </>
               )}
             </Box>
@@ -331,71 +235,7 @@ const ExpandedContentCard: React.FC<ComponentCardProps> = ({
                 flexShrink: 0,
               })}
             >
-              <Avatar
-                sx={{
-                  width: 36,
-                  height: 36,
-                  border: (t) =>
-                    `2px solid ${alpha(t.palette.primary.main, 0.2)}`,
-                  flexShrink: 0,
-                }}
-                src={userThumbnail}
-              />
-              <TextField
-                fullWidth
-                placeholder="Add a comment..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                onKeyDown={handleKeyDown}
-                variant="outlined"
-                size="small"
-                disabled={isPosting}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        edge="end"
-                        onClick={sendCommentHandler}
-                        disabled={!comment.trim() || isPosting}
-                        sx={{
-                          color: (t) => t.palette.primary.main,
-                          "&:hover": {
-                            background: (t) =>
-                              alpha(t.palette.primary.main, 0.1),
-                          },
-                          "&.Mui-disabled": {
-                            opacity: 0.3,
-                          },
-                        }}
-                      >
-                        {isPosting ? (
-                          <CircularProgress size={20} thickness={4} />
-                        ) : (
-                          <SendIcon fontSize="small" />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                  sx: (t) => ({
-                    borderRadius: 3,
-                    background: alpha(t.palette.background.default, 0.4),
-                    "& fieldset": {
-                      border: "none",
-                    },
-                    "&:hover": {
-                      background: alpha(t.palette.background.default, 0.6),
-                    },
-                    "&.Mui-focused": {
-                      background: alpha(t.palette.background.default, 0.7),
-                    },
-                  }),
-                }}
-                sx={{
-                  "& .MuiInputBase-input": {
-                    fontSize: "0.9rem",
-                  },
-                }}
-              />
+              <CommentInput contentId={contentId} />
             </Box>
           </Box>
         </Stack>
