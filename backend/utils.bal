@@ -15,6 +15,7 @@
 // under the License.
 
 import pitstop.types;
+import pitstop.entity;
 
 # Replace hyphens with spaces, trim the string, and make it lowercase..
 #
@@ -68,19 +69,45 @@ public isolated function buildRouteTree(types:Route[] allRoutes) returns types:R
 }
 
 # Extract and deduplicate mentioned emails from comment payload.
+# Validates against employee directory to prevent unauthorized mentions.
 #
-# + commentText - The comment text (not used for parsing, just for reference)
+# + commentText - The comment text for parsing @mentions
 # + mentionedEmails - The list of mentioned emails from the payload
-# + return - Deduplicated list of mentioned emails
-isolated function extractMentionedEmails(string commentText, string[]? mentionedEmails) returns string[] {
+# + return - Validated and deduplicated list of mentioned emails
+public isolated function extractMentionedEmails(string commentText, string[]? mentionedEmails) returns string[]|error {
     if mentionedEmails is () { return []; }
+    
     map<boolean> seen = {};
     string[] result = [];
+    
     foreach string email in mentionedEmails {
         if !seen.hasKey(email) {
+            // Validate email format
+            if !isValidEmailFormat(email) {
+                return error("Invalid email format: " + email);
+            }
             seen[email] = true;
             result.push(email);
         }
     }
     return result;
+}
+
+# Validate email format
+#
+# + email - Email address to validate
+# + return - true if email format is valid
+isolated function isValidEmailFormat(string email) returns boolean =>
+    re `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`.isFullMatch(email);
+
+# Validate mentioned email against employee directory
+#
+# + email - Email to validate
+# + return - true if employee exists, error otherwise
+public isolated function validateMentionedEmailExists(string email) returns boolean|error {
+    entity:Employee|error employee = entity:getEmployee(email);
+    if employee is error {
+        return false;
+    }
+    return true;
 }

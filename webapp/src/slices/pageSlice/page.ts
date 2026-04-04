@@ -1263,7 +1263,7 @@ export const fetchMentionSuggestions = createAsyncThunk(
     }
     return new Promise<EmployeeSuggestion[]>((resolve, reject) => {
       ApiService.getInstance()
-        .get(`${AppConfig.serviceUrls.searchEmployees}?q=${encodeURIComponent(payload.query)}`)
+        .get(`${AppConfig.serviceUrls.searchEmployees}?searchQuery=${encodeURIComponent(payload.query)}`)
         .then((resp) => {
           resolve(resp.data || []);
         })

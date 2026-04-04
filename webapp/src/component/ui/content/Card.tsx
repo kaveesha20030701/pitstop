@@ -252,11 +252,14 @@ const ComponentCard = ({
     return () => ro.disconnect();
   }, [description, createdOn, customContentTheme, note, tags, localCustomButtons, localIsVisible]);
 
+  const [likesLoaded, setLikesLoaded] = useState(false);
+
   useEffect(() => {
-    if (contentId) {
+    if (contentId && !likesLoaded) {
       dispatch(getLikes({ contentId }));
+      setLikesLoaded(true);
     }
-  }, [contentId]);
+  }, [contentId, likesLoaded, dispatch]);
 
   const fetchLikesIfNeeded = useCallback(() => {
     if (!likes || likes.length === 0) {

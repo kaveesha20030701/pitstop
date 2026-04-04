@@ -386,8 +386,6 @@ public type Comment record {|
     int userId;
     # Provided comment for the post
     string comment;
-    # Comma-separated mentioned emails
-    string? mentionedEmails = ();
 |};
 
 # Like helper record.

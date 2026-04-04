@@ -14,7 +14,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   Box,
   TextField,
@@ -56,7 +56,7 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
   const [isPosting, setIsPosting] = useState(false);
   const [suggestions, setSuggestions] = useState<EmployeeSuggestion[]>([]);
   const [mentionedUsers, setMentionedUsers] = useState<MentionedUser[]>([]);
-  const [debounceTimer, setDebounceTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const userThumbnail = useAppSelector(
     (state: RootState) => state.employee.employeeInfo?.employeeThumbnail
@@ -65,12 +65,20 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
     (state: RootState) => state.auth.userInfo?.email ?? ""
   );
 
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleCommentChange = useCallback(
     (newText: string) => {
       setText(newText);
 
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
       }
 
       const mentionMatch = newText.match(/@([\w]*)$/);
@@ -78,7 +86,7 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
       if (mentionMatch) {
         const query = mentionMatch[1];
 
-        const timer = setTimeout(() => {
+        debounceTimerRef.current = setTimeout(() => {
           if (query.length >= 2) {
             dispatch(fetchMentionSuggestions({ query }))
               .then((result) => {
@@ -97,13 +105,11 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
             setSuggestions([]);
           }
         }, 300);
-
-        setDebounceTimer(timer);
       } else {
         setSuggestions([]);
       }
     },
-    [dispatch, debounceTimer, currentUserEmail]
+    [dispatch, currentUserEmail]
   );
 
   const selectMention = useCallback(

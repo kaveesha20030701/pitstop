@@ -93,19 +93,19 @@ service http:InterceptableService / on new http:Listener(9090) {
 
     # Search for employees by partial name for @mention autocomplete.
     #
-    # + partialName - Partial name query (minimum 2 characters)
+    # + searchQuery - Partial name query
     # + return - Array of matching employees or error responses
-    resource function get employees/search(string? partialName) 
+    resource function get employees/search(string? searchQuery) 
         returns entity:Employee[]|http:BadRequest|http:InternalServerError {
             
-        if partialName is () || partialName.length() < 2 {
+        if searchQuery is () || searchQuery.length() < 2 {
             string customError = "Search query must be at least 2 characters long";
             return <http:BadRequest>{
                 body: customError
             };
         }
 
-        entity:Employee[]|error employees = entity:searchEmployeesByName(partialName);
+        entity:Employee[]|error employees = entity:searchEmployeesByName(searchQuery);
         if employees is error {
             string customError = "Error while searching for employees";
             log:printError(customError, employees);
@@ -327,11 +327,21 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
  
-        string[] mentionedEmails = extractMentionedEmails(commentPayload.comment, commentPayload.mentionedEmails);
-        string? mentionedEmailsStr = mentionedEmails.length() > 0 ? string:'join(",", ...mentionedEmails) : ();
-        
+        string[] validatedMentions = [];
+        string[]? mentionedEmailsList = commentPayload.mentionedEmails;
+        if mentionedEmailsList is string[] && mentionedEmailsList.length() > 0 {
+            foreach string email in mentionedEmailsList {
+                boolean|error exists = validateMentionedEmailExists(email);
+                if exists == true {
+                    validatedMentions.push(email);
+                } else {
+                    log:printWarn("Mentioned employee not found", email = email);
+                }
+            }
+        }
+
         error? comment = database:addComment({contentId: commentPayload.contentId, userId, 
-            comment: commentPayload.comment, mentionedEmails: mentionedEmailsStr});
+            comment: commentPayload.comment});
         if comment is error {
             string customError = "Error while adding comment";
             log:printError(customError, comment);
@@ -394,7 +404,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             log:printError("Error occurred while sending the email!", emailErr);
         }
 
-        foreach string mentionedEmail in mentionedEmails {
+        foreach string mentionedEmail in validatedMentions {
             string mentionEmailSubject = string `[${appName}] You have been mentioned in a content`;
             
             string mentionRenderedTemplate = renderAppName(email:mentionNotificationTemplate, appName);

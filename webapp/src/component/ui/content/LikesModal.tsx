@@ -48,7 +48,7 @@ const LikesModal: React.FC<LikesModalProps> = ({ open, onClose, likes }) => {
             left: "50%",
             transform: "translate(-50%, -50%)",
             width: 460,
-            maxHeight: "70vh",
+            maxHeight: "50vh",
             backgroundColor:
               theme.palette.mode === "light"
                 ? theme.palette.common.white
