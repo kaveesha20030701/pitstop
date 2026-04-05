@@ -1254,7 +1254,7 @@ export const addComment = createAsyncThunk(
   }
 );
 
-//Fetch mention suggestions by name
+// Fetch mention suggestions by name
 export const fetchMentionSuggestions = createAsyncThunk(
   "pitstop/fetchMentionSuggestions",
   async (payload: { query: string }, { dispatch }) => {

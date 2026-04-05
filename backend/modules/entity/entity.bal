@@ -53,12 +53,11 @@ public isolated function getEmployee(string workEmail) returns Employee|error {
         : employee;
 }
 
-# Search for employees by name.
+# Search for employees by name or email.
 #
-# + nameQuery - Partial name to search 
+# + searchQuery - Partial name/email query
 # + return - List of employees matching the query
-public isolated function searchEmployeesByName(string nameQuery) returns Employee[]|error {
-
+public isolated function searchEmployees(string searchQuery) returns Employee[]|error {
     string document = string `
         query searchEmployees($searchQuery: String!) {
             employees(filter: { emailSearchString: $searchQuery }) {
@@ -66,23 +65,16 @@ public isolated function searchEmployeesByName(string nameQuery) returns Employe
                 firstName,
                 lastName,
                 employeeThumbnail,
-                department,
-                team
             }
         }
     `;
 
-    EmployeeSearchResults|graphql:ClientError employeeData = employeeGqlClient
-        ->execute(document, {searchQuery: nameQuery});
+    EmployeeSearchResults|graphql:ClientError employeeData = employeeGqlClient->execute(document, {searchQuery});
 
     if employeeData is graphql:ClientError {
         return handleGraphQlResultError(employeeData);
     }
 
     Employee[]? employees = employeeData.data.employees;
-
-    if employees is () {
-        return [];
-    }
-    return employees;
+    return employees is () ? <Employee[]>[] : employees;
 }

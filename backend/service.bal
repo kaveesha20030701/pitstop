@@ -91,9 +91,9 @@ service http:InterceptableService / on new http:Listener(9090) {
         return employee;
     }
 
-    # Search for employees by partial name for @mention autocomplete.
+    # Search for employees by partial name or email for @mention autocomplete.
     #
-    # + searchQuery - Partial name query
+    # + searchQuery - Partial name or email query
     # + return - Array of matching employees or error responses
     resource function get employees/search(string? searchQuery) 
         returns entity:Employee[]|http:BadRequest|http:InternalServerError {
@@ -105,7 +105,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        entity:Employee[]|error employees = entity:searchEmployeesByName(searchQuery);
+        entity:Employee[]|error employees = entity:searchEmployees(searchQuery);
         if employees is error {
             string customError = "Error while searching for employees";
             log:printError(customError, employees);
@@ -406,9 +406,7 @@ service http:InterceptableService / on new http:Listener(9090) {
 
         foreach string mentionedEmail in validatedMentions {
             string mentionEmailSubject = string `[${appName}] You have been mentioned in a content`;
-            
             string mentionRenderedTemplate = renderAppName(email:mentionNotificationTemplate, appName);
-            
             string|error mentionContent = email:bindKeyValues(mentionRenderedTemplate,
                 {
                     "COMMENTER_NAME": string `${employeeInfo.firstName} ${employeeInfo.lastName}`,
@@ -420,7 +418,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             );
 
             if mentionContent is error {
-                log:printError("Error with mention email template!", mentionContent);
+                log:printError("Error occurred while processing comment mention email template!", mentionContent);
                 continue;
             }
 

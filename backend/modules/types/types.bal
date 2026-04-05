@@ -570,3 +570,11 @@ public type AppInfo record {|
     # List of URLs that cannot be embedded in iframes
     string[] blockedIframeUrls;
 |};
+
+# Cache entry for validated emails
+public type EmailCacheEntry record {
+    # Whether the employee exists
+    boolean exists;
+    # Timestamp when this entry was cached
+    time:Utc cachedAt;
+};

@@ -16,6 +16,11 @@
 
 import pitstop.types;
 import pitstop.entity;
+import ballerina/time;
+
+map<types:EmailCacheEntry> emailValidationCache = {};
+
+const decimal CACHE_TTL_SECONDS = 86400;
 
 # Replace hyphens with spaces, trim the string, and make it lowercase..
 #
@@ -68,31 +73,6 @@ public isolated function buildRouteTree(types:Route[] allRoutes) returns types:R
     return rootNodes;
 }
 
-# Extract and deduplicate mentioned emails from comment payload.
-# Validates against employee directory to prevent unauthorized mentions.
-#
-# + commentText - The comment text for parsing @mentions
-# + mentionedEmails - The list of mentioned emails from the payload
-# + return - Validated and deduplicated list of mentioned emails
-public isolated function extractMentionedEmails(string commentText, string[]? mentionedEmails) returns string[]|error {
-    if mentionedEmails is () { return []; }
-    
-    map<boolean> seen = {};
-    string[] result = [];
-    
-    foreach string email in mentionedEmails {
-        if !seen.hasKey(email) {
-            // Validate email format
-            if !isValidEmailFormat(email) {
-                return error("Invalid email format: " + email);
-            }
-            seen[email] = true;
-            result.push(email);
-        }
-    }
-    return result;
-}
-
 # Validate email format
 #
 # + email - Email address to validate
@@ -104,10 +84,26 @@ isolated function isValidEmailFormat(string email) returns boolean =>
 #
 # + email - Email to validate
 # + return - true if employee exists, error otherwise
-public isolated function validateMentionedEmailExists(string email) returns boolean|error {
-    entity:Employee|error employee = entity:getEmployee(email);
-    if employee is error {
-        return false;
+public function validateMentionedEmailExists(string email) returns boolean|error {
+    if emailValidationCache.hasKey(email) {
+        types:EmailCacheEntry? cacheEntry = emailValidationCache[email];
+        if cacheEntry is types:EmailCacheEntry {
+            time:Utc now = time:utcNow();
+            decimal ageSec = time:utcDiffSeconds(now, cacheEntry.cachedAt);
+            if ageSec < CACHE_TTL_SECONDS {
+                return cacheEntry.exists;
+            }
+        }
     }
-    return true;
+
+    // Cache miss or expired then fetch from entity
+    entity:Employee|error employee = entity:getEmployee(email);
+    boolean exists = employee is error ? false : true;
+    
+    emailValidationCache[email] = {
+        exists: exists,
+        cachedAt: time:utcNow()
+    };
+    
+    return exists;
 }

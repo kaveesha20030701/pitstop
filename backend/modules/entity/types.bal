@@ -37,12 +37,7 @@ public type Employee record {|
     string workEmail;
     # Employee Thumbnail URL
     string? employeeThumbnail = ();
-    # Employee Department
-    string department;
-    # Employee Location
-    string? location = ();
-    # Employee team
-    string? team = ();
+    json...;
 |};
 
 # [HR Entity] Inner record for single employee.
