@@ -90,7 +90,16 @@ public function validateMentionedEmailExists(string email) returns boolean|error
     }
 
     entity:Employee|error employee = entity:getEmployee(email);
-    boolean exists = employee !is error;
+    boolean exists;
+    if employee is error {
+        if employee.message().startsWith("No matching employee found for ") {
+            exists = false;
+        } else {
+            return employee;
+        }
+    } else {
+        exists = true;
+    }
 
     error? cacheErr = emailValidationCache.put(email, exists, 1800.0);
 
