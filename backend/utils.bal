@@ -20,7 +20,7 @@ import ballerina/cache;
 import ballerina/log;
 
 final cache:Cache emailValidationCache = new ({
-    capacity: 5000,
+    capacity: 500,
     defaultMaxAge: 1800.0,
     cleanupInterval: 86400.0
 });
