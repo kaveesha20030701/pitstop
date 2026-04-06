@@ -95,9 +95,9 @@ service http:InterceptableService / on new http:Listener(9090) {
     #
     # + searchQuery - Partial name or email query
     # + return - Array of matching employees or error responses
-    resource function get employees/search(string? searchQuery) 
+    resource function get employees/search(string? searchQuery)
         returns entity:Employee[]|http:BadRequest|http:InternalServerError {
-            
+
         if searchQuery is () || searchQuery.length() < 2 {
             string customError = "Search query must be at least 2 characters long";
             return <http:BadRequest>{
@@ -249,11 +249,11 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         boolean|error? isContentExistsResult = database:checkContentExists(
-            contentPayload.contentLink,
-            contentPayload.contentType,
-            contentPayload.sectionId,
-            (),
-            contentPayload.routeId
+                contentPayload.contentLink,
+                contentPayload.contentType,
+                contentPayload.sectionId,
+                (),
+                contentPayload.routeId
         );
         if isContentExistsResult is error {
             string customError = "Error while checking content existence";
@@ -326,7 +326,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: customError
             };
         }
- 
+
         string[] validatedMentions = [];
         string[]? mentionedEmailsList = commentPayload.mentionedEmails;
         if mentionedEmailsList is string[] && mentionedEmailsList.length() > 0 {
@@ -335,7 +335,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 if exists is error {
                     string customError = "Error occurred while validating mentioned emails";
                     return <http:InternalServerError>{
-                        body:  {
+                        body: {
                             message: customError
                         }
                     };
@@ -343,7 +343,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 if !exists {
                     log:printWarn("Mentioned employee not found", email = email);
                 }
-                
+
                 validatedMentions.push(email);
             }
         }
@@ -375,20 +375,20 @@ service http:InterceptableService / on new http:Listener(9090) {
                 }
             };
         }
-        
+
         string emailSubject = string `[${appName}][${contentResponse.description}] Comment Activity`;
 
         string renderedTemplate = renderAppName(email:commentNotificationTemplate, appName);
 
         string|error content = email:bindKeyValues(renderedTemplate,
-            {
-                "EMAIL_BODY": string `A new comment has been <b>added</b> to a content on the ${appName} application.`,
-                "COMMENT": commentPayload.comment,
-                "USER_EMAIL": userEmail,
-                "CONTENT_NAME": contentResponse.description,
-                "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?sectionId=${
+                {
+                    "EMAIL_BODY": string `A new comment has been <b>added</b> to a content on the ${appName} application.`,
+                    "COMMENT": commentPayload.comment,
+                    "USER_EMAIL": userEmail,
+                    "CONTENT_NAME": contentResponse.description,
+                    "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?sectionId=${
                     contentResponse.sectionId}&contentId=${commentPayload.contentId}`
-            }
+                }
         );
 
         if content is error {
@@ -401,28 +401,29 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        error? emailErr = email:sendEmail(
-            {
-            to: email:emailServiceConfig.to,
-            'from: email:emailServiceConfig.'from,
-            subject: emailSubject,
-            template: content
-        });
-        if emailErr is error {
-            log:printError("Error occurred while sending the email!", emailErr);
+        error? emailResponse = email:sendEmail(
+                {
+                    to: email:emailServiceConfig.to,
+                    'from: email:emailServiceConfig.'from,
+                    subject: emailSubject,
+                    template: content
+                });
+        if emailResponse is error {
+            log:printError("Error occurred while sending the email!", emailResponse);
         }
 
         foreach string mentionedEmail in validatedMentions {
-            string mentionEmailSubject = string `[${appName}] You have been mentioned in a content`;
+            string mentionEmailSubject = string `[${appName}]${employeeInfo.firstName} ${employeeInfo.lastName} 
+                mentioned you in a content`;
             string mentionRenderedTemplate = renderAppName(email:mentionNotificationTemplate, appName);
             string|error mentionContent = email:bindKeyValues(mentionRenderedTemplate,
-                {
-                    "COMMENTER_NAME": string `${employeeInfo.firstName} ${employeeInfo.lastName}`,
-                    "CONTENT_NAME": contentResponse.description,
-                    "COMMENT": commentPayload.comment,
-                    "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?sectionId=${
+                    {
+                        "COMMENTER_NAME": string `${employeeInfo.firstName} ${employeeInfo.lastName}`,
+                        "CONTENT_NAME": contentResponse.description,
+                        "COMMENT": commentPayload.comment,
+                        "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?sectionId=${
                         contentResponse.sectionId}&contentId=${commentPayload.contentId}`
-                }
+                    }
             );
 
             if mentionContent is error {
@@ -430,15 +431,15 @@ service http:InterceptableService / on new http:Listener(9090) {
                 continue;
             }
 
-            error? mentionEmailErr = email:sendEmail(
-                {
-                to: [mentionedEmail],
-                'from: email:emailServiceConfig.'from,
-                subject: mentionEmailSubject,
-                template: mentionContent
-            });
-            if mentionEmailErr is error {
-                log:printError("Error occurred while sending mention email!", mentionEmailErr);
+            error? response = email:sendEmail(
+                    {
+                        to: [mentionedEmail],
+                        'from: email:emailServiceConfig.'from,
+                        subject: mentionEmailSubject,
+                        template: mentionContent
+                    });
+            if response is error {
+                log:printError("Error occurred while sending mention email!", response);
             }
         }
 
@@ -1462,15 +1463,15 @@ service http:InterceptableService / on new http:Listener(9090) {
         string renderedTemplate = renderAppName(email:commentNotificationTemplate, appName);
 
         string|error content = email:bindKeyValues(renderedTemplate,
-            {
-                "EMAIL_BODY": string `An <b>update</b> has been made to a comment for a content within the 
+                {
+                    "EMAIL_BODY": string `An <b>update</b> has been made to a comment for a content within the 
                     ${appName} application.`,
-                "COMMENT": commentPayload.comment,
-                "USER_EMAIL": userEmail,
-                "CONTENT_NAME": contentResponse.description,
-                "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?sectionId=${
+                    "COMMENT": commentPayload.comment,
+                    "USER_EMAIL": userEmail,
+                    "CONTENT_NAME": contentResponse.description,
+                    "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?sectionId=${
                     contentResponse.sectionId}&contentId=${commentPayload.contentId}`
-            }
+                }
         );
 
         string customContentError = "Error with email template!";
@@ -1481,15 +1482,15 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        error? emailErr = email:sendEmail(
-            {
-            to: email:emailServiceConfig.to,
-            'from: email:emailServiceConfig.'from,
-            subject: emailSubject,
-            template: content
-        });
-        if emailErr is error {
-            log:printError("Error occurred while sending the email!", emailErr);
+        error? emailResponse = email:sendEmail(
+                {
+                    to: email:emailServiceConfig.to,
+                    'from: email:emailServiceConfig.'from,
+                    subject: emailSubject,
+                    template: content
+                });
+        if emailResponse is error {
+            log:printError("Error occurred while sending the email!", emailResponse);
         }
 
         return http:OK;
@@ -1594,15 +1595,15 @@ service http:InterceptableService / on new http:Listener(9090) {
         string renderedTemplate = renderAppName(email:commentNotificationTemplate, appName);
 
         string|error content = email:bindKeyValues(renderedTemplate,
-            {
-                "EMAIL_BODY": string `This comment has been <b>deleted</b> from a content in the 
+                {
+                    "EMAIL_BODY": string `This comment has been <b>deleted</b> from a content in the 
                     ${appName} application.`,
-                "COMMENT": commentPayload.comment,
-                "USER_EMAIL": userEmail,
-                "CONTENT_NAME": contentResponse.description,
-                "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?sectionId=${
+                    "COMMENT": commentPayload.comment,
+                    "USER_EMAIL": userEmail,
+                    "CONTENT_NAME": contentResponse.description,
+                    "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?sectionId=${
                     contentResponse.sectionId}&contentId=${commentPayload.contentId}`
-            }
+                }
         );
 
         if content is error {
@@ -1614,15 +1615,15 @@ service http:InterceptableService / on new http:Listener(9090) {
                 }
             };
         }
-        error? emailError = email:sendEmail(
-            {
-            to: email:emailServiceConfig.to,
-            'from: email:emailServiceConfig.'from,
-            subject: emailSubject,
-            template: content
-        });
-        if emailError is error {
-            log:printError("Error occurred while sending the email !", emailError);
+        error? emailResponse = email:sendEmail(
+                {
+                    to: email:emailServiceConfig.to,
+                    'from: email:emailServiceConfig.'from,
+                    subject: emailSubject,
+                    template: content
+                });
+        if emailResponse is error {
+            log:printError("Error occurred while sending the email !", emailResponse);
         }
 
         return http:OK;

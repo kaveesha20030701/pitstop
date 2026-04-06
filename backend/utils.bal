@@ -14,11 +14,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import pitstop.types;
 import pitstop.entity;
+import pitstop.types;
 import ballerina/cache;
+import ballerina/log;
 
-final cache:Cache emailValidationCache = new({
+final cache:Cache emailValidationCache = new ({
     capacity: 5000,
     defaultMaxAge: 1800.0,
     cleanupInterval: 86400.0
@@ -32,12 +33,12 @@ isolated function replaceSpacesWithHyphens(string input) returns string =>
     re `\s+(?:-\s+)*`.replaceAll(input.trim().toLowerAscii(), "-");
 
 # Replace the {{appName}} placeholder in the email template with the actual app name.
-# 
+#
 # + template - email template containing the {{appName}} placeholder
 # + appName - actual application name to replace the placeholder with
 # + return - email template with the {{appName}} placeholder replaced by the actual app name
 isolated function renderAppName(string template, string appName) returns string =>
-   re `\{\{appName\}\}`.replaceAll(template, appName);
+    re `\{\{appName\}\}`.replaceAll(template, appName);
 
 # Creating a route tree from a flat list.
 #
@@ -75,23 +76,17 @@ public isolated function buildRouteTree(types:Route[] allRoutes) returns types:R
     return rootNodes;
 }
 
-# Validate email format
-#
-# + email - Email address to validate
-# + return - true if email format is valid
-isolated function isValidEmailFormat(string email) returns boolean =>
-    re `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`.isFullMatch(email);
-
 # Validate mentioned email against employee directory using Ballerina cache.
 #
 # + email - Email to validate
 # + return - true if employee exists, false if not found, error on unexpected failure
 public function validateMentionedEmailExists(string email) returns boolean|error {
     if emailValidationCache.hasKey(email) {
-        any|error cachedValue = emailValidationCache.get(email);
+        boolean|error cachedValue = <boolean|error>emailValidationCache.get(email);
         if cachedValue is boolean {
             return cachedValue;
         }
+        log:printWarn("Error occurred while reading the cache", cachedValue);
     }
 
     entity:Employee|error employee = entity:getEmployee(email);
@@ -100,7 +95,7 @@ public function validateMentionedEmailExists(string email) returns boolean|error
     error? cacheErr = emailValidationCache.put(email, exists, 1800.0);
 
     if cacheErr is error {
+        log:printWarn("Error occurred while updating the cache", cacheErr);
     }
-
     return exists;
 }
