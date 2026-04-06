@@ -16,11 +16,13 @@
 
 import pitstop.types;
 import pitstop.entity;
-import ballerina/time;
+import ballerina/cache;
 
-map<types:EmailCacheEntry> emailValidationCache = {};
-
-const decimal CACHE_TTL_SECONDS = 86400;
+final cache:Cache emailValidationCache = new({
+    capacity: 5000,
+    defaultMaxAge: 1800.0,
+    cleanupInterval: 86400.0
+});
 
 # Replace hyphens with spaces, trim the string, and make it lowercase..
 #
@@ -80,30 +82,25 @@ public isolated function buildRouteTree(types:Route[] allRoutes) returns types:R
 isolated function isValidEmailFormat(string email) returns boolean =>
     re `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`.isFullMatch(email);
 
-# Validate mentioned email against employee directory
+# Validate mentioned email against employee directory using Ballerina cache.
 #
 # + email - Email to validate
-# + return - true if employee exists, error otherwise
+# + return - true if employee exists, false if not found, error on unexpected failure
 public function validateMentionedEmailExists(string email) returns boolean|error {
     if emailValidationCache.hasKey(email) {
-        types:EmailCacheEntry? cacheEntry = emailValidationCache[email];
-        if cacheEntry is types:EmailCacheEntry {
-            time:Utc now = time:utcNow();
-            decimal ageSec = time:utcDiffSeconds(now, cacheEntry.cachedAt);
-            if ageSec < CACHE_TTL_SECONDS {
-                return cacheEntry.exists;
-            }
+        any|error cachedValue = emailValidationCache.get(email);
+        if cachedValue is boolean {
+            return cachedValue;
         }
     }
 
-    // Cache miss or expired then fetch from entity
     entity:Employee|error employee = entity:getEmployee(email);
-    boolean exists = employee is error ? false : true;
-    
-    emailValidationCache[email] = {
-        exists: exists,
-        cachedAt: time:utcNow()
-    };
-    
+    boolean exists = employee !is error;
+
+    error? cacheErr = emailValidationCache.put(email, exists, 1800.0);
+
+    if cacheErr is error {
+    }
+
     return exists;
 }

@@ -56,6 +56,7 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
   const [isPosting, setIsPosting] = useState(false);
   const [suggestions, setSuggestions] = useState<EmployeeSuggestion[]>([]);
   const [mentionedUsers, setMentionedUsers] = useState<MentionedUser[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const userThumbnail = useAppSelector(
@@ -88,6 +89,7 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
 
         debounceTimerRef.current = setTimeout(() => {
           if (query.length >= 2) {
+            setIsLoadingSuggestions(true);
             dispatch(fetchMentionSuggestions({ query }))
               .then((result) => {
                 const payload = result.payload as EmployeeSuggestion[] | undefined;
@@ -100,13 +102,18 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
               })
               .catch(() => {
                 setSuggestions([]);
+              })
+              .finally(() => {
+                setIsLoadingSuggestions(false);
               });
           } else if (query.length === 0) {
             setSuggestions([]);
+            setIsLoadingSuggestions(false);
           }
         }, 300);
       } else {
         setSuggestions([]);
+        setIsLoadingSuggestions(false);
       }
     },
     [dispatch, currentUserEmail]
@@ -442,7 +449,7 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
           </Box>
 
           {/*Suggestion dropdown*/}
-          {suggestions.length > 0 && (
+          {(suggestions.length > 0 || isLoadingSuggestions) && (
             <List
               sx={{
                 position: "absolute",
@@ -479,87 +486,114 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
                 },
               }}
             >
-              {/* subtle heading */}
-              <Box sx={{ px: 1.5, pt: 0.75, pb: 0.5 }}>
-                <Typography
+              {isLoadingSuggestions ? (
+                <Box
                   sx={{
-                    fontSize: "0.68rem",
-                    fontWeight: 600,
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    opacity: 0.4,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.5,
+                    p: 2,
+                    justifyContent: "center",
+                    minHeight: "100px",
                   }}
                 >
-                  People
-                </Typography>
-              </Box>
-
-              {suggestions.map((suggestion: EmployeeSuggestion, index: number) => (
-                <ListItem
-                  key={suggestion.workEmail}
-                  component="button"
-                  onClick={() => handleSuggestionClick(suggestion)}
-                  sx={{
-                    borderRadius: "10px",
-                    cursor: "pointer",
-                    border: "1px solid transparent",
-                    transition: "all 0.15s ease",
-                    py: 0.75,
-                    px: 1,
-                    mb: index < suggestions.length - 1 ? 0.25 : 0,
-                    background: "transparent",
-                    width: "100%",
-                    textAlign: "left",
-                    "&:hover": {
-                      backgroundColor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.07),
-                      border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                    },
-                    "&:active": {
-                      backgroundColor: alpha(theme.palette.primary.main, 0.2),
-                      transform: "scale(0.99)",
-                    },
-                  }}
-                >
-                  <ListItemAvatar sx={{ minWidth: 44 }}>
-                    <Avatar
-                      src={suggestion.employeeThumbnail}
+                  <CircularProgress size={20} thickness={4} sx={{ color: theme.palette.primary.main }} />
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontWeight: 500,
+                      color: theme.palette.text.primary,
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    Finding people...
+                  </Typography>
+                </Box>
+              ) : (
+                <>
+                  {/* subtle heading */}
+                  <Box sx={{ px: 1.5, pt: 0.75, pb: 0.5 }}>
+                    <Typography
                       sx={{
-                        width: 32,
-                        height: 32,
-                        border: `1.5px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-                        boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.2)}`,
+                        fontSize: "0.68rem",
+                        fontWeight: 600,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        opacity: 0.4,
                       }}
-                    />
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={
-                      <Typography
-                        sx={{
-                          fontWeight: 600,
-                          fontSize: "0.85rem",
-                          lineHeight: 1.2,
-                          color: theme.palette.text.primary,
-                        }}
-                      >
-                        {suggestion.firstName} {suggestion.lastName}
-                      </Typography>
-                    }
-                    secondary={
-                      <Typography
-                        sx={{
-                          fontSize: "0.72rem",
-                          opacity: 0.5,
-                          lineHeight: 1.3,
-                          mt: 0.15,
-                        }}
-                      >
-                        {suggestion.workEmail}
-                      </Typography>
-                    }
-                    sx={{ my: 0 }}
-                  />
-                </ListItem>
-              ))}
+                    >
+                      People
+                    </Typography>
+                  </Box>
+
+                  {suggestions.map((suggestion: EmployeeSuggestion, index: number) => (
+                    <ListItem
+                      key={suggestion.workEmail}
+                      component="button"
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      sx={{
+                        borderRadius: "10px",
+                        cursor: "pointer",
+                        border: "1px solid transparent",
+                        transition: "all 0.15s ease",
+                        py: 0.75,
+                        px: 1,
+                        mb: index < suggestions.length - 1 ? 0.25 : 0,
+                        background: "transparent",
+                        width: "100%",
+                        textAlign: "left",
+                        "&:hover": {
+                          backgroundColor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.07),
+                          border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                        },
+                        "&:active": {
+                          backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                          transform: "scale(0.99)",
+                        },
+                      }}
+                    >
+                      <ListItemAvatar sx={{ minWidth: 44 }}>
+                        <Avatar
+                          src={suggestion.employeeThumbnail}
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            border: `1.5px solid ${alpha(theme.palette.primary.main, 0.3)}`,
+                            boxShadow: `0 2px 8px ${alpha(theme.palette.common.black, 0.2)}`,
+                          }}
+                        />
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Typography
+                            sx={{
+                              fontWeight: 600,
+                              fontSize: "0.85rem",
+                              lineHeight: 1.2,
+                              color: theme.palette.text.primary,
+                            }}
+                          >
+                            {suggestion.firstName} {suggestion.lastName}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography
+                            sx={{
+                              fontSize: "0.72rem",
+                              opacity: 0.5,
+                              lineHeight: 1.3,
+                              mt: 0.15,
+                            }}
+                          >
+                            {suggestion.workEmail}
+                          </Typography>
+                        }
+                        sx={{ my: 0 }}
+                      />
+                    </ListItem>
+                  ))}
+                </>
+              )}
             </List>
           )}
         </Box>

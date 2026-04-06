@@ -415,8 +415,8 @@ const ComponentCard = ({
     dispatch(getAllComments({ contentId }));
 
     const currentSearch = new URLSearchParams(location.search);
-    currentSearch.set("contentId", contentId.toString());
     currentSearch.set("sectionId", sectionId.toString());
+    currentSearch.set("contentId", contentId.toString());
 
     const newUrl = `${location.pathname}?${currentSearch.toString()}`;
     navigate(newUrl, { replace: true });
@@ -427,8 +427,8 @@ const ComponentCard = ({
     urlCheckDone.current = false;
     setUrlProcessed(false);
     const currentSearch = new URLSearchParams(location.search);
-    currentSearch.delete("contentId");
     currentSearch.delete("sectionId");
+    currentSearch.delete("contentId");
     const searchString = currentSearch.toString();
     const newUrl = location.pathname + (searchString ? `?${searchString}` : "");
 

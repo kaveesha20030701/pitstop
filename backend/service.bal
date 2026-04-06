@@ -332,11 +332,19 @@ service http:InterceptableService / on new http:Listener(9090) {
         if mentionedEmailsList is string[] && mentionedEmailsList.length() > 0 {
             foreach string email in mentionedEmailsList {
                 boolean|error exists = validateMentionedEmailExists(email);
-                if exists == true {
-                    validatedMentions.push(email);
-                } else {
+                if exists is error {
+                    string customError = "Error occurred while validating mentioned emails";
+                    return <http:InternalServerError>{
+                        body:  {
+                            message: customError
+                        }
+                    };
+                }
+                if !exists {
                     log:printWarn("Mentioned employee not found", email = email);
                 }
+                
+                validatedMentions.push(email);
             }
         }
 
@@ -378,8 +386,8 @@ service http:InterceptableService / on new http:Listener(9090) {
                 "COMMENT": commentPayload.comment,
                 "USER_EMAIL": userEmail,
                 "CONTENT_NAME": contentResponse.description,
-                "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?contentId=${
-                    commentPayload.contentId}&sectionId=${contentResponse.sectionId}`
+                "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?sectionId=${
+                    contentResponse.sectionId}&contentId=${commentPayload.contentId}`
             }
         );
 
@@ -412,8 +420,8 @@ service http:InterceptableService / on new http:Listener(9090) {
                     "COMMENTER_NAME": string `${employeeInfo.firstName} ${employeeInfo.lastName}`,
                     "CONTENT_NAME": contentResponse.description,
                     "COMMENT": commentPayload.comment,
-                    "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?contentId=${
-                        commentPayload.contentId}&sectionId=${contentResponse.sectionId}`
+                    "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?sectionId=${
+                        contentResponse.sectionId}&contentId=${commentPayload.contentId}`
                 }
             );
 
@@ -1460,8 +1468,8 @@ service http:InterceptableService / on new http:Listener(9090) {
                 "COMMENT": commentPayload.comment,
                 "USER_EMAIL": userEmail,
                 "CONTENT_NAME": contentResponse.description,
-                "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?contentId=${
-                    commentPayload.contentId}&sectionId=${contentResponse.sectionId}`
+                "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?sectionId=${
+                    contentResponse.sectionId}&contentId=${commentPayload.contentId}`
             }
         );
 
@@ -1592,8 +1600,8 @@ service http:InterceptableService / on new http:Listener(9090) {
                 "COMMENT": commentPayload.comment,
                 "USER_EMAIL": userEmail,
                 "CONTENT_NAME": contentResponse.description,
-                "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?contentId=${
-                    commentPayload.contentId}&sectionId=${contentResponse.sectionId}`
+                "SHAREABLE_LINK": string `${frontendBaseUrl}${contentResponse.routePath}?sectionId=${
+                    contentResponse.sectionId}&contentId=${commentPayload.contentId}`
             }
         );
 
