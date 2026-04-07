@@ -16,6 +16,7 @@
 
 import pitstop.entity;
 import pitstop.types;
+
 import ballerina/cache;
 import ballerina/log;
 
@@ -82,24 +83,15 @@ public isolated function buildRouteTree(types:Route[] allRoutes) returns types:R
 # + return - true if employee exists, false if not found, error on unexpected failure
 public function validateMentionedEmailExists(string email) returns boolean|error {
     if emailValidationCache.hasKey(email) {
-        boolean|error cachedValue = <boolean|error>emailValidationCache.get(email);
+        boolean|error cachedValue = emailValidationCache.get(email).ensureType();
         if cachedValue is boolean {
             return cachedValue;
         }
         log:printWarn("Error occurred while reading the cache", cachedValue);
     }
 
-    entity:Employee|error employee = entity:getEmployee(email);
-    boolean exists;
-    if employee is error {
-        if employee.message().startsWith("No matching employee found for ") {
-            exists = false;
-        } else {
-            return employee;
-        }
-    } else {
-        exists = true;
-    }
+    entity:Employee? employee = check entity:getEmployee(email);
+    boolean exists = employee != ();
 
     error? cacheErr = emailValidationCache.put(email, exists, 1800.0);
 

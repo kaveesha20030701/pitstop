@@ -95,7 +95,7 @@ service http:InterceptableService / on new http:Listener(9090) {
     #
     # + searchQuery - Partial name or email query
     # + return - Array of matching employees or error responses
-    resource function get employees/search(string? searchQuery)
+    resource function post employees/search(string? searchQuery)
         returns entity:Employee[]|http:BadRequest|http:InternalServerError {
 
         if searchQuery is () || searchQuery.length() < 2 {
@@ -413,8 +413,8 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         foreach string mentionedEmail in validatedMentions {
-            string mentionEmailSubject = string `[${appName}]${employeeInfo.firstName} ${employeeInfo.lastName} 
-                mentioned you in a content`;
+            string mentionEmailSubject = string `[${appName}]${employeeInfo.firstName} ${
+                employeeInfo.lastName} mentioned you in a content`;
             string mentionRenderedTemplate = renderAppName(email:mentionNotificationTemplate, appName);
             string|error mentionContent = email:bindKeyValues(mentionRenderedTemplate,
                     {

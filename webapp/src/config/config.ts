@@ -97,6 +97,6 @@ export const AppConfig = {
     updateTestimonial: (testimonialId: number) => ServiceBaseUrl + "/testimonials/" + testimonialId,
     deleteTestimonial: (testimonialId: number) => ServiceBaseUrl + "/testimonials/" + testimonialId,
     appInfo: ServiceBaseUrl + "/app-info",
-    searchEmployees: ServiceBaseUrl + "/employees/search",
+    searchEmployees: (query: string) => ServiceBaseUrl + "/employees/search?searchQuery=" + query,
   },
 };
