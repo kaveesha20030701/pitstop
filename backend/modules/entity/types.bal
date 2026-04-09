@@ -37,12 +37,7 @@ public type Employee record {|
     string workEmail;
     # Employee Thumbnail URL
     string? employeeThumbnail = ();
-    # Employee Department
-    string department;
-    # Employee Location
-    string location;
-    # Employee team
-    string? team = ();
+    json...;
 |};
 
 # [HR Entity] Inner record for single employee.
@@ -55,6 +50,18 @@ type EmployeeData record {|
 type EmployeeResults record {|
     # Employee Data Object
     EmployeeData data;
+|};
+
+# [HR Entity] Inner record for employee search.
+type EmployeeSearchData record {|
+    # List of Employees
+    Employee[]? employees = ();
+|};
+
+# [HR Entity] GraphQL return record for employee search.
+type EmployeeSearchResults record {|
+    # Employee Search Data Object
+    EmployeeSearchData data;
 |};
 
 # List of employee statuses.

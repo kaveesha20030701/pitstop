@@ -322,7 +322,7 @@ const Header = (props: HeaderProps) => {
                     {window.config?.APP_DETAILS?.NAME || ""}
                   </Typography>
 
-                  {window.config?.IS_PITSTOP_APP !== undefined && (
+                  {window.config?.IS_PITSTOP_APP == false && (
                     <Tooltip
                       title={`Switch to ${
                         window.config.REDIRECT_APP_NAME 

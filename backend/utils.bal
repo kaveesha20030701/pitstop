@@ -14,7 +14,17 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import pitstop.entity;
 import pitstop.types;
+
+import ballerina/cache;
+import ballerina/log;
+
+final cache:Cache emailValidationCache = new ({
+    capacity: 500,
+    defaultMaxAge: 1800.0,
+    cleanupInterval: 86400.0
+});
 
 # Replace hyphens with spaces, trim the string, and make it lowercase..
 #
@@ -24,12 +34,12 @@ isolated function replaceSpacesWithHyphens(string input) returns string =>
     re `\s+(?:-\s+)*`.replaceAll(input.trim().toLowerAscii(), "-");
 
 # Replace the {{appName}} placeholder in the email template with the actual app name.
-# 
+#
 # + template - email template containing the {{appName}} placeholder
 # + appName - actual application name to replace the placeholder with
 # + return - email template with the {{appName}} placeholder replaced by the actual app name
 isolated function renderAppName(string template, string appName) returns string =>
-   re `\{\{appName\}\}`.replaceAll(template, appName);
+    re `\{\{appName\}\}`.replaceAll(template, appName);
 
 # Creating a route tree from a flat list.
 #
@@ -65,4 +75,28 @@ public isolated function buildRouteTree(types:Route[] allRoutes) returns types:R
     }
 
     return rootNodes;
+}
+
+# Validate mentioned email against employee directory using Ballerina cache.
+#
+# + email - Email to validate
+# + return - true if employee exists, false if not found, error on unexpected failure
+public function validateMentionedEmailExists(string email) returns boolean|error {
+    if emailValidationCache.hasKey(email) {
+        boolean|error cachedValue = emailValidationCache.get(email).ensureType();
+        if cachedValue is boolean {
+            return cachedValue;
+        }
+        log:printWarn("Error occurred while reading the cache", cachedValue);
+    }
+
+    entity:Employee? employee = check entity:getEmployee(email);
+    boolean exists = employee != ();
+
+    error? cacheErr = emailValidationCache.put(email, exists, 1800.0);
+
+    if cacheErr is error {
+        log:printWarn("Error occurred while updating the cache", cacheErr);
+    }
+    return exists;
 }

@@ -29,6 +29,8 @@ import {
   UpdateCommentPayload,
   CustomTheme,
   LikeResponse,
+  EmployeeSuggestion,
+  EmployeeSearchPayload,
 } from "@/types/types";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { 
@@ -1238,7 +1240,7 @@ export const getPinnedContentIds = createAsyncThunk(
 //Add a comment to a content
 export const addComment = createAsyncThunk(
   "pitstop/commentContent",
-  async (payload: { contentId: number; comment: string }, { dispatch }) => {
+  async (payload: { contentId: number; comment: string; mentionedEmails?: string[] }, { dispatch }) => {
     return new Promise<unknown>((resolve, reject) => {
       ApiService.getInstance()
         .post(AppConfig.serviceUrls.createNewComment, payload)
@@ -1248,6 +1250,36 @@ export const addComment = createAsyncThunk(
         })
         .catch((resp) => {
           reject(resp);
+        });
+    });
+  }
+);
+
+// Fetch mention suggestions by name
+export const fetchMentionSuggestions = createAsyncThunk(
+  "pitstop/fetchMentionSuggestions",
+  async (payload: EmployeeSearchPayload, { dispatch }) => {
+    if (payload.searchQuery.length < 2) {
+      return [];
+    }
+    return new Promise<EmployeeSuggestion[]>((resolve, reject) => {
+      ApiService.getInstance()
+        .post(AppConfig.serviceUrls.searchEmployees, payload)
+        .then((resp) => {
+          resolve(resp.data || []);
+        })
+        .catch((error) => {
+          dispatch(
+            enqueueSnackbarMessage({
+              message: "Error fetching mention suggestions",
+              type: "error",
+              anchorOrigin: {
+                vertical: "bottom",
+                horizontal: "right",
+              },
+            })
+          );
+          reject(error);
         });
     });
   }

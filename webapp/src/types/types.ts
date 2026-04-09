@@ -296,6 +296,26 @@ export interface UpdateCommentPayload {
   commentId: number;
   contentId: number;
   comment: string;
+  mentionedEmails?: string[];
+}
+
+export interface EmployeeSuggestion {
+  workEmail: string;
+  firstName: string;
+  lastName: string;
+  employeeThumbnail?: string;
+  department: string;
+  team?: string;
+}
+
+export interface EmployeeSearchPayload {
+  searchQuery: string;
+}
+
+export interface MentionedUser {
+  name: string;
+  email: string;
+  thumbnail?: string;
 }
 
 //For Creating New Nav Item

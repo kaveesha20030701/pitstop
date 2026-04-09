@@ -52,3 +52,29 @@ public isolated function getEmployee(string workEmail) returns Employee|error {
         ? error(string `No matching employee found for ${workEmail}`)
         : employee;
 }
+
+# Search for employees by name or email.
+#
+# + searchQuery - Partial name/email query
+# + return - List of employees matching the query
+public isolated function searchEmployees(string searchQuery) returns Employee[]|error {
+    string document = string `
+        query searchEmployees($searchQuery: String!) {
+            employees(filter: { emailSearchString: $searchQuery }) {
+                workEmail,
+                firstName,
+                lastName,
+                employeeThumbnail,
+            }
+        }
+    `;
+
+    EmployeeSearchResults|graphql:ClientError employeeData = employeeGqlClient->execute(document, {searchQuery});
+
+    if employeeData is graphql:ClientError {
+        return handleGraphQlResultError(employeeData);
+    }
+
+    Employee[]? employees = employeeData.data.employees;
+    return employees is () ? <Employee[]>[] : employees;
+}

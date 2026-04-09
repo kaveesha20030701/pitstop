@@ -187,9 +187,11 @@ const CommentCard: React.FC<CommentCardProps> = ({
             overflowWrap: "break-word",
             whiteSpace: "pre-wrap",
             lineHeight: 1.5,
+            wordBreak: "break-word",
+            maxWidth: "90%",
           }}
         >
-          {commentResponse.comment}
+          {renderCommentText(commentResponse.comment)}
         </Typography>
 
         {isOwner && (
@@ -435,5 +437,35 @@ const CommentCard: React.FC<CommentCardProps> = ({
     </Box>
   );
 };
+
+// Render comment text with highlighted @mentions
+function renderCommentText(text: string): React.ReactNode {
+  const mentionPattern = /\b[A-Z][a-z]+ [A-Z][a-z]+\b/g;
+  const parts = text.split(mentionPattern);
+  const mentions = text.match(mentionPattern) || [];
+
+  const nodes: React.ReactNode[] = [];
+
+  parts.forEach((part, index) => {
+    if (part) {
+      nodes.push(part);
+    }
+    if (mentions[index]) {
+      nodes.push(
+        <span
+          key={`mention-${index}`}
+          style={{
+            color: "#2563eb",
+            fontWeight: 600,
+          }}
+        >
+          {mentions[index]}
+        </span>
+      );
+    }
+  });
+
+  return nodes.length > 0 ? nodes : text;
+}
 
 export default CommentCard;

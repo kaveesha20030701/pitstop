@@ -103,6 +103,8 @@ public type CommentPayload record {|
     int contentId;
     # Provided comment for the post
     string comment;
+    # List of mentioned user emails
+    string[]? mentionedEmails = ();
 |};
 
 # Update route payload.
@@ -567,4 +569,10 @@ public type PinContentPayload record {|
 public type AppInfo record {|
     # List of URLs that cannot be embedded in iframes
     string[] blockedIframeUrls;
+|};
+
+# Payload for employee search.
+public type EmployeeSearchPayload record {|
+   # Search query for employee search
+   string searchQuery;
 |};
