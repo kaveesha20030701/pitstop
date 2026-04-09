@@ -30,6 +30,7 @@ import {
   CustomTheme,
   LikeResponse,
   EmployeeSuggestion,
+  EmployeeSearchPayload,
 } from "@/types/types";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { 
@@ -1257,13 +1258,13 @@ export const addComment = createAsyncThunk(
 // Fetch mention suggestions by name
 export const fetchMentionSuggestions = createAsyncThunk(
   "pitstop/fetchMentionSuggestions",
-  async (payload: { query: string }, { dispatch }) => {
-    if (payload.query.length < 2) {
+  async (payload: EmployeeSearchPayload, { dispatch }) => {
+    if (payload.searchQuery.length < 2) {
       return [];
     }
     return new Promise<EmployeeSuggestion[]>((resolve, reject) => {
       ApiService.getInstance()
-        .post(AppConfig.serviceUrls.searchEmployees(payload.query), {})
+        .post(AppConfig.serviceUrls.searchEmployees, payload)
         .then((resp) => {
           resolve(resp.data || []);
         })

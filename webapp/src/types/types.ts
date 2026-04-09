@@ -308,6 +308,10 @@ export interface EmployeeSuggestion {
   team?: string;
 }
 
+export interface EmployeeSearchPayload {
+  searchQuery: string;
+}
+
 export interface MentionedUser {
   name: string;
   email: string;

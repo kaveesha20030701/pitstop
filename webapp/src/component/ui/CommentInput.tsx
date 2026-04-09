@@ -90,7 +90,7 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
         debounceTimerRef.current = setTimeout(() => {
           if (query.length >= 2) {
             setIsLoadingSuggestions(true);
-            dispatch(fetchMentionSuggestions({ query }))
+            dispatch(fetchMentionSuggestions({ searchQuery: query }))
               .then((result) => {
                 const payload = result.payload as EmployeeSuggestion[] | undefined;
                 if (payload) {
@@ -290,7 +290,6 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
           </Box>
         )}
 
-        {/* ── Input + dropdown wrapper ───────────────────────────────── */}
         <Box sx={{ position: "relative" }}>
           {/* Conditional: Show TextField or Posting Indicator in same container */}
           <Box
@@ -580,7 +579,8 @@ const CommentInput: React.FC<CommentInputProps> = ({ contentId, onCommentPosted 
                           <Typography
                             sx={{
                               fontSize: "0.72rem",
-                              opacity: 0.5,
+                              opacity: isDark ? 0.7 : 0.5,
+                              color: isDark ? theme.palette.common.white : "inherit",
                               lineHeight: 1.3,
                               mt: 0.15,
                             }}

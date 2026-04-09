@@ -93,19 +93,19 @@ service http:InterceptableService / on new http:Listener(9090) {
 
     # Search for employees by partial name or email for @mention autocomplete.
     #
-    # + searchQuery - Partial name or email query
+    # + searchPayload - Search query payload
     # + return - Array of matching employees or error responses
-    resource function post employees/search(string? searchQuery)
+    resource function post employees/search(types:EmployeeSearchPayload searchPayload)
         returns entity:Employee[]|http:BadRequest|http:InternalServerError {
 
-        if searchQuery is () || searchQuery.length() < 2 {
+        if searchPayload.searchQuery.length() < 2 {
             string customError = "Search query must be at least 2 characters long";
             return <http:BadRequest>{
                 body: customError
             };
         }
 
-        entity:Employee[]|error employees = entity:searchEmployees(searchQuery);
+        entity:Employee[]|error employees = entity:searchEmployees(searchPayload.searchQuery);
         if employees is error {
             string customError = "Error while searching for employees";
             log:printError(customError, employees);

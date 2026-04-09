@@ -570,3 +570,9 @@ public type AppInfo record {|
     # List of URLs that cannot be embedded in iframes
     string[] blockedIframeUrls;
 |};
+
+# Payload for employee search.
+public type EmployeeSearchPayload record {|
+   # Search query for employee search
+   string searchQuery;
+|};
