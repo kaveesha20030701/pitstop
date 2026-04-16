@@ -414,8 +414,7 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         foreach string mentionedEmail in validatedMentions {
-            string mentionEmailSubject = string `[${appName}][Content: ${
-                contentResponse.description}] You were mentioned in a comment`;
+            string mentionEmailSubject = string `[${appName}][${contentResponse.description}] Comment Activity`;
             string mentionRenderedTemplate = renderAppName(email:mentionNotificationTemplate, appName);
             string|error mentionContent = email:bindKeyValues(mentionRenderedTemplate,
                     {
