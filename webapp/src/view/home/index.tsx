@@ -42,6 +42,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { useNavigate, useLocation } from "react-router-dom";
 import CustomerTestimonialSection from "@components/ui/section/CustomerTestimonialSection";
 import { Role } from "@utils/types";
+import { fetchCustomerTestimonials } from "@slices/customerTestimonialSlice/customerTestimonial";
 import raceVideo from "@assets/images/race.mp4";
 
 export declare let _paq: unknown[];
@@ -160,6 +161,7 @@ function Home() {
   // Fetch tags only once on mount
   useEffect(() => {
     dispatch(getAllTags());
+    dispatch(fetchCustomerTestimonials());
   }, [dispatch]);
 
   // Track if sections have content
@@ -180,7 +182,9 @@ function Home() {
   useEffect(() => {
     const isPitstopApp = window.config?.IS_PITSTOP_APP ?? false;
     const isAdmin = roles.includes(Role.SALES_ADMIN);
-    setHasTestimonialSection(isPitstopApp && (isAdmin || customerTestimonials.length >= 4));
+    const shouldShowTestimonials = isAdmin || customerTestimonials.length >= 4;
+
+    setHasTestimonialSection(isPitstopApp && shouldShowTestimonials);
   }, [customerTestimonials.length, roles]);
 
   useEffect(() => {
