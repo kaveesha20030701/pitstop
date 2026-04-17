@@ -44,7 +44,6 @@ const IframeViewerDialogBox: React.FC<IframeViewerDialogBoxProps> = ({
   originalUrl,
   open,
   handleClose,
-  contentId,
   description,
   contentType,
   contentSubtype,
@@ -54,7 +53,6 @@ const IframeViewerDialogBox: React.FC<IframeViewerDialogBoxProps> = ({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const openedAtRef = useRef<number | null>(null);
   const loadAttemptedRef = useRef(false);
   const theme = useTheme();
   const dispatch = useAppDispatch();
@@ -125,14 +123,6 @@ const IframeViewerDialogBox: React.FC<IframeViewerDialogBoxProps> = ({
   const isBlocked = isBlockedUrl(link);
   const shouldCropIframe = contentType === FILETYPE.External_Link && (contentSubtype === CONTENT_SUBTYPE.Pdf || contentSubtype === CONTENT_SUBTYPE.Video);
 
-  const formatsTime = (minutes: number): string => {
-    if (minutes >= 60) {
-      const hours = Math.floor(minutes / 60);
-      return `${hours}h`;
-    }
-    return `${minutes}min`;
-  };
-
   useEffect(() => {
     if (
       blockedUrlsState === CONTENT_STATE_IDLE ||
@@ -141,29 +131,6 @@ const IframeViewerDialogBox: React.FC<IframeViewerDialogBoxProps> = ({
       dispatch(getBlockedIframeUrls());
     }
   }, [dispatch, blockedUrlsState]);
-
-  useEffect(() => {
-    if (!window.config?.IS_MATOMO_ENABLED) return;
-
-    if (open) {
-      openedAtRef.current = Date.now();
-      return;
-    }
-
-    if (!open && openedAtRef.current) {
-      const minutes = Math.round((Date.now() - openedAtRef.current) / 60000);
-      const formattedTime = formatsTime(minutes);
-
-      _paq.push([
-        "trackEvent",
-        "User Interaction",
-        "Preview Modal",
-        `Content : ${description} - ${formattedTime}`,
-      ]);
-
-      openedAtRef.current = null;
-    }
-  }, [open, description, contentId]);
 
   useEffect(() => {
     if (open) {

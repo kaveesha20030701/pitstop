@@ -886,7 +886,7 @@ const ComponentCard = ({
                       _paq.push([
                         "trackEvent",
                         "User Interaction",
-                        "Thumbnail Click",
+                        "Preview Click",
                         `Content: ${description}`,
                       ]);
                     }
