@@ -21,6 +21,7 @@ import pitstop.database;
 import pitstop.email;
 import pitstop.entity;
 import pitstop.types;
+import pitstop.ai_content;
 
 import ballerina/http;
 import ballerina/log;
@@ -41,6 +42,14 @@ configurable types:AppInfo appInfo = {
 @display {
     label: "Pitstop",
     id: "pitstop"
+}
+
+@http:ServiceConfig {
+    cors: {
+        allowOrigins: ["http://localhost:3000"],
+        allowMethods: ["POST", "OPTIONS"],
+        allowHeaders: ["Content-Type"]
+    }
 }
 service http:InterceptableService / on new http:Listener(9090) {
 
@@ -1975,5 +1984,29 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         return http:OK;
+    }
+    # Generate a summary for search results using AI.
+        #
+        # + req - Summary request containing the search query and results
+        # + return - Generated summary or error response
+    resource function post summary(types:SummaryRequest req) returns types:SummaryResponse|http:InternalServerError {
+        
+        if req.query == "" || req.results.length() == 0 {
+            log:printError("Invalid summary request: empty query or results");
+            return <http:InternalServerError>{
+                body: {message: "Query and results are required"}
+            };
+        }
+
+        string|error summary = ai_content:generateSearchSummary(req.query, req.results);
+
+        if summary is error {
+            log:printError("Error generating summary", summary);
+            return <http:InternalServerError>{
+                body: {message: "Failed to generate summary"}
+            };
+        }
+
+        return {summary};
     }
 }

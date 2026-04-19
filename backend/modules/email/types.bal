@@ -46,4 +46,6 @@ public type EmailPayload record {|
     string subject;
     # Email template
     string template;
+    # Optional custom email headers (e.g., Message-ID, In-Reply-To)
+    map<string>? customHeaders = ();
 |};

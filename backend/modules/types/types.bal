@@ -576,3 +576,19 @@ public type EmployeeSearchPayload record {|
    # Search query for employee search
    string searchQuery;
 |};
+
+// Request type from frontend - UPDATED to use actual ContentResponse
+public type SummaryRequest record {
+    string query;
+    // json[] results;
+    ContentResponse[] results;
+};
+
+// Response type to frontend
+public type SummaryResponse record {
+    string summary;
+};
+
+public type ErrorResponse record {
+    string 'error;
+};
