@@ -30,6 +30,9 @@ import {
   CustomTheme,
   LikeResponse,
   EmployeeSuggestion,
+  SummaryRequest,
+  SummaryResponse,
+  SummaryState,
   EmployeeSearchPayload,
 } from "@/types/types";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
@@ -62,6 +65,7 @@ type MyBoardState = {
 
 type PageStateWithMyBoard = PageState & {
   myBoard: MyBoardState;
+  summaryState: SummaryState;
 };
 
 const createInitialBoardSection = (): MyBoardSectionState => ({
@@ -79,7 +83,14 @@ const pageData: LocalPageData = {
   description: "",
   thumbnail: "",
   isVisible: 0,
-  isRouteVisible: 1, // Default to visible
+  isRouteVisible: 1,
+};
+
+const initialSummaryState: SummaryState = {
+  summary: null,
+  isLoading: false,
+  error: null,
+  isVisible: false,
 };
 
 const initialState: PageStateWithMyBoard = {
@@ -116,6 +127,7 @@ const initialState: PageStateWithMyBoard = {
     pinned: createInitialBoardSection(),
     essential: createInitialBoardSection(),
   },
+  summaryState: initialSummaryState,
 };
 
 export const PageSlice = createSlice({
@@ -140,6 +152,11 @@ export const PageSlice = createSlice({
     clearSearchResults(state) {
       state.searchResults = [];
       state.searchState = CONTENT_STATE_IDLE;
+    },
+    dismissSummary(state) {
+      state.summaryState.isVisible = false;
+      state.summaryState.summary = null;
+      state.summaryState.error = null;
     },
   },
 
@@ -595,6 +612,7 @@ export const PageSlice = createSlice({
       //Search contents
       .addCase(searchContent.pending, (state) => {
         state.searchState = CONTENT_STATE_LOADING;
+        state.summaryState = initialSummaryState;
       })
       .addCase(searchContent.fulfilled, (state, action) => {
         state.searchResults = action.payload.searchInfo;
@@ -602,12 +620,13 @@ export const PageSlice = createSlice({
       })
       .addCase(searchContent.rejected, (state) => {
         state.searchState = CONTENT_STATE_FAILED;
-        state.stateMessage = "Something went wrong :(";
+        state.stateMessage = "Something went wrong while searching content :(";
       })
 
       //Filter contents
       .addCase(filterContent.pending, (state) => {
         state.searchState = CONTENT_STATE_LOADING;
+        state.summaryState = initialSummaryState;
       })
       .addCase(filterContent.fulfilled, (state, action) => {
         state.searchResults = action.payload.filterInfo;
@@ -615,7 +634,25 @@ export const PageSlice = createSlice({
       })
       .addCase(filterContent.rejected, (state) => {
         state.searchState = CONTENT_STATE_FAILED;
-        state.stateMessage = "Something went wrong :(";
+        state.stateMessage = "Something went wrong while filtering content by tags :(";
+      })
+
+      // Fetch Search Summary
+      .addCase(fetchSearchSummary.pending, (state) => {
+        state.summaryState.isLoading = true;
+        state.summaryState.error = null;
+        state.summaryState.isVisible = true;
+      })
+      .addCase(fetchSearchSummary.fulfilled, (state, action) => {
+        state.summaryState.summary = action.payload.summary;
+        state.summaryState.isLoading = false;
+        state.summaryState.error = null;
+        state.summaryState.isVisible = true;
+      })
+      .addCase(fetchSearchSummary.rejected, (state, action) => {
+        state.summaryState.isLoading = false;
+        state.summaryState.error = action.payload as string || "Failed to generate summary";
+        state.summaryState.isVisible = true;
       })
 
       //Get content report details
@@ -1644,7 +1681,38 @@ export const deleteTag = createAsyncThunk(
   }
 );
 
-export const { resetPageData, clearSearchResults } = PageSlice.actions;
+// Fetch Search Summary
+export const fetchSearchSummary = createAsyncThunk(
+  "pitstop/fetchSearchSummary",
+  async (
+    payload: SummaryRequest,
+    { rejectWithValue }
+  ) => {
+    return new Promise<SummaryResponse>((resolve, reject) => {
+      ApiService.getInstance()
+        .post(AppConfig.serviceUrls.searchSummary, payload)
+        .then((resp) => {
+          resolve({ summary: resp.data.summary });
+        })
+        .catch((error) => {
+          // Handle different error types
+          let errorMessage = "Failed to generate summary";
+          
+          if (error?.response?.status === 429) {
+            errorMessage = "AI summary service is temporarily busy. Please try again in a moment.";
+          } else if (error?.response?.status === 503) {
+            errorMessage = "AI summary service is unavailable. Please try again later.";
+          } else if (error?.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          }
+          
+          reject(rejectWithValue(errorMessage));
+        });
+    });
+  }
+);
+
+export const { resetPageData, clearSearchResults, dismissSummary } = PageSlice.actions;
 export default PageSlice.reducer;
 
 export interface LocalPageData {

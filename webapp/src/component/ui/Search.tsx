@@ -33,8 +33,9 @@ import {
   filterContent,
   getAllTags,
   searchContent,
+  fetchSearchSummary,
 } from "@slices/pageSlice/page";
-import { TagResponse } from "@/types/types";
+import { TagResponse, ContentResponse } from "@/types/types";
 import { useLocation } from "react-router-dom";
 
 export declare let _paq: unknown[];
@@ -59,26 +60,75 @@ export default function Search() {
     const query = params.get("query");
     if (query) {
       setKeywordText(query);
-      dispatch(searchContent({ userInput: query }));
-      if (window.config?.IS_MATOMO_ENABLED) {
-        _paq.push(["trackSiteSearch", query, false, false]);
-      }
+      handleInitialSearch(query);
     }
   }, [location.search, dispatch]);
 
-  const handleSearch = () => {
+  const handleInitialSearch = async (query: string) => {
+    try {
+      const result = await dispatch(
+        searchContent({ userInput: query })
+      ).unwrap();
+
+      if (result.searchInfo && result.searchInfo.length > 0) {
+        await dispatch(
+          fetchSearchSummary({
+            query: query,
+            results: result.searchInfo,
+          })
+        ).unwrap().catch(() => {
+          // Silently fail if summary generation fails
+        });
+      }
+
+      if (window.config?.IS_MATOMO_ENABLED) {
+        _paq.push(["trackSiteSearch", query, false, false]);
+      }
+    } catch (error) {
+      // Search failed, but don't crash the UI
+      console.error("Search error:", error);
+    }
+  };
+
+  const handleSearch = async () => {
     const searchText = keywordText.trim();
     const tags = selectedTags.map((tag) => tag.tagName);
 
-    if (searchText) {
-      dispatch(searchContent({ userInput: searchText }));
-      if (window.config?.IS_MATOMO_ENABLED) {
-        _paq.push(["trackSiteSearch", searchText, false, false]);
-      }
-    }
+    let searchResults: ContentResponse[] = [];
 
-    if (tags.length > 0) {
-      dispatch(filterContent({ inputTags: tags }));
+    try {
+      if (searchText) {
+        const result = await dispatch(
+          searchContent({ userInput: searchText })
+        ).unwrap();
+        searchResults = result.searchInfo || [];
+
+        if (window.config?.IS_MATOMO_ENABLED) {
+          _paq.push(["trackSiteSearch", searchText, false, false]);
+        }
+      }
+
+      if (tags.length > 0) {
+        const result = await dispatch(
+          filterContent({ inputTags: tags })
+        ).unwrap();
+        searchResults = result.filterInfo || [];
+      }
+
+      if (searchResults.length > 0) {
+        const summaryQuery = searchText || tags.join(", ");
+        await dispatch(
+          fetchSearchSummary({
+            query: summaryQuery,
+            results: searchResults,
+          })
+        ).unwrap().catch(() => {
+          // Silently fail if summary generation fails
+        });
+      }
+    } catch (error) {
+      // Search or summary failed, but don't crash the UI
+      console.error("Error during search:", error);
     }
   };
 

@@ -645,3 +645,27 @@ export interface CustomerTestimonialCardProps {
   onEdit: () => void;
   onDelete: () => void;
 }
+
+// AI Summary types
+export interface SummaryRequest {
+  query: string;
+  results: ContentResponse[];
+}
+
+export interface SummaryResponse {
+  summary: string;
+}
+
+export interface SummaryState {
+  summary: string | null;
+  isLoading: boolean;
+  error: string | null;
+  isVisible: boolean;
+}
+
+export interface SearchSummaryBoxProps {
+  summary: string | null;
+  isLoading: boolean;
+  error: string | null;
+  onDismiss: () => void;
+}

@@ -37,8 +37,9 @@ import {
 } from "@mui/material";
 import { SkeletonCard } from "@components/ui/content/SkeletonCard";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
-import { clearSearchResults } from "@slices/pageSlice/page";
+import { clearSearchResults, dismissSummary } from "@slices/pageSlice/page";
 import searchImage from "@assets/images/search.png";
+import SearchSummaryBox from "../../components/ui/SearchSummaryBox";
 
 // For matomo integration
 export declare let _paq: unknown[];
@@ -51,6 +52,9 @@ export default function Layout() {
   const searchData = useAppSelector((state: RootState) => state.page.searchResults);
   const searchState = useAppSelector(
     (state: RootState) => state.page.searchState
+  );
+  const summaryState = useAppSelector(
+    (state: RootState) => state.page.summaryState
   );
 
   const location = useLocation();
@@ -87,6 +91,10 @@ export default function Layout() {
   const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 400, behavior: 'smooth' });
+  };
+
+  const handleDismissSummary = () => {
+    dispatch(dismissSummary());
   };
 
   return (
@@ -203,6 +211,16 @@ export default function Layout() {
               </Box>
             )}
 
+            {/*Search Summary Box*/}
+            {summaryState.isVisible && (
+              <SearchSummaryBox
+                summary={summaryState.summary}
+                isLoading={summaryState.isLoading}
+                error={summaryState.error}
+                onDismiss={handleDismissSummary}
+              />
+            )}
+
             {/*Search Results*/}
             <Grid
               container
@@ -257,37 +275,37 @@ export default function Layout() {
                     alignItems: "center",
                     justifyContent: "center",
                     textAlign: "center",
-                      "@keyframes float": {
-                        "0%": { transform: "translateY(0px)" },
-                        "50%": { transform: "translateY(-10px)" },
-                        "100%": { transform: "translateY(0px)" },
-                      },
+                    "@keyframes float": {
+                      "0%": { transform: "translateY(0px)" },
+                      "50%": { transform: "translateY(-10px)" },
+                      "100%": { transform: "translateY(0px)" },
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      mb: 2,
+                      animation: "float 3s ease-in-out infinite",
                     }}
                   >
-                    <Box
+                    <SearchOffIcon
                       sx={{
-                        mb: 2,
-                        animation: "float 3s ease-in-out infinite",
+                        fontSize: 72,
+                        color: theme.palette.text.secondary,
                       }}
-                    >
-                      <SearchOffIcon
-                        sx={{
-                          fontSize: 72,
-                          color: theme.palette.text.secondary,
-                        }}
-                      />
-                    </Box>
-                    <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                      No results found
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ maxWidth: 480, color: "text.secondary" }}
-                    >
-                      We couldn't find anything matching your search. Please try
-                      again.
-                    </Typography>
+                    />
                   </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                    No results found
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ maxWidth: 480, color: "text.secondary" }}
+                  >
+                    We couldn't find anything matching your search. Please try
+                    again.
+                  </Typography>
+                </Box>
               )}
               {/*END Empty state*/}
             </Grid>
