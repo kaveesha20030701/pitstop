@@ -13,34 +13,27 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
-
-import { Box, useTheme, Typography } from "@mui/material";
-import Header from "@layout/header/index";
-import { useLocation, matchRoutes } from "react-router-dom";
+import { Box, Typography, useTheme } from "@mui/material";
+import { DataGrid, GridColDef, GridRowClassNameParams } from "@mui/x-data-grid";
 import { useSelector } from "react-redux";
-import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
-import { selectUserInfo } from "@slices/authSlice";
-import { CURRENT_YEAR } from "@config/constant";
-import pJson from "../../../package.json";
-import {
-  DataGrid,
-  GridColDef,
-  GridRowClassNameParams,
-  GridToolbar,
-} from "@mui/x-data-grid";
+import { matchRoutes, useLocation } from "react-router-dom";
+
 import { useEffect } from "react";
-import { getContentReport } from "@slices/pageSlice/page";
+
 import ErrorHandler from "@components/common/ErrorHandler";
+import { CURRENT_YEAR } from "@config/constant";
+import Header from "@layout/header/index";
 import { ContentReportResponse } from "@root/src/types/types";
+import { selectUserInfo } from "@slices/authSlice";
+import { getContentReport } from "@slices/pageSlice/page";
+import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
+
+import pJson from "../../../package.json";
 
 export default function Summary() {
   const routes = useAppSelector((state: RootState) => state.route.routes);
-  const contentReportData = useAppSelector(
-    (state: RootState) => state.page.contentReport
-  );
-  const contentReportState = useAppSelector(
-    (state: RootState) => state.page.contentReportState
-  );
+  const contentReportData = useAppSelector((state: RootState) => state.page.contentReport);
+  const contentReportState = useAppSelector((state: RootState) => state.page.contentReportState);
   const userInfo = useSelector(selectUserInfo);
   const dispatch = useAppDispatch();
 
@@ -120,9 +113,7 @@ export default function Summary() {
       sx={{
         pt: 10,
         backgroundColor:
-          theme.palette.mode === "dark"
-            ? theme.palette.background.default
-            : "#f5f5f5",
+          theme.palette.mode === "dark" ? theme.palette.background.default : "#f5f5f5",
         minHeight: "100vh",
       }}
     >
@@ -143,16 +134,10 @@ export default function Summary() {
           flexDirection: "column",
         }}
       >
-        <Typography
-          variant="h3"
-          sx={{ fontWeight: 700, mb: 1, mt: 2, alignSelf: "center" }}
-        >
+        <Typography variant="h3" sx={{ fontWeight: 700, mb: 1, mt: 2, alignSelf: "center" }}>
           Content Report
         </Typography>
-        <Typography
-          variant="h6"
-          sx={{ color: "#666", mb: 2, alignSelf: "center" }}
-        >
+        <Typography variant="h6" sx={{ color: "#666", mb: 2, alignSelf: "center" }}>
           Summary of uploaded content
         </Typography>
       </Box>
@@ -165,12 +150,10 @@ export default function Summary() {
           height: "calc(100vh - 250px)",
         }}
       >
-        {contentReportState === "failed" && (
-          <ErrorHandler message={"Something went wrong"} />
-        )}
+        {contentReportState === "failed" && <ErrorHandler message={"Something went wrong"} />}
         {contentReportState === "success" && (
           <DataGrid
-            slots={{ toolbar: GridToolbar }}
+            showToolbar
             rows={rowData}
             getRowClassName={getRowClassName}
             columns={columns}
@@ -184,15 +167,10 @@ export default function Summary() {
             pageSizeOptions={[10, 25, 50]}
             sx={{
               backgroundColor:
-                theme.palette.mode === "dark"
-                  ? "#1e1e1e"
-                  : theme.palette.background.paper,
+                theme.palette.mode === "dark" ? "#1e1e1e" : theme.palette.background.paper,
               border: "none",
               borderRadius: "8px",
-              boxShadow:
-                theme.palette.mode === "dark"
-                  ? "none"
-                  : "0 1px 3px rgba(0,0,0,0.1)",
+              boxShadow: theme.palette.mode === "dark" ? "none" : "0 1px 3px rgba(0,0,0,0.1)",
               "& .MuiDataGrid-toolbarContainer": {
                 padding: "16px",
                 borderBottom: `1px solid ${theme.palette.divider}`,
@@ -209,9 +187,7 @@ export default function Summary() {
               },
               "& .MuiDataGrid-columnHeaders": {
                 backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? theme.palette.background.default
-                    : "#fafafa",
+                  theme.palette.mode === "dark" ? theme.palette.background.default : "#fafafa",
                 borderBottom: `2px solid ${theme.palette.divider}`,
               },
               "& .MuiDataGrid-columnHeaderTitle": {
@@ -232,9 +208,7 @@ export default function Summary() {
               },
               "& .MuiDataGrid-row:hover": {
                 backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? "rgba(255, 255, 255, 0.05)"
-                    : "#fafafa",
+                  theme.palette.mode === "dark" ? "rgba(255, 255, 255, 0.05)" : "#fafafa",
               },
               "& .row-outdated": {
                 backgroundColor: "#FFCDD2",
@@ -244,9 +218,7 @@ export default function Summary() {
               },
               "& .MuiDataGrid-footerContainer": {
                 backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? theme.palette.background.default
-                    : "#fafafa",
+                  theme.palette.mode === "dark" ? theme.palette.background.default : "#fafafa",
                 borderTop: `1px solid ${theme.palette.divider}`,
               },
               "& .MuiTablePagination-displayedRows": {
@@ -261,7 +233,7 @@ export default function Summary() {
           />
         )}
       </Box>
-      
+
       <Box
         className="layout-note"
         component="footer"
