@@ -25,8 +25,7 @@ import pJson from "../../../package.json";
 import {
   DataGrid,
   GridColDef,
-  GridRowClassNameParams,
-  GridToolbar,
+  GridRowClassNameParams
 } from "@mui/x-data-grid";
 import { useEffect } from "react";
 import { getContentReport } from "@slices/pageSlice/page";
@@ -170,7 +169,7 @@ export default function Summary() {
         )}
         {contentReportState === "success" && (
           <DataGrid
-            slots={{ toolbar: GridToolbar }}
+            showToolbar
             rows={rowData}
             getRowClassName={getRowClassName}
             columns={columns}
@@ -182,82 +181,6 @@ export default function Summary() {
               },
             }}
             pageSizeOptions={[10, 25, 50]}
-            sx={{
-              backgroundColor:
-                theme.palette.mode === "dark"
-                  ? "#1e1e1e"
-                  : theme.palette.background.paper,
-              border: "none",
-              borderRadius: "8px",
-              boxShadow:
-                theme.palette.mode === "dark"
-                  ? "none"
-                  : "0 1px 3px rgba(0,0,0,0.1)",
-              "& .MuiDataGrid-toolbarContainer": {
-                padding: "16px",
-                borderBottom: `1px solid ${theme.palette.divider}`,
-                "& .MuiButton-root": {
-                  color: "#ff6b35",
-                  border: "1px solid #ff6b35",
-                  borderRadius: "6px",
-                  textTransform: "uppercase",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  padding: "6px 16px",
-                  marginRight: "12px",
-                },
-              },
-              "& .MuiDataGrid-columnHeaders": {
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? theme.palette.background.default
-                    : "#fafafa",
-                borderBottom: `2px solid ${theme.palette.divider}`,
-              },
-              "& .MuiDataGrid-columnHeaderTitle": {
-                fontWeight: 600,
-                fontSize: "14px",
-                color: theme.palette.text.primary,
-              },
-              "& .Mui-selected": {
-                background:
-                  theme.palette.mode === "dark"
-                    ? "rgba(255, 255, 255, 0.08) !important"
-                    : "#EFEFEF !important",
-              },
-              "& .MuiDataGrid-cell": {
-                color: theme.palette.text.primary,
-                fontSize: "14px",
-                borderBottom: `1px solid ${theme.palette.divider}`,
-              },
-              "& .MuiDataGrid-row:hover": {
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? "rgba(255, 255, 255, 0.05)"
-                    : "#fafafa",
-              },
-              "& .row-outdated": {
-                backgroundColor: "#FFCDD2",
-                "&:hover": {
-                  backgroundColor: "#FFA1AA",
-                },
-              },
-              "& .MuiDataGrid-footerContainer": {
-                backgroundColor:
-                  theme.palette.mode === "dark"
-                    ? theme.palette.background.default
-                    : "#fafafa",
-                borderTop: `1px solid ${theme.palette.divider}`,
-              },
-              "& .MuiTablePagination-displayedRows": {
-                fontSize: "13px",
-                margin: 0,
-              },
-              "& .MuiTablePagination-selectLabel": {
-                fontSize: "13px",
-                margin: 0,
-              },
-            }}
           />
         )}
       </Box>
