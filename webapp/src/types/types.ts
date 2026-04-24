@@ -247,6 +247,8 @@ export interface UpdateRoutePayload {
   description?: string;
   thumbnail?: string;
   menuItem?: string;
+  label?: string;
+  routePath?: string; 
   customPageTheme?: CustomTheme;
   isVisible?: boolean;
   isRouteVisible?: boolean;
