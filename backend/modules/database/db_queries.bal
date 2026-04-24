@@ -67,18 +67,36 @@ isolated function getAllRoutesFlatQuery() returns sql:ParameterizedQuery =>
 # + return - SQL parameterized query
 isolated function updateChildRoutePathsQuery(int routeId, string newPath) returns sql:ParameterizedQuery => 
 `
-    UPDATE 
+    UPDATE
         route
-    SET 
-        route_path = CONCAT(${newPath}, SUBSTRING(route_path, 
-        LENGTH((SELECT route_path FROM (SELECT route_path FROM route WHERE route_id = ${routeId}) AS r)) + 1
-    ))
-    WHERE 
+    SET
+        route_path = CONCAT(
+            (CASE WHEN ${newPath} = '/' THEN '' ELSE ${newPath} END),
+            SUBSTRING(
+                route_path,
+                LENGTH((
+                    SELECT old_path FROM (
+                        SELECT CASE WHEN route_path = '/' THEN '' ELSE route_path END AS old_path
+                        FROM route
+                        WHERE route_id = ${routeId}
+                          AND is_deleted = false
+                    ) AS r
+                )) + 1
+            )
+        )
+    WHERE
         route_path LIKE CONCAT(
-        (SELECT route_path FROM (SELECT route_path FROM route WHERE route_id = ${routeId}) AS r2), 
-        '/%'
-    )
-    AND is_deleted = false
+            (
+                SELECT old_path FROM (
+                    SELECT CASE WHEN route_path = '/' THEN '' ELSE route_path END AS old_path
+                    FROM route
+                    WHERE route_id = ${routeId}
+                      AND is_deleted = false
+                ) AS r2
+            ),
+            '/%'
+        )
+        AND is_deleted = false
 `;
 
 # Query to update route.

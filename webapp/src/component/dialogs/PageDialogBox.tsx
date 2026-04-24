@@ -94,9 +94,20 @@ const PageDialogBox = ({
   };
 
   const handleUpdatePage = (values: typeof formik.values) => {
-    const derivedLabel = values.label.trim().toLowerCase().replace(/\s+/g, "-");
-    const currentPath = window.location.pathname;
-    const parentPath = currentPath.substring(0, currentPath.lastIndexOf("/"));
+    const derivedLabel = values.label
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    if (!derivedLabel) {
+      return;
+    }
+
+    const routePath = initialValues?.routePath || window.location.pathname;
+    const lastSlashIndex = routePath.lastIndexOf("/");
+    const parentPath = lastSlashIndex > 0 ? routePath.substring(0, lastSlashIndex) : "";
     const derivedRoutePath = `${parentPath}/${derivedLabel}`;
 
     dispatch(
@@ -116,7 +127,7 @@ const PageDialogBox = ({
           },
           isVisible: values.isVisible,
         },
-        routePath: window.location.pathname,
+        routePath,
       }),
     );
   };

@@ -378,11 +378,14 @@ export const updateRoute = createAsyncThunk(
         .finally(() => {
           if (!payload.page.reorderRoutes?.length) {
             const newPath = payload.page.routePath ?? payload.routePath;
-            dispatch(getRoutesInfo(newPath)).then(() => {
-              dispatch(getPageData(newPath));
-            });
-            if (payload.page.routePath && payload.page.routePath !== payload.routePath) {
-              window.location.href = payload.page.routePath;
+            const pathChanged =
+              !!payload.page.routePath && payload.page.routePath !== payload.routePath;
+            if (pathChanged) {
+              window.location.href = payload.page.routePath as string;
+            } else {
+              dispatch(getRoutesInfo(newPath)).then(() => {
+                dispatch(getPageData(newPath));
+              });
             }
           }
         });

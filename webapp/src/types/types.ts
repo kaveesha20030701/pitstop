@@ -30,6 +30,7 @@ export interface PageDialogBoxProps {
     routeId: number;
     label: string;
     title: string;
+    routePath: string;
     description: string;
     thumbnail: string;
     customPageTheme: CustomTheme;
