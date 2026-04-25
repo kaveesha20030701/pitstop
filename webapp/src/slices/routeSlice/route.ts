@@ -377,9 +377,16 @@ export const updateRoute = createAsyncThunk(
         })
         .finally(() => {
           if (!payload.page.reorderRoutes?.length) {
-            dispatch(getRoutesInfo(payload.routePath)).then(() => {
-              dispatch(getPageData(payload.routePath));
-            });
+            const newPath = payload.page.routePath ?? payload.routePath;
+            const pathChanged =
+              !!payload.page.routePath && payload.page.routePath !== payload.routePath;
+            if (pathChanged) {
+              window.location.href = payload.page.routePath as string;
+            } else {
+              dispatch(getRoutesInfo(newPath)).then(() => {
+                dispatch(getPageData(newPath));
+              });
+            }
           }
         });
     });

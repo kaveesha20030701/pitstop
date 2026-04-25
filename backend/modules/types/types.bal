@@ -115,6 +115,10 @@ public type UpdateRoutePayload record {|
     string description?;
     # Page thumbnail
     string thumbnail?;
+    # Page label
+    string label?;  
+    # Route path
+    string routePath?;
     # Navbar item name
     string menuItem?;
     # Page custom theme

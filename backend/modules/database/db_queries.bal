@@ -60,6 +60,45 @@ isolated function getAllRoutesFlatQuery() returns sql:ParameterizedQuery =>
      ORDER BY parent_id, route_order
 `;
 
+# Query to update child route paths when a route path is updated.
+# 
+# + routeId - Route ID of the updated route
+# + newPath - New path of the updated route
+# + return - SQL parameterized query
+isolated function updateChildRoutePathsQuery(int routeId, string newPath) returns sql:ParameterizedQuery => 
+`
+    UPDATE
+        route
+    SET
+        route_path = CONCAT(
+            (CASE WHEN ${newPath} = '/' THEN '' ELSE ${newPath} END),
+            SUBSTRING(
+                route_path,
+                LENGTH((
+                    SELECT old_path FROM (
+                        SELECT CASE WHEN route_path = '/' THEN '' ELSE route_path END AS old_path
+                        FROM route
+                        WHERE route_id = ${routeId}
+                          AND is_deleted = false
+                    ) AS r
+                )) + 1
+            )
+        )
+    WHERE
+        route_path LIKE CONCAT(
+            (
+                SELECT old_path FROM (
+                    SELECT CASE WHEN route_path = '/' THEN '' ELSE route_path END AS old_path
+                    FROM route
+                    WHERE route_id = ${routeId}
+                      AND is_deleted = false
+                ) AS r2
+            ),
+            '/%'
+        )
+        AND is_deleted = false
+`;
+
 # Query to update route.
 #
 # + routeId - Route ID to update
@@ -97,6 +136,14 @@ isolated function updateRouteQuery(int? routeId, types:UpdateRoutePayload payloa
 
     if payload.isRouteVisible is boolean { 
         sqlQueries.push(`isRouteVisible = ${payload.isRouteVisible}`); 
+    }
+
+    if payload.label is string {
+        sqlQueries.push(`label = ${payload.label}`);
+    }
+
+    if payload.routePath is string {
+        sqlQueries.push(`route_path = ${payload.routePath}`);
     }
 
     //Reordering

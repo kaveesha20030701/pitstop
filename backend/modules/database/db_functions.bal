@@ -200,6 +200,16 @@ public isolated function updateRoute(int routeId, types:UpdateRoutePayload updat
     int totalAffectedRows = 0;
 
     transaction {
+        if updateRoutePayload.routePath is string {
+            sql:ExecutionResult childResult = check dbClient->execute(
+                updateChildRoutePathsQuery(routeId, <string>updateRoutePayload.routePath)
+            );
+            int? childRows = childResult.affectedRowCount;
+            if childRows is int {
+                totalAffectedRows += childRows;
+            }
+        }
+
         foreach sql:ParameterizedQuery query in queries {
             sql:ExecutionResult result = check dbClient->execute(query);
             int? rowCount = result.affectedRowCount;

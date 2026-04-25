@@ -30,6 +30,7 @@ export interface PageDialogBoxProps {
     routeId: number;
     label: string;
     title: string;
+    routePath: string;
     description: string;
     thumbnail: string;
     customPageTheme: CustomTheme;
@@ -247,6 +248,8 @@ export interface UpdateRoutePayload {
   description?: string;
   thumbnail?: string;
   menuItem?: string;
+  label?: string;
+  routePath?: string; 
   customPageTheme?: CustomTheme;
   isVisible?: boolean;
   isRouteVisible?: boolean;
