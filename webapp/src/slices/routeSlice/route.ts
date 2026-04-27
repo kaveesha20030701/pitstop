@@ -398,8 +398,13 @@ export const reparentRoutes = createAsyncThunk(
   "pitstop/reparentRoutes",
   async (payload: reparentRoutesPayload, { dispatch }) => {
     return new Promise<void>((resolve, reject) => {
+      const requestPayload = {
+        newParentId: payload.newParentId,
+        routeIds: payload.routeIds,
+      };
+
       ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.reparentRoutes, payload)
+        .patch(AppConfig.serviceUrls.reparentRoutes, requestPayload)
         .then((resp) => {
           if (resp.status === 200) {
             dispatch(
