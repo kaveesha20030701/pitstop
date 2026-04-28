@@ -42,6 +42,7 @@ import { useAppDispatch, useAppSelector, RootState } from "@slices/store";
 import { updateComment, deleteComment } from "@slices/pageSlice/page";
 import { enqueueSnackbarMessage } from "@slices/commonSlice/common";
 import { CommentsResponse } from "@/types/types";
+import { Role } from "@utils/types";
 
 export interface CommentCardProps {
   commentResponse: CommentsResponse;
@@ -64,6 +65,10 @@ const CommentCard: React.FC<CommentCardProps> = ({
     (state: RootState) => state.auth.userInfo?.email ?? "",
   );
   const isOwner = commentResponse.userEmail === currentUserEmail;
+  const authorizedRoles: Role[] = useAppSelector((state: RootState) => state.auth.roles);
+  const isAdmin = authorizedRoles.includes(Role.SALES_ADMIN);
+
+  const canManageComment = isOwner || isAdmin;
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
@@ -194,7 +199,7 @@ const CommentCard: React.FC<CommentCardProps> = ({
           {renderCommentText(commentResponse.comment)}
         </Typography>
 
-        {isOwner && (
+        {canManageComment && (
           <IconButton
             size="small"
             onClick={handleMenuOpen}
