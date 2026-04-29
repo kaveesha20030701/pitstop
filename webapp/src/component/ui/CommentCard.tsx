@@ -391,8 +391,6 @@ const CommentCard: React.FC<CommentCardProps> = ({
                     ? theme.palette.grey[800]
                     : theme.palette.grey[50],
                 borderRadius: 2,
-                borderLeft: 4,
-                borderColor: "#dc2626",
               }}
             >
               <Typography variant="body1" sx={{ lineHeight: 1.6, mt: 2 }}>
