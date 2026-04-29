@@ -1248,8 +1248,18 @@ export const addComment = createAsyncThunk(
           resolve({ requestResponse: resp.data });
           dispatch(getAllComments({ contentId: payload.contentId }));
         })
-        .catch((resp) => {
-          reject(resp);
+        .catch((error) => {
+          dispatch(
+            enqueueSnackbarMessage({
+              message: "Something went wrong while adding a comment :(",
+              type: "error",
+              anchorOrigin: {
+                vertical: "bottom",
+                horizontal: "right",
+              },
+            })
+          );
+          reject(error);
         });
     });
   }

@@ -377,7 +377,7 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
         
         // Send email notification to the configured email address with the content title about the new comment activity.
-        string emailSubject = string `[${appName}][${contentResponse.description}] Comment Activity`;
+        string emailSubject = string `[${appName}] ${contentResponse.description} Comment Activity`;
 
         string renderedTemplate = renderAppName(email:commentNotificationTemplate, appName);
 
@@ -414,7 +414,7 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         foreach string mentionedEmail in validatedMentions {
-            string mentionEmailSubject = string `[${appName}][${contentResponse.description}] Comment Activity`;
+            string mentionEmailSubject = string `[${appName}] ${contentResponse.description} Comment Activity`;
             string mentionRenderedTemplate = renderAppName(email:mentionNotificationTemplate, appName);
             string|error mentionContent = email:bindKeyValues(mentionRenderedTemplate,
                     {
@@ -1458,7 +1458,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string emailSubject = string `[${appName}][${contentResponse.description}] Comment Activity`;
+        string emailSubject = string `[${appName}] ${contentResponse.description} Comment Activity`;
 
         string renderedTemplate = renderAppName(email:commentNotificationTemplate, appName);
 
@@ -1590,7 +1590,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string emailSubject = string `[${appName}][${contentResponse.description}] Comment Activity`;
+        string emailSubject = string `[${appName}] ${contentResponse.description} Comment Activity`;
 
         string renderedTemplate = renderAppName(email:commentNotificationTemplate, appName);
 
