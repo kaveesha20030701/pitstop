@@ -330,3 +330,80 @@ CREATE TABLE `tag` (
 
 ALTER TABLE `tag`
 MODIFY COLUMN `tag_name` VARCHAR(255) COLLATE utf8mb4_bin NOT NULL;
+
+CREATE TABLE `answer` (
+  `answer_id` int NOT NULL AUTO_INCREMENT,
+  `question_id` int NOT NULL,
+  `answer_text` text NOT NULL,
+  `is_correct` tinyint(1) NOT NULL DEFAULT '0',
+  `created_by` varchar(50) NOT NULL,
+  `updated_by` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`answer_id`),
+  KEY `question_id` (`question_id`),
+  CONSTRAINT `answer_ibfk_1` FOREIGN KEY (`question_id`) REFERENCES `question` (`question_id`)
+);
+CREATE TABLE `question` (
+  `question_id` int NOT NULL AUTO_INCREMENT,
+  `question_number` int NOT NULL COMMENT 'Display number scoped per quiz (1, 2, 3...)',
+  `quiz_id` int NOT NULL,
+  `question_text` text NOT NULL,
+  `question_type` varchar(100) NOT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `created_by` varchar(50) NOT NULL,
+  `updated_by` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `ref_links` json DEFAULT NULL,
+  PRIMARY KEY (`question_id`),
+  UNIQUE KEY `unique_question_number` (`quiz_id`,`question_number`) COMMENT 'No duplicate numbers within a quiz',
+  KEY `quiz_id` (`quiz_id`),
+  CONSTRAINT `question_ibfk_1` FOREIGN KEY (`quiz_id`) REFERENCES `quiz` (`quiz_id`)
+) ;
+
+CREATE TABLE `quiz` (
+  `quiz_id` int NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL,
+  `description` text,
+  `thumbnail` varchar(500) DEFAULT NULL,
+  `passing_score` int NOT NULL DEFAULT '70' COMMENT 'Minimum % to pass',
+  `due_date` timestamp NULL DEFAULT NULL,
+  `assigned_user_ids` json DEFAULT NULL COMMENT 'Array of user IDs this quiz is assigned',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `status` varchar(20) NOT NULL DEFAULT 'DRAFTED',
+  `created_by` varchar(50) NOT NULL,
+  `updated_by` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`quiz_id`)
+);
+
+CREATE TABLE `quiz_feedback` (
+  `feedback_id` int NOT NULL AUTO_INCREMENT,
+  `quiz_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `feedback_text` text NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`feedback_id`),
+  KEY `idx_quiz_id` (`quiz_id`),
+  CONSTRAINT `fk_quiz_feedback_quiz` FOREIGN KEY (`quiz_id`) REFERENCES `quiz` (`quiz_id`)
+) ;
+
+CREATE TABLE `user_answer` (
+  `user_answer_id` int NOT NULL AUTO_INCREMENT,
+  `quiz_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `question_id` int NOT NULL,
+  `selected_answer_id` int DEFAULT NULL,
+  `submitted_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_answer_id`),
+  KEY `fk_ua_quiz` (`quiz_id`),
+  KEY `fk_ua_question` (`question_id`),
+  KEY `fk_ua_answer` (`selected_answer_id`),
+  KEY `fk_ua_user` (`user_id`),
+  CONSTRAINT `fk_ua_answer` FOREIGN KEY (`selected_answer_id`) REFERENCES `answer` (`answer_id`),
+  CONSTRAINT `fk_ua_question` FOREIGN KEY (`question_id`) REFERENCES `question` (`question_id`),
+  CONSTRAINT `fk_ua_quiz` FOREIGN KEY (`quiz_id`) REFERENCES `quiz` (`quiz_id`),
+  CONSTRAINT `fk_ua_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`)
+) ;

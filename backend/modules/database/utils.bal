@@ -285,3 +285,249 @@ public isolated function toContentResponseFromPinned(PinnedContentResponse row)
 
     return convertedContent;
 }
+
+# Format ISO date string to MySQL datetime format.
+#
+# + dateTimeStr - ISO date string
+# + return - Formatted date string or ()
+public isolated function formatDateTime(string? dateTimeStr) returns string? {
+    if dateTimeStr is () {
+        return ();
+    }
+    string formatted = regexp:replace(re `T`, dateTimeStr, " ");
+    formatted = regexp:replace(re `\.\d+Z$`, formatted, "");
+    formatted = regexp:replace(re `Z$`, formatted, "");
+    return formatted;
+}
+
+# Orchestrates quiz creation with nested questions and answers in a single transaction.
+# 
+# + quiz - Quiz payload with nested questions and answers
+# + createdBy - User email who created the quiz
+# + return - Created quiz ID or error
+isolated function createQuizWithQuestionsAndAnswers(QuizPayload quiz, string createdBy) returns int|error {
+    int quizId;
+    
+    transaction {
+        // Create base quiz record
+        sql:ExecutionResult result = check dbClient->execute(createQuizQuery(quiz, createdBy));
+        quizId = check result.lastInsertId.ensureType(int);
+
+        // Process each question
+        foreach int i in 0 ..< quiz.questions.length() {
+            var q = quiz.questions[i];
+            QuestionPayload qPayload = {
+                questionNumber: i + 1,
+                questionText: q.text,
+                questionType: q.'type,
+                refLinks: q.refLinks
+            };
+            int questionId = check createQuestion(quizId, qPayload, createdBy);
+
+            // Process each answer for this question
+            foreach var a in q.answers {
+                AnswerPayload aPayload = {
+                    answerText: a.text,
+                    isCorrect: a.isCorrect
+                };
+                _ = check createAnswer(questionId, aPayload, createdBy);
+            }
+        }
+        
+        check commit;
+    }
+    
+    return quizId;
+}
+
+# Orchestrates quiz update with nested questions and answers in a single transaction.
+# 
+# + quizId - Quiz ID to update
+# + payload - Updated quiz payload with nested questions and answers
+# + updatedBy - User email who updated the quiz
+# + return - Total affected rows for the quiz update or error
+isolated function updateQuizWithQuestionsAndAnswers(int quizId, UpdateQuizPayload payload, string updatedBy) returns int|error? {
+    int totalAffectedRows = 0;
+    
+    transaction {
+        // Update base quiz record
+        sql:ExecutionResult result = check dbClient->execute(updateQuizQuery(quizId, payload, updatedBy));
+        totalAffectedRows = check result.affectedRowCount.ensureType(int);
+
+        // Check if questions need to be updated
+        NestedQuestionPayload[]? questions = payload.questions;
+        if questions is NestedQuestionPayload[] {
+            // Delete existing answers first (FK constraint)
+            _ = check dbClient->execute(deleteAnswersByQuizIdQuery(quizId));
+            
+            // Delete existing questions
+            _ = check dbClient->execute(deleteQuestionsByQuizIdQuery(quizId));
+
+            // Recreate questions with new answers
+            foreach int i in 0 ..< questions.length() {
+                var q = questions[i];
+                QuestionPayload qPayload = {
+                    questionNumber: i + 1,
+                    questionText: q.text,
+                    questionType: q.'type,
+                    refLinks: q.refLinks
+                };
+                int questionId = check createQuestion(quizId, qPayload, updatedBy);
+
+                foreach var a in q.answers {
+                    AnswerPayload aPayload = {
+                        answerText: a.text,
+                        isCorrect: a.isCorrect
+                    };
+                    _ = check createAnswer(questionId, aPayload, updatedBy);
+                }
+            }
+        }
+        
+        check commit;
+    }
+    
+    return totalAffectedRows;
+}
+
+# Submits user answers with conditional logic for feedback and re-attempts in a single transaction.
+# 
+# + quizId - Quiz ID being attempted
+# + userId - User ID submitting the answers
+# + answers - Array of user answer payloads with question type and feedback
+# + return - Total affected rows for the submission or error
+isolated function submitUserAnswersWithFeedback(int quizId, int userId, UserAnswerPayload[] answers) returns int|error {
+    int totalAffected = 0;
+    
+    transaction {
+        // Process each answer with conditional logic
+        foreach UserAnswerPayload ua in answers {
+            if ua.questionType == "feedback" {
+                // Handle feedback submission
+                string feedbackText = ua.feedbackText ?: "";
+                sql:ExecutionResult fbResult = check dbClient->execute(
+                    insertQuizFeedbackQuery(quizId, userId, feedbackText)
+                );
+                
+                int? rowCount = fbResult.affectedRowCount;
+                if rowCount is int {
+                    totalAffected += rowCount;
+                }
+            } else {
+                // Handle regular answer submission (handles re-attempts)
+                _ = check dbClient->execute(
+                    deleteUserAnswersForQuestionQuery(quizId, userId, ua.questionId)
+                );
+                
+                // Insert one row per selected answer
+                foreach int answerId in ua.selectedAnswerIds {
+                    sql:ExecutionResult result = check dbClient->execute(
+                        insertUserAnswerQuery(quizId, userId, ua.questionId, answerId)
+                    );
+                    
+                    int? rowCount = result.affectedRowCount;
+                    if rowCount is int {
+                        totalAffected += rowCount;
+                    }
+                }
+            }
+        }
+        
+        check commit;
+    }
+    
+    return totalAffected;
+}
+
+# builds the quiz result for a user.
+# + quizId - Quiz ID for which to build the result
+# + userEmail - User email to fetch the result for
+# + return - QuizResult with transformations applied or error
+isolated function buildQuizResultWithTransformations(int quizId, string userEmail) returns QuizResult|error {
+    // Step 1: Get raw score summary
+    QuizResultRaw|sql:Error raw = dbClient->queryRow(getUserResultQuery(quizId, userEmail));
+    if raw is sql:Error {
+        return raw;
+    }
+
+    int|error? userId = getUserIdByUserEmail(userEmail);
+    if userId is () || userId is error {
+        return error("User not found for email: " + userEmail);
+    }
+
+    SubmittedAnswer[]|error answers = getUserSubmittedAnswers(quizId, userId);
+    if answers is error {
+        return answers;
+    }
+
+    foreach var i in 0 ..< answers.length() {
+        if answers[i].isCorrect {
+            answers[i].refLinks = ();
+        }
+    }
+
+    QuizFeedback|error? feedback = getUserFeedback(quizId, userId);
+    if feedback is error {
+        return feedback;
+    }
+
+    return {
+        totalQuestions: raw.totalQuestions,
+        correctAnswers: <int>(raw.correctAnswers ?: 0),
+        scorePercentage: raw.scorePercentage,
+        totalMarks: <int>(raw.totalMarks ?: 0),
+        marksObtained: <int>(raw.marksObtained ?: 0),
+        passed: raw.passed == 1,
+        completed: raw.completed == 1,
+        answers: answers,
+        feedback: feedback
+    };
+}
+
+# Transforms raw database rows of submitted answers into structured SubmittedAnswer records.
+# + resultStream - Stream of raw database rows for submitted answers
+# + return - Array of SubmittedAnswer or error
+isolated function transformRawAnswersToSubmittedAnswers(stream<record {}, sql:Error?> resultStream) 
+        returns SubmittedAnswer[]|error {
+    SubmittedAnswer[] answers = [];
+
+    error? err = from record {} raw in resultStream
+        do {
+            map<anydata> row = <map<anydata>>raw;
+
+            anydata qId = row.get("question_id");
+            anydata qNum = row.get("question_number");
+            anydata qText = row.get("question_text");
+            anydata qType = row.get("question_type");
+            anydata refLinks = row.get("ref_links");
+            anydata ansId = row.get("selected_answer_id");
+            anydata ansText = row.get("answer_text");
+            anydata isCorrect = row.get("is_correct");
+            anydata submittedAt = row.get("submitted_at");
+
+            if qId is int && qNum is int && qText is string && qType is string &&
+                ansId is int && ansText is string && isCorrect is boolean && submittedAt is string {
+
+                json? refLinksJson = refLinks is json ? refLinks : ();
+
+                SubmittedAnswer answer = {
+                    questionId: qId,
+                    questionNumber: qNum,
+                    questionText: qText,
+                    questionType: qType,
+                    refLinks: refLinksJson,
+                    selectedAnswerId: ansId,
+                    selectedAnswerText: ansText,
+                    isCorrect: isCorrect,
+                    submittedAt: submittedAt
+                };
+                answers.push(answer);
+            }
+        };
+
+    if err is error {
+        return err;
+    }
+
+    return answers;
+}

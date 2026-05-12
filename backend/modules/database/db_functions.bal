@@ -20,6 +20,20 @@ import pitstop.types;
 import ballerina/log;
 import ballerina/sql;
 
+# Get a user by their user ID.
+#
+# + userId - User ID
+# + return - User or error if not found
+public isolated function getUserById(int userId) returns types:User|error? {
+    types:User|error result = dbClient->queryRow(getUserByIdQuery(userId));
+    if result is error {
+        if result is sql:NoRowsError {
+            return ();
+        }
+    }
+    return result;
+}
+
 # Create a route path.
 #
 # + route - Route details
@@ -106,8 +120,8 @@ public isolated function addComment(types:Comment comment) returns error? {
 # + routeId - Route ID
 # + userEmail - User email
 # + return - Contents or error
-public isolated function getContents(boolean isUser, int 'limit, int 'offset, int? sectionId = (), int? routeId = (), 
-    string? userEmail = ()) returns types:ContentResponse[]|error {
+public isolated function getContents(boolean isUser, int 'limit, int 'offset, int? sectionId = (), int? routeId = (),
+        string? userEmail = ()) returns types:ContentResponse[]|error {
 
     types:ContentResponse[] contents = [];
     stream<ContentResponse, sql:Error?> resultStream = dbClient->query(
@@ -115,7 +129,7 @@ public isolated function getContents(boolean isUser, int 'limit, int 'offset, in
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags, 
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags,
                     {...contentRest});
             contents.push(convertedContent);
         };
@@ -213,7 +227,7 @@ public isolated function updateRoute(int routeId, types:UpdateRoutePayload updat
         foreach sql:ParameterizedQuery query in queries {
             sql:ExecutionResult result = check dbClient->execute(query);
             int? rowCount = result.affectedRowCount;
-            
+
             if rowCount is int {
                 totalAffectedRows += rowCount;
             }
@@ -257,15 +271,15 @@ public isolated function getPageDetails(string routePath) returns types:PageResp
 
     PageResponse {customPageTheme, routeId, ...pageRest} = result;
     types:CustomTheme? convertedTheme = ();
-    
+
     if customPageTheme is () {
     } else {
         types:CustomTheme convertedCustomPageTheme = check customPageTheme.fromJsonStringWithType();
         convertedTheme = convertedCustomPageTheme;
     }
 
-    types:ContentResponse[]|error routeContents = getContents(false, DEFAULT_CONTENTS_LIMIT, 
-        DEFAULT_CONTENTS_OFFSET, (), routeId, "");
+    types:ContentResponse[]|error routeContents = getContents(false, DEFAULT_CONTENTS_LIMIT,
+            DEFAULT_CONTENTS_OFFSET, (), routeId, "");
     if routeContents is error {
         log:printWarn("Could not fetch route contents", routeId = routeId);
         return {...pageRest, routeId: routeId, customPageTheme: convertedTheme, routeContents: []};
@@ -290,7 +304,7 @@ public isolated function updateContent(int contentId, types:UpdateContentPayload
         foreach sql:ParameterizedQuery query in queries {
             sql:ExecutionResult result = check dbClient->execute(query);
             int? rowCount = result.affectedRowCount;
-            
+
             if rowCount is int {
                 totalAffectedRows += rowCount;
             }
@@ -322,9 +336,9 @@ public isolated function getSectionById(int sectionId) returns types:SectionPayl
 # + sectionId - Section ID
 # + updateSectionPayload - New section details
 # + return - Error or nil
-public isolated function updateSection(int sectionId, types:UpdateSectionPayload updateSectionPayload) 
+public isolated function updateSection(int sectionId, types:UpdateSectionPayload updateSectionPayload)
     returns int|error? {
-        
+
     sql:ParameterizedQuery[] queries = updateSectionQuery(sectionId, updateSectionPayload);
     int totalAffectedRows = 0;
 
@@ -332,7 +346,7 @@ public isolated function updateSection(int sectionId, types:UpdateSectionPayload
         foreach sql:ParameterizedQuery query in queries {
             sql:ExecutionResult result = check dbClient->execute(query);
             int? rowCount = result.affectedRowCount;
-            
+
             if rowCount is int {
                 totalAffectedRows += rowCount;
             }
@@ -434,7 +448,7 @@ public isolated function getContentsByText(string userInput, string userEmail)
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags, 
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags,
                     {...contentRest});
             contents.push(convertedContent);
         };
@@ -463,7 +477,7 @@ public isolated function getContentsByTags(string[] inputTags, string userEmail)
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags, 
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags,
                     {...contentRest});
             contents.push(convertedContent);
         };
@@ -640,7 +654,7 @@ public isolated function getRecentContents(string userEmail, int 'limit, int 'of
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags, 
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags,
                     {...contentRest});
             contents.push(convertedContent);
         };
@@ -689,6 +703,7 @@ public isolated function getPinnedContents(string userEmail, int 'limit, int 'of
 
     return contents;
 }
+
 # Check if user has any pinned content.
 #
 # + userEmail - User email
@@ -750,7 +765,7 @@ public isolated function getSuggestionsFromPinnedContents(string userEmail, int 
 
     check from ContentResponse {customContentTheme, tags, ...contentRest} in resultStream
         do {
-            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags, 
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, tags,
                     {...contentRest});
             contents.push(convertedContent);
         };
@@ -781,7 +796,7 @@ public isolated function getContentsByTagsAndKeywords(string userEmail, string[]
 
     check from ContentResponse {customContentTheme, tags: contentTags, ...contentRest} in resultStream
         do {
-            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, contentTags, 
+            types:ContentResponse convertedContent = check transformContentResponse(customContentTheme, contentTags,
                     {...contentRest});
             contents.push(convertedContent);
         };
@@ -905,4 +920,230 @@ public isolated function getTestimonialById(int id) returns CustomerTestimonial|
         }
     }
     return result;
+}
+
+# Get quizzes for admin or a specific user.
+#
+# + userId - Optional User ID. When provided, returns only that user's quizzes.
+# + return - Array of quizzes or error
+public isolated function getQuizzes(int? userId = ()) returns Quiz[]|error {
+    stream<Quiz, sql:Error?> resultStream = dbClient->query(getQuizzesQuery(userId));
+    return from Quiz result in resultStream
+        select result;
+}
+
+# Create a new quiz with questions and answers.
+# 
+# + quiz - Quiz create payload
+# + createdBy - User email who created
+# + return - Inserted quiz ID or error
+public isolated function createQuiz(QuizPayload quiz, string createdBy) returns int|error {
+    return createQuizWithQuestionsAndAnswers(quiz, createdBy);
+}
+
+# Update an existing quiz with questions and answers.
+# 
+# + quizId - Quiz ID
+# + payload - Quiz update payload
+# + updatedBy - User email who updated
+# + return - Affected row count or error
+public isolated function updateQuiz(int quizId, UpdateQuizPayload payload, string updatedBy) returns int|error? {
+    return updateQuizWithQuestionsAndAnswers(quizId, payload, updatedBy);
+}
+
+# Assign users to a quiz.
+# 
+# + quizId - Quiz ID
+# + userIds - Array of user IDs to assign
+# + updatedBy - User email who updated
+# + return - Affected row count or error
+public isolated function assignUsersToQuiz(int quizId, int[] userIds, string updatedBy) returns int|error? {
+    sql:ExecutionResult result = check dbClient->execute(assignUsersToQuizQuery(quizId, userIds, updatedBy));
+    return result.affectedRowCount;
+}
+
+# Delete a quiz along with its questions, answers, and user assignments.
+# 
+# + quizId - Quiz ID
+# + return - Affected row count or error
+public isolated function deleteQuiz(int quizId) returns int|error? {
+    sql:ExecutionResult result = check dbClient->execute(deleteQuizQuery(quizId));
+    return result.affectedRowCount;
+}
+
+# Get quiz title by quiz ID.
+#
+# + quizId - Quiz ID
+# + return - Quiz title or error
+public isolated function getQuizTitle(int quizId) returns string|error {
+    QuizTitle result = check dbClient->queryRow(getQuizTitleQuery(quizId));
+    return result.title;
+}
+
+# Get assigned user IDs for a quiz.
+# + quizId - Quiz ID
+# + return - Array of assigned user IDs or error
+public isolated function getAssignedUserIds(int quizId) returns int[]|error {
+    record {|
+        @sql:Column {name: "assigned_user_ids"}
+        json? assignedUserIds;
+    |}|error result = dbClient->queryRow(getAssignedUserIdsQuery(quizId));
+    if result is error {
+        return result;
+    }
+    json? assigned = result.assignedUserIds;
+    if assigned is json[] {
+        return from var item in assigned
+            select check item.ensureType(int);
+    }
+    return [];
+}
+
+# Get questions and answers for a quiz.
+# + quizId - Quiz ID
+# + return - Array of questions with answers or error
+public isolated function getQuestionsByQuizId(int quizId) returns Question[]|error {
+    stream<Question, sql:Error?> resultStream = dbClient->query(getQuestionsByQuizIdQuery(quizId));
+    return from Question result in resultStream
+        select result;
+}
+
+# Get public questions (without correct answer) for a quiz.
+# + quizId - Quiz ID
+# + payload - Additional payload if needed for fetching public questions
+# + createdBy - User email who is fetching the questions
+# + return - Array of public questions or error
+public isolated function createQuestion(int quizId, QuestionPayload payload, string createdBy) returns int|error {
+    sql:ExecutionResult result = check dbClient->execute(createQuestionQuery(quizId, payload, createdBy));
+    return result.lastInsertId.ensureType(int);
+}
+
+# Update a question.
+# + questionId - Question ID
+# + payload - Question update payload
+# + updatedBy - User email who updated the question
+# + return - Affected row count or error
+public isolated function updateQuestion(int questionId, UpdateQuestionPayload payload, string updatedBy) returns int|error? {
+    sql:ExecutionResult result = check dbClient->execute(updateQuestionQuery(questionId, payload, updatedBy));
+    return result.affectedRowCount;
+}
+
+# Delete a question along with its answers.
+# + questionId - Question ID
+# + return - Affected row count or error
+public isolated function deleteQuestion(int questionId) returns int|error? {
+    sql:ExecutionResult result = check dbClient->execute(deleteQuestionQuery(questionId));
+    return result.affectedRowCount;
+}
+
+# Get answers for a question.
+# + questionId - Question ID
+# + return - Array of answers or error
+public isolated function getAnswersByQuestionId(int questionId) returns Answer[]|error {
+    stream<Answer, sql:Error?> resultStream = dbClient->query(getAnswersByQuestionIdQuery(questionId));
+    return from Answer result in resultStream
+        select result;
+}
+
+# Get public answers (without correct answer) for a question.
+# + questionId - Question ID
+# + return - Array of public answers or error
+public isolated function getAnswersByQuestionIdPublic(int questionId) returns AnswerPublic[]|error {
+    stream<AnswerPublic, sql:Error?> resultStream = dbClient->query(getAnswersByQuestionIdPublicQuery(questionId));
+    return from AnswerPublic result in resultStream
+        select result;
+}
+
+# Create a new answer for a question.
+# + questionId - Question ID
+# + payload - Answer create payload
+# + createdBy - User email who created the answer
+# + return - Inserted answer ID or error
+public isolated function createAnswer(int questionId, AnswerPayload payload, string createdBy) returns int|error {
+    sql:ExecutionResult result = check dbClient->execute(createAnswerQuery(questionId, payload, createdBy));
+    return result.lastInsertId.ensureType(int);
+}
+
+# Update an answer.
+# + answerId - Answer ID
+# + payload - Answer update payload
+# + updatedBy - User email who updated the answer
+# + return - Affected row count or error
+public isolated function updateAnswer(int answerId, UpdateAnswerPayload payload, string updatedBy) returns int|error? {
+    sql:ExecutionResult result = check dbClient->execute(updateAnswerQuery(answerId, payload, updatedBy));
+    return result.affectedRowCount;
+}
+
+# Delete an answer.
+# + answerId - Answer ID
+# + return - Affected row count or error
+public isolated function deleteAnswer(int answerId) returns int|error? {
+    sql:ExecutionResult result = check dbClient->execute(deleteAnswerQuery(answerId));
+    return result.affectedRowCount;
+}
+
+# Submit quiz answers for a user.
+# + quizId - Quiz ID
+# + userId - User ID
+# + answers - Array of user answers to submit
+# + return - Quiz result or error
+public isolated function submitQuizAnswers(int quizId, int userId, UserAnswerPayload[] answers) returns int|error {
+    return submitUserAnswersWithFeedback(quizId, userId, answers);
+}
+
+# Get quiz result for a user.
+# + quizId - Quiz ID
+# + userEmail - User email
+# + return - Quiz result or error
+public isolated function getUserQuizResult(int quizId, string userEmail) returns QuizResult|error {
+    return buildQuizResultWithTransformations(quizId, userEmail);
+}
+
+# Get quiz analytics for a quiz.
+# + quizId - Quiz ID
+# + return - Array of user quiz analytics or error
+public isolated function getQuizAnalytics(int quizId) returns UserQuizAnalytics[]|error {
+    stream<UserQuizAnalytics, sql:Error?> resultStream = dbClient->query(getQuizAnalyticsQuery(quizId));
+    return from UserQuizAnalytics result in resultStream
+        select result;
+}
+
+#  Get submitted answers for a user in a quiz.
+# + quizId - Quiz ID
+# + userId - User ID
+# + return - Array of submitted answers or error
+public isolated function getUserSubmittedAnswers(int quizId, int userId) returns SubmittedAnswer[]|error {
+    stream<record {}, sql:Error?> resultStream = dbClient->query(getUserSubmittedAnswersQuery(quizId, userId));
+    return transformRawAnswersToSubmittedAnswers(resultStream);
+}
+# Get user feedback for a quiz.
+# + quizId - Quiz ID
+# + userId - User ID
+# + return - User feedback or error
+public isolated function getUserFeedback(int quizId, int userId) returns QuizFeedback|error? {
+    QuizFeedback|sql:Error result = dbClient->queryRow(getUserFeedbackQuery(quizId, userId));
+    if result is sql:NoRowsError {
+        return ();
+    }
+    if result is sql:Error {
+        return result;
+    }
+    return result;
+}
+
+# Get all feedback for a quiz (admin view).
+# + quizId - Quiz ID
+# + return - Array of quiz feedback or error
+public isolated function getAllFeedbackForQuiz(int quizId) returns QuizFeedbackAdmin[]|error {
+    stream<QuizFeedbackAdmin, sql:Error?> resultStream = dbClient->query(getAllFeedbackForQuizQuery(quizId));
+    return from QuizFeedbackAdmin result in resultStream
+        select result;
+}
+
+# Get quiz status for a quiz.
+# + quizId - Quiz ID
+# + return - Quiz status or error
+public isolated function getQuizStatus(int quizId) returns string|error {
+    QuizStatus result = check dbClient->queryRow(getQuizStatusQuery(quizId));
+    return result.status;
 }

@@ -331,6 +331,19 @@ public type LikeResponse record {|
     string? thumbnail;
 |};
 
+# Application User
+public type User record {|
+    # User ID
+    int userId;
+    # User email
+    string email;
+    # User thumbnail
+    string? thumbnail;
+    # User first name
+    string firstName;
+    # User last name
+    string lastName;
+|};
 # Route helper.
 public type Route record {|
     # Route ID

@@ -37,6 +37,21 @@ isolated function addRoutePathQuery(RoutePayload route) returns sql:Parameterize
     );
 `;
 
+# Query to get user by ID.
+#
+# + userId - User ID
+# + return - SQL parameterized query
+isolated function getUserByIdQuery(int userId) returns sql:ParameterizedQuery => `
+    SELECT
+        user_id AS userId,
+        email,
+        thumbnail,
+        first_name AS firstName,
+        last_name AS lastName
+    FROM user
+    WHERE user_id = ${userId}
+`;
+
 # Query to get all routes in a flat structure.
 #
 # + return - SQL parameterized query
@@ -61,11 +76,11 @@ isolated function getAllRoutesFlatQuery() returns sql:ParameterizedQuery =>
 `;
 
 # Query to update child route paths when a route path is updated.
-# 
+#
 # + routeId - Route ID of the updated route
 # + newPath - New path of the updated route
 # + return - SQL parameterized query
-isolated function updateChildRoutePathsQuery(int routeId, string newPath) returns sql:ParameterizedQuery => 
+isolated function updateChildRoutePathsQuery(int routeId, string newPath) returns sql:ParameterizedQuery =>
 `
     UPDATE
         route
@@ -104,38 +119,38 @@ isolated function updateChildRoutePathsQuery(int routeId, string newPath) return
 # + routeId - Route ID to update
 # + payload - Route data to change
 # + return - SQL parameterized query
-isolated function updateRouteQuery(int? routeId, types:UpdateRoutePayload payload) 
+isolated function updateRouteQuery(int? routeId, types:UpdateRoutePayload payload)
     returns sql:ParameterizedQuery[] {
 
     sql:ParameterizedQuery[] sqlQueries = [];
 
     //Normal field updates 
-    if payload.title is string { 
-        sqlQueries.push(`title = ${payload.title}`); 
+    if payload.title is string {
+        sqlQueries.push(`title = ${payload.title}`);
     }
 
-    if payload.description is string { 
-        sqlQueries.push(`description = ${payload.description}`); 
+    if payload.description is string {
+        sqlQueries.push(`description = ${payload.description}`);
     }
 
-    if payload.thumbnail is string { 
-        sqlQueries.push(`thumbnail = ${payload.thumbnail}`); 
+    if payload.thumbnail is string {
+        sqlQueries.push(`thumbnail = ${payload.thumbnail}`);
     }
 
-    if payload.menuItem is string { 
-        sqlQueries.push(`menu_item = ${payload.menuItem}`); 
+    if payload.menuItem is string {
+        sqlQueries.push(`menu_item = ${payload.menuItem}`);
     }
 
-    if payload.isVisible is boolean { 
-        sqlQueries.push(`isVisible = ${payload.isVisible}`); 
+    if payload.isVisible is boolean {
+        sqlQueries.push(`isVisible = ${payload.isVisible}`);
     }
 
-    if payload.customPageTheme is types:CustomTheme { 
-        sqlQueries.push(`styling_info = ${payload.customPageTheme.toJsonString()}`); 
+    if payload.customPageTheme is types:CustomTheme {
+        sqlQueries.push(`styling_info = ${payload.customPageTheme.toJsonString()}`);
     }
 
-    if payload.isRouteVisible is boolean { 
-        sqlQueries.push(`isRouteVisible = ${payload.isRouteVisible}`); 
+    if payload.isRouteVisible is boolean {
+        sqlQueries.push(`isRouteVisible = ${payload.isRouteVisible}`);
     }
 
     if payload.label is string {
@@ -150,7 +165,7 @@ isolated function updateRouteQuery(int? routeId, types:UpdateRoutePayload payloa
     sql:ParameterizedQuery? reorderClause = ();
     sql:ParameterizedQuery[] reorderIds = [];
     var reorderRoutes = payload.reorderRoutes;
-    
+
     if reorderRoutes is types:ReorderRouteItem[] && reorderRoutes.length() > 0 {
         sql:ParameterizedQuery[] caseWhen = [];
         foreach var route in reorderRoutes {
@@ -172,13 +187,15 @@ isolated function updateRouteQuery(int? routeId, types:UpdateRoutePayload payloa
     if sqlQueries.length() > 0 && routeId is int {
         sql:ParameterizedQuery fieldQuery = `UPDATE route SET `;
         boolean isFirst = true;
-        
+
         foreach var clause in sqlQueries {
-            if !isFirst { fieldQuery = sql:queryConcat(fieldQuery, `, `); }
+            if !isFirst {
+                fieldQuery = sql:queryConcat(fieldQuery, `, `);
+            }
             fieldQuery = sql:queryConcat(fieldQuery, clause);
             isFirst = false;
         }
-        
+
         if payload.isRouteVisible is boolean {
             fieldQuery = sql:queryConcat(fieldQuery, ` 
         WHERE (route_id = ${routeId} OR parent_id = ${routeId}) AND is_deleted = false`);
@@ -192,12 +209,12 @@ isolated function updateRouteQuery(int? routeId, types:UpdateRoutePayload payloa
     if reorderClause is sql:ParameterizedQuery {
         sql:ParameterizedQuery reorderQuery = `UPDATE route SET `;
         reorderQuery = sql:queryConcat(reorderQuery, reorderClause);
-        
+
         sql:ParameterizedQuery idList = reorderIds[0];
         foreach int i in 1 ..< reorderIds.length() {
             idList = sql:queryConcat(idList, `, `, reorderIds[i]);
         }
-        
+
         reorderQuery = sql:queryConcat(reorderQuery, ` 
         WHERE route_id IN (`, idList, `) AND is_deleted = false`);
         queries.push(reorderQuery);
@@ -276,8 +293,8 @@ isolated function addCommentQuery(types:Comment comment) returns sql:Parameteriz
 # + sectionId - Section ID of the content
 # + routeId - Route ID of the content
 # + return - SQL parameterized query
-isolated function getContentIdQuery(string? contentLink, string? contentType, int? sectionId, int? contentId, 
-    int? routeId = ())
+isolated function getContentIdQuery(string? contentLink, string? contentType, int? sectionId, int? contentId,
+        int? routeId = ())
     
     returns sql:ParameterizedQuery {
 
@@ -387,7 +404,7 @@ isolated function deleteContentByIdQuery(int contentId) returns sql:Parameterize
 # + 'limit - Number of records to retrieve
 # + 'offset - Number of records to offset
 # + return - SQL parameterized query
-isolated function getContentsQuery(boolean isUser, int? sectionId, int? routeId, string? userEmail, 
+isolated function getContentsQuery(boolean isUser, int? sectionId, int? routeId, string? userEmail,
         int 'limit, int 'offset) returns sql:ParameterizedQuery => `
     SELECT
         c.content_id,
@@ -632,26 +649,28 @@ isolated function updateContentQuery(int? contentId, types:UpdateContentPayload 
         }
     }
 
-    if payload.tags is string { 
+    if payload.tags is string {
         sqlQueries.push(`tags = ${payload.tags}`);
     }
-    if payload.isVisible is boolean { 
-        sqlQueries.push(`is_visible = ${payload.isVisible}`); 
+    if payload.isVisible is boolean {
+        sqlQueries.push(`is_visible = ${payload.isVisible}`);
     }
-    if payload.isReused is boolean { 
-        sqlQueries.push(`is_reused = ${payload.isReused}`); 
+    if payload.isReused is boolean {
+        sqlQueries.push(`is_reused = ${payload.isReused}`);
     }
 
     if sqlQueries.length() > 0 && contentId is int {
         sql:ParameterizedQuery fieldQuery = `UPDATE content SET `;
         boolean isFirst = true;
-        
+
         foreach var clause in sqlQueries {
-            if !isFirst { fieldQuery = sql:queryConcat(fieldQuery, `, `); }
+            if !isFirst {
+                fieldQuery = sql:queryConcat(fieldQuery, `, `);
+            }
             fieldQuery = sql:queryConcat(fieldQuery, clause);
             isFirst = false;
         }
-        
+
         fieldQuery = sql:queryConcat(fieldQuery, ` WHERE content_id = ${contentId} AND is_deleted = false`);
         sqlQueries = [];
         sqlQueries.push(fieldQuery);
@@ -659,25 +678,25 @@ isolated function updateContentQuery(int? contentId, types:UpdateContentPayload 
 
     //Reordering 
     var reorderContents = payload.reorderContents;
-    
+
     if reorderContents is types:SwapContentOrders[] && reorderContents.length() > 0 {
         sql:ParameterizedQuery[] caseWhen = [];
         sql:ParameterizedQuery[] contentIds = [];
-        
+
         foreach var item in reorderContents {
             caseWhen.push(`WHEN content_id = ${item.contentId} THEN ${item.contentOrder} `);
             contentIds.push(`${item.contentId}`);
         }
-        
+
         caseWhen.push(` END`);
         sql:ParameterizedQuery caseClause = sql:queryConcat(`content_order = CASE `, ...caseWhen);
         sql:ParameterizedQuery reorderQuery = sql:queryConcat(`UPDATE content SET `, caseClause);
-        
+
         sql:ParameterizedQuery idList = contentIds[0];
         foreach int i in 1 ..< contentIds.length() {
             idList = sql:queryConcat(idList, `, `, contentIds[i]);
         }
-        
+
         reorderQuery = sql:queryConcat(reorderQuery, ` WHERE content_id IN (`, idList, `) AND is_deleted = false`);
 
         if payload.sectionId is int {
@@ -701,76 +720,78 @@ isolated function updateContentQuery(int? contentId, types:UpdateContentPayload 
 # + sectionId - Section ID to update
 # + payload - Combined update + reorder payload
 # + return - SQL parameterized query
-isolated function updateSectionQuery(int sectionId, types:UpdateSectionPayload payload) 
+isolated function updateSectionQuery(int sectionId, types:UpdateSectionPayload payload)
     returns sql:ParameterizedQuery[] {
 
     sql:ParameterizedQuery[] queries = [];
     sql:ParameterizedQuery[] sqlQueries = [];
 
     //Normal field updates
-    if payload.title is string { 
-        sqlQueries.push(`title = ${payload.title}`); 
+    if payload.title is string {
+        sqlQueries.push(`title = ${payload.title}`);
     }
 
-    if payload.description is string { 
-        sqlQueries.push(`description = ${payload.description}`); 
+    if payload.description is string {
+        sqlQueries.push(`description = ${payload.description}`);
     }
 
-    if payload.sectionType is string { 
-        sqlQueries.push(`section_type = ${payload.sectionType}`); 
+    if payload.sectionType is string {
+        sqlQueries.push(`section_type = ${payload.sectionType}`);
     }
 
-    if payload.imageUrl is string { 
-        sqlQueries.push(`image_url = ${payload.imageUrl}`); 
+    if payload.imageUrl is string {
+        sqlQueries.push(`image_url = ${payload.imageUrl}`);
     }
 
-    if payload.redirectUrl is string { 
-        sqlQueries.push(`redirect_url = ${payload.redirectUrl}`); 
+    if payload.redirectUrl is string {
+        sqlQueries.push(`redirect_url = ${payload.redirectUrl}`);
     }
 
-    if payload.tags is string { 
-        sqlQueries.push(`tags = ${payload.tags}`); 
+    if payload.tags is string {
+        sqlQueries.push(`tags = ${payload.tags}`);
     }
-    
-    if payload.customSectionTheme is types:CustomTheme { 
-        sqlQueries.push(`styling_info = ${payload.customSectionTheme.toJsonString()}`); 
+
+    if payload.customSectionTheme is types:CustomTheme {
+        sqlQueries.push(`styling_info = ${payload.customSectionTheme.toJsonString()}`);
     }
 
     if sqlQueries.length() > 0 {
         sql:ParameterizedQuery fieldQuery = `UPDATE section SET `;
         boolean isFirst = true;
-        
+
         foreach var clause in sqlQueries {
-            if !isFirst { fieldQuery = sql:queryConcat(fieldQuery, `, `); }
+            if !isFirst {
+                fieldQuery = sql:queryConcat(fieldQuery, `, `);
+            }
             fieldQuery = sql:queryConcat(fieldQuery, clause);
             isFirst = false;
         }
-        
+
         fieldQuery = sql:queryConcat(fieldQuery, ` WHERE section_id = ${sectionId} AND is_deleted = false`);
         queries.push(fieldQuery);
     }
 
     //Reordering
     var reorderSections = payload.reorderSections;
-    
+
     if reorderSections is types:SwapSectionOrders[] && reorderSections.length() > 0 {
         sql:ParameterizedQuery[] caseWhen = [];
         sql:ParameterizedQuery[] reorderIds = [];
-        
+
         foreach var item in reorderSections {
             caseWhen.push(`WHEN section_id = ${item.sectionId} THEN ${item.sectionOrder} `);
             reorderIds.push(`${item.sectionId}`);
         }
         caseWhen.push(` END`);
-        
+
         sql:ParameterizedQuery reorderClause = sql:queryConcat(`section_order = CASE `, ...caseWhen);
         sql:ParameterizedQuery reorderQuery = sql:queryConcat(`UPDATE section SET `, reorderClause);
-        
+
         sql:ParameterizedQuery idList = reorderIds[0];
         foreach int i in 1 ..< reorderIds.length() {
             idList = sql:queryConcat(idList, `, `, reorderIds[i]);
         }
-        
+
         reorderQuery = sql:queryConcat(reorderQuery, ` 
         WHERE section_id IN (`, idList, `) AND is_deleted = false`);
         queries.push(reorderQuery);
@@ -1838,3 +1859,689 @@ isolated function getTestimonialByIdQuery(int id) returns sql:ParameterizedQuery
         id = ${id}
         AND is_deleted = FALSE
 `;
+
+# Create a new quiz.
+#
+# + quiz - Quiz payload details
+# + createdBy - User email who created the quiz
+# + return - SQL parameterized query
+isolated function createQuizQuery(QuizPayload quiz, string createdBy) returns sql:ParameterizedQuery => `
+    INSERT INTO quiz (
+        title,
+        description,
+        thumbnail,
+        passing_score,
+        due_date,
+        assigned_user_ids,
+        status,
+        created_by,
+        updated_by
+    ) VALUES (
+        ${quiz.title},
+        ${quiz.description},
+        ${quiz.thumbnail},
+        ${quiz.passingScore},
+        ${formatDateTime(quiz.dueDate)},
+        ${quiz.assignedUserIds.toJsonString()},
+        ${quiz.status},
+        ${createdBy},
+        ${createdBy}
+    )
+`;
+
+# Delete all answers for a quiz.
+#
+# + quizId - Quiz ID
+# + return - SQL parameterized query
+isolated function deleteAnswersByQuizIdQuery(int quizId) returns sql:ParameterizedQuery => `
+    DELETE 
+    FROM answer 
+    WHERE 
+        question_id IN (SELECT question_id 
+    FROM question 
+    WHERE 
+        quiz_id = ${quizId})
+`;
+
+# Mark all questions of a quiz as deleted.
+#
+# + quizId - Quiz ID
+# + return - SQL parameterized query
+isolated function deleteQuestionsByQuizIdQuery(int quizId) returns sql:ParameterizedQuery => `
+    UPDATE 
+        question 
+    SET is_deleted = true 
+    WHERE 
+        quiz_id = ${quizId} 
+        AND is_deleted = false
+`;
+
+# Get quizzes with question count.
+#
+# + userId - Optional User ID. When provided, returns only the user's published quizzes.
+# + return - SQL parameterized query
+isolated function getQuizzesQuery(int? userId = ()) returns sql:ParameterizedQuery {
+sql:ParameterizedQuery query = `
+        SELECT
+            q.quiz_id,
+            q.title AS quiz_title,
+            q.description AS quiz_description,
+            q.thumbnail,
+            q.passing_score,
+            q.due_date,
+            q.assigned_user_ids,
+            q.status,
+            q.is_deleted,
+            q.created_by,
+            q.updated_by,
+            q.created_at,
+            q.updated_at,
+            COUNT(qn.question_id) AS total_questions
+        FROM quiz q
+        LEFT JOIN question qn ON qn.quiz_id = q.quiz_id AND qn.is_deleted = false
+        WHERE q.is_deleted = false
+    `;
+
+    if userId is int {
+        query = sql:queryConcat(query, `
+            AND q.status = 'PUBLISHED'
+            AND q.assigned_user_ids IS NOT NULL
+            AND JSON_CONTAINS(q.assigned_user_ids, JSON_ARRAY(${userId}))
+            AND (q.due_date IS NULL OR q.due_date > NOW())
+        `);
+    }
+
+    query = sql:queryConcat(query, `
+        GROUP BY q.quiz_id
+        ORDER BY q.created_at DESC
+    `);
+
+    return query;
+}
+
+# Get the status of a quiz.
+#
+# + quizId - Quiz ID
+# + return - SQL parameterized query
+isolated function getQuizStatusQuery(int quizId) returns sql:ParameterizedQuery => `
+    SELECT 
+        status
+    FROM 
+        quiz 
+    WHERE 
+        quiz_id = ${quizId} 
+        AND is_deleted = false
+`;
+
+# Get quiz details by ID.
+#
+# + quizId - Quiz ID
+# + return - SQL parameterized query
+isolated function getQuizByIdQuery(int quizId) returns sql:ParameterizedQuery => `
+    SELECT
+        quiz_id, 
+        title, 
+        description, 
+        thumbnail, 
+        passing_score,
+        due_date, 
+        assigned_user_ids, 
+        is_deleted,
+        created_by, 
+        updated_by, 
+        created_at, 
+        updated_at
+    FROM quiz
+    WHERE 
+        quiz_id = ${quizId} 
+        AND is_deleted = false
+`;
+
+# Update quiz with selective field updates.
+#
+# + quizId - Quiz ID
+# + payload - Update quiz payload
+# + updatedBy - User email who updated the quiz
+# + return - SQL parameterized query
+isolated function updateQuizQuery(int quizId, UpdateQuizPayload payload, string updatedBy)
+        returns sql:ParameterizedQuery {
+
+    sql:ParameterizedQuery[] clauses = [`updated_by = ${updatedBy}`];
+
+    if payload.title is string {
+        clauses.push(`title = ${payload.title}`);
+    }
+    if payload.description is string {
+        clauses.push(`description = ${payload.description}`);
+    }
+    if payload.thumbnail is string {
+        clauses.push(`thumbnail = ${payload.thumbnail}`);
+    }
+    if payload.passingScore is int {
+        clauses.push(`passing_score = ${payload.passingScore}`);
+    }
+    if payload.dueDate is string {
+        clauses.push(`due_date = ${formatDateTime(payload.dueDate)}`);
+    }
+    if payload.assignedUserIds is int[] {
+        string jsonVal = (<int[]>payload.assignedUserIds).toJsonString();
+        clauses.push(`assigned_user_ids = ${jsonVal}`);
+    }
+
+    if payload.status is string {
+        clauses.push(`status = ${payload.status}`);
+    }
+
+    sql:ParameterizedQuery q = `UPDATE quiz SET `;
+    boolean isFirst = true;
+    foreach var clause in clauses {
+        if !isFirst {
+            q = sql:queryConcat(q, `, `);
+        }
+        q = sql:queryConcat(q, clause);
+        isFirst = false;
+    }
+    return sql:queryConcat(q, ` WHERE quiz_id = ${quizId} AND is_deleted = false`);
+}
+
+# Assign users to a quiz.
+#
+# + quizId - Quiz ID
+# + userIds - Array of user IDs to assign
+# + updatedBy - User email who made the assignment
+# + return - SQL parameterized query
+isolated function assignUsersToQuizQuery(int quizId, int[] userIds, string updatedBy)
+        returns sql:ParameterizedQuery => `
+
+    UPDATE 
+        quiz
+    SET
+        assigned_user_ids = ${userIds.toJsonString()}, 
+        updated_by = ${updatedBy}
+    WHERE 
+        quiz_id = ${quizId} 
+        AND is_deleted = false
+`;
+
+# Mark a quiz as deleted.
+#
+# + quizId - Quiz ID
+# + return - SQL parameterized query
+isolated function deleteQuizQuery(int quizId) returns sql:ParameterizedQuery => `
+    UPDATE 
+        quiz 
+    SET 
+        is_deleted = true 
+    WHERE 
+        quiz_id = ${quizId} 
+        AND is_deleted = false
+`;
+
+# Get all questions for a quiz.
+#
+# + quizId - Quiz ID
+# + return - SQL parameterized query
+isolated function getQuestionsByQuizIdQuery(int quizId) returns sql:ParameterizedQuery => `
+    SELECT
+        question_id, 
+        question_number, 
+        quiz_id, 
+        question_text,
+        question_type,
+        COALESCE(ref_links, JSON_ARRAY()) AS ref_links, 
+        is_deleted, 
+        created_by, 
+        updated_by, 
+        created_at, 
+        updated_at
+    FROM question
+    WHERE quiz_id = ${quizId} AND is_deleted = false
+    ORDER BY question_number ASC
+`;
+
+# Create a new question for a quiz.
+#
+# + quizId - Quiz ID
+# + q - Question payload
+# + createdBy - User email who created the question
+# + return - SQL parameterized query
+isolated function createQuestionQuery(int quizId, QuestionPayload q, string createdBy)
+        returns sql:ParameterizedQuery => `
+    INSERT INTO question (
+        question_number,
+        quiz_id,
+        question_text,
+        question_type,
+        ref_links,
+        created_by,
+        updated_by
+    ) VALUES (
+        ${q.questionNumber},
+        ${quizId},
+        ${q.questionText},
+        ${q.questionType},
+        ${(q.refLinks is string[] ? (<string[]>q.refLinks).toJsonString() : null)},
+        ${createdBy},
+        ${createdBy}
+    )
+    ON DUPLICATE KEY UPDATE
+        question_id = LAST_INSERT_ID(question_id),
+        question_text = VALUES(question_text),
+        question_type = VALUES(question_type),
+        ref_links = VALUES(ref_links),
+        updated_by = VALUES(updated_by),
+        is_deleted = false
+`;
+
+# Update a question with selective field updates.
+#
+# + questionId - Question ID
+# + payload - Update question payload
+# + updatedBy - User email who updated the question
+# + return - SQL parameterized query
+isolated function updateQuestionQuery(int questionId, UpdateQuestionPayload payload, string updatedBy)
+        returns sql:ParameterizedQuery {
+
+    sql:ParameterizedQuery[] clauses = [`updated_by = ${updatedBy}`];
+
+    if payload.questionText is string {
+        clauses.push(`question_text = ${payload.questionText}`);
+    }
+    if payload.questionType is string {
+        clauses.push(`question_type = ${payload.questionType}`);
+    }
+    if payload.refLinks is string[] {
+        string jsonVal = (<string[]>payload.refLinks).toJsonString();
+        clauses.push(`ref_links = ${jsonVal}`);
+    }
+
+    sql:ParameterizedQuery q = `UPDATE question SET `;
+    boolean isFirst = true;
+    foreach var clause in clauses {
+        if !isFirst {
+            q = sql:queryConcat(q, `, `);
+        }
+        q = sql:queryConcat(q, clause);
+        isFirst = false;
+    }
+    return sql:queryConcat(q, ` WHERE question_id = ${questionId} AND is_deleted = false`);
+}
+
+# Mark a question as deleted.
+#
+# + questionId - Question ID
+# + return - SQL parameterized query
+isolated function deleteQuestionQuery(int questionId) returns sql:ParameterizedQuery => `
+    UPDATE 
+        question 
+    SET 
+        is_deleted = true 
+    WHERE 
+        question_id = ${questionId} 
+        AND is_deleted = false
+`;
+
+# Get all answers for a question (public view - excludes is_correct).
+#
+# + questionId - Question ID
+# + return - SQL parameterized query
+isolated function getAnswersByQuestionIdPublicQuery(int questionId) returns sql:ParameterizedQuery => `
+    SELECT
+        answer_id, 
+        question_id, 
+        answer_text,
+        created_at, 
+        updated_at
+    FROM 
+        answer
+    WHERE 
+        question_id = ${questionId}
+`;
+
+# Get all answers for a question (includes is_correct).
+#
+# + questionId - Question ID
+# + return - SQL parameterized query
+isolated function getAnswersByQuestionIdQuery(int questionId) returns sql:ParameterizedQuery => `
+    SELECT
+        answer_id, 
+        question_id, 
+        answer_text, 
+        is_correct,
+        created_by, 
+        updated_by, 
+        created_at, 
+        updated_at
+    FROM 
+        answer
+    WHERE 
+        question_id = ${questionId}
+`;
+
+# Create a new answer for a question.
+#
+# + questionId - Question ID
+# + a - Answer payload
+# + createdBy - User email who created the answer
+# + return - SQL parameterized query
+isolated function createAnswerQuery(int questionId, AnswerPayload a, string createdBy)
+        returns sql:ParameterizedQuery => `
+    INSERT INTO answer (
+        question_id, 
+        answer_text, 
+        is_correct, 
+        created_by, 
+        updated_by
+    ) VALUES (
+        ${questionId}, 
+        ${a.answerText}, 
+        ${a.isCorrect}, 
+        ${createdBy}, 
+        ${createdBy}
+    )
+`;
+
+# Update an answer with selective field updates.
+#
+# + answerId - Answer ID
+# + payload - Update answer payload
+# + updatedBy - User email who updated the answer
+# + return - SQL parameterized query
+isolated function updateAnswerQuery(int answerId, UpdateAnswerPayload payload, string updatedBy)
+        returns sql:ParameterizedQuery {
+
+    sql:ParameterizedQuery[] clauses = [`updated_by = ${updatedBy}`];
+
+    if payload.answerText is string {
+        clauses.push(`answer_text = ${payload.answerText}`);
+    }
+    if payload.isCorrect is boolean {
+        clauses.push(`is_correct = ${payload.isCorrect}`);
+    }
+
+    sql:ParameterizedQuery q = `UPDATE answer SET `;
+    boolean isFirst = true;
+    foreach var clause in clauses {
+        if !isFirst {
+            q = sql:queryConcat(q, `, `);
+        }
+        q = sql:queryConcat(q, clause);
+        isFirst = false;
+    }
+    return sql:queryConcat(q, ` WHERE answer_id = ${answerId}`);
+}
+
+# Delete an answer.
+#
+# + answerId - Answer ID
+# + return - SQL parameterized query
+isolated function deleteAnswerQuery(int answerId) returns sql:ParameterizedQuery => `
+    DELETE FROM 
+        answer 
+    WHERE 
+        answer_id = ${answerId}
+`;
+
+# Delete user answers for a specific question (for re-attempts).
+#
+# + quizId - Quiz ID
+# + userId - User ID
+# + questionId - Question ID
+# + return - SQL parameterized query
+isolated function deleteUserAnswersForQuestionQuery(int quizId, int userId, int questionId)
+        returns sql:ParameterizedQuery => `
+    DELETE FROM 
+        user_answer
+    WHERE 
+        quiz_id = ${quizId} 
+        AND user_id = ${userId} 
+        AND question_id = ${questionId}
+`;
+
+# Insert a user answer submission.
+#
+# + quizId - Quiz ID
+# + userId - User ID
+# + questionId - Question ID
+# + selectedAnswerId - Selected answer ID
+# + return - SQL parameterized query
+isolated function insertUserAnswerQuery(int quizId, int userId, int questionId, int selectedAnswerId)
+        returns sql:ParameterizedQuery => `
+    INSERT INTO user_answer (
+        quiz_id, 
+        user_id, 
+        question_id, 
+        selected_answer_id
+    ) VALUES (
+        ${quizId}, 
+        ${userId}, 
+        ${questionId}, 
+        ${selectedAnswerId}
+    )
+`;
+
+# Insert or update quiz feedback submission.
+#
+# + quizId - Quiz ID
+# + userId - User ID
+# + feedbackText - Feedback text
+# + return - SQL parameterized query
+isolated function insertQuizFeedbackQuery(int quizId, int userId, string feedbackText)
+        returns sql:ParameterizedQuery => `
+    INSERT INTO quiz_feedback (
+        quiz_id, 
+        user_id, 
+        feedback_text
+    ) VALUES (
+        ${quizId}, 
+        ${userId}, 
+        ${feedbackText})
+    ON DUPLICATE KEY UPDATE feedback_text = ${feedbackText}, created_at = CURRENT_TIMESTAMP
+`;
+
+# Get comprehensive quiz result for a user including score, marks, and pass status.
+#
+# + quizId - Quiz ID
+# + userEmail - User email
+# + return - SQL parameterized query
+isolated function getUserResultQuery(int quizId, string userEmail) returns sql:ParameterizedQuery => `
+    SELECT 
+        COUNT(*) AS total_questions,
+        CAST(SUM(perq.is_correct) AS SIGNED) AS correct_answers,
+        ROUND(SUM(perq.is_correct) / NULLIF(COUNT(*), 0) * 100, 2) AS score_percentage,
+        COUNT(*) AS total_marks,
+        CAST(SUM(perq.is_correct) AS SIGNED) AS marks_obtained,
+        COUNT(*) = SUM(perq.answered) AS completed,
+        ROUND(SUM(perq.is_correct) / NULLIF(COUNT(*), 0) * 100, 2) >= qz.passing_score AS passed
+
+    FROM quiz qz
+    JOIN question q ON q.quiz_id = qz.quiz_id
+    LEFT JOIN (
+        SELECT 
+            qn.question_id,
+            CASE 
+                WHEN qn.question_type IN ('rating', 'feedback') THEN 0
+                WHEN (
+                    SELECT COUNT(*) FROM answer a 
+                    WHERE a.question_id = qn.question_id AND a.is_correct = 1
+                ) = (
+                    SELECT COUNT(DISTINCT ua.selected_answer_id)
+                    FROM user_answer ua 
+                    JOIN answer a ON a.answer_id = ua.selected_answer_id
+                    WHERE ua.question_id = qn.question_id 
+                    AND ua.user_id = (SELECT user_id FROM user WHERE email = ${userEmail})
+                    AND a.is_correct = 1
+                )
+                AND NOT EXISTS (
+                    SELECT 1 
+                    FROM user_answer ua 
+                    JOIN answer a ON a.answer_id = ua.selected_answer_id
+                    WHERE ua.question_id = qn.question_id 
+                    AND ua.user_id = (SELECT user_id FROM user WHERE email = ${userEmail})
+                    AND a.is_correct = 0
+                )
+                THEN 1 ELSE 0 
+            END AS is_correct,
+
+            EXISTS (
+                SELECT 1 FROM user_answer ua 
+                WHERE ua.question_id = qn.question_id 
+                AND ua.user_id = (SELECT user_id FROM user WHERE email = ${userEmail})
+            ) AS answered
+
+        FROM question qn
+        WHERE qn.quiz_id = ${quizId} AND qn.is_deleted = FALSE
+    ) perq ON perq.question_id = q.question_id
+
+    WHERE q.quiz_id = ${quizId} 
+    AND q.is_deleted = FALSE 
+    AND q.question_type NOT IN ('rating', 'feedback')
+    GROUP BY qz.passing_score
+`;
+
+# Get analytics for a quiz across all users with score and completion metrics.
+#
+# + quizId - Quiz ID
+# + return - SQL parameterized query
+isolated function getQuizAnalyticsQuery(int quizId) returns sql:ParameterizedQuery => `
+    SELECT
+        u.user_id,
+        u.email AS user_email,
+        CONCAT(u.first_name, ' ', u.last_name) AS user_name,
+
+        CAST(COUNT(DISTINCT q.question_id) AS SIGNED) AS total_questions,
+        CAST(COUNT(DISTINCT ua.question_id) AS SIGNED) AS answered,
+
+        CAST(SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END) AS SIGNED) AS correct_answers,
+
+        ROUND(
+            SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END)
+            / NULLIF(SUM(CASE WHEN q.question_type NOT IN ('rating', 'feedback') THEN 1 ELSE 0 END), 0)
+            * 100,
+        2) AS score_percentage,
+
+        CAST(SUM(CASE WHEN q.question_type NOT IN ('rating', 'feedback') THEN 1 ELSE 0 END) AS SIGNED) AS total_marks,
+
+        CAST(SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END) AS SIGNED) AS marks_obtained,
+
+        IF(COUNT(DISTINCT q.question_id) = COUNT(DISTINCT ua.question_id), 1, 0) AS completed,
+
+        IF(
+            ROUND(
+                SUM(CASE WHEN a.is_correct = 1 THEN 1 ELSE 0 END)
+                / NULLIF(SUM(CASE WHEN q.question_type NOT IN ('rating', 'feedback') THEN 1 ELSE 0 END), 0)
+                * 100,
+            2) >= qz.passing_score,
+        1, 0) AS passed,
+
+        MAX(ua.submitted_at) AS submitted_at
+
+    FROM user u
+    JOIN user_answer ua ON ua.user_id = u.user_id
+    JOIN question q ON q.question_id = ua.question_id
+    JOIN quiz qz ON qz.quiz_id = q.quiz_id
+    LEFT JOIN answer a ON a.answer_id = ua.selected_answer_id
+
+    WHERE q.quiz_id = ${quizId}
+    AND q.is_deleted = false
+
+    GROUP BY
+        u.user_id,
+        u.email,
+        u.first_name,
+        u.last_name,
+        qz.passing_score
+
+    ORDER BY score_percentage DESC
+`;
+
+# Get user's submitted answers for a quiz.
+#
+# + quizId - Quiz ID
+# + userId - User ID
+# + return - SQL parameterized query
+isolated function getUserSubmittedAnswersQuery(int quizId, int userId) returns sql:ParameterizedQuery => `
+    SELECT
+        qn.question_id,
+        qn.question_number,
+        qn.question_text,
+        qn.question_type,
+        CAST(IF(qn.ref_links IS NULL, NULL, qn.ref_links) AS JSON) AS ref_links,
+        a.answer_id AS selected_answer_id,
+        a.answer_text,
+        a.is_correct,
+        ua.submitted_at
+    FROM 
+        question qn
+    JOIN 
+        user_answer ua ON ua.question_id = qn.question_id AND ua.user_id = ${userId}
+    JOIN 
+        answer a ON a.answer_id = ua.selected_answer_id
+    WHERE 
+        qn.quiz_id = ${quizId} AND qn.is_deleted = false
+        ORDER BY qn.question_number ASC
+`;
+
+# Get feedback for a user's quiz submission.
+#
+# + quizId - Quiz ID
+# + userId - User ID
+# + return - SQL parameterized query
+isolated function getUserFeedbackQuery(int quizId, int userId) returns sql:ParameterizedQuery => `
+    SELECT 
+        feedback_id, 
+        quiz_id, 
+        user_id, 
+        feedback_text, 
+        created_at
+    FROM 
+        quiz_feedback
+    WHERE 
+        quiz_id = ${quizId} 
+        AND user_id = ${userId}
+`;
+
+# Get all feedback submissions for a quiz.
+#
+# + quizId - Quiz ID
+# + return - SQL parameterized query
+isolated function getAllFeedbackForQuizQuery(int quizId) returns sql:ParameterizedQuery => `
+    SELECT
+        qf.feedback_id,
+        qf.quiz_id,
+        qf.user_id,
+        CONCAT(u.first_name, ' ', u.last_name) AS user_name,
+        u.email                                AS user_email,
+        qf.feedback_text,
+        qf.created_at
+    FROM 
+        quiz_feedback qf
+    JOIN 
+        user u ON u.user_id = qf.user_id
+    WHERE 
+        qf.quiz_id = ${quizId}
+        ORDER BY qf.created_at DESC
+`;
+
+# Get quiz title by ID.
+#
+# + quizId - Quiz ID
+# + return - SQL parameterized query
+isolated function getQuizTitleQuery(int quizId) returns sql:ParameterizedQuery => `
+    SELECT 
+        title 
+    FROM quiz 
+    WHERE quiz_id = ${quizId} AND is_deleted = false
+`;
+
+# Get assigned user IDs for a quiz.
+#
+# + quizId - Quiz ID
+# + return - SQL parameterized query
+isolated function getAssignedUserIdsQuery(int quizId) returns sql:ParameterizedQuery => `
+    SELECT 
+        assigned_user_ids 
+    FROM quiz 
+    WHERE quiz_id = ${quizId} AND is_deleted = false
+`;
+
