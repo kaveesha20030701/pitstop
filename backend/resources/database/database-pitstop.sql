@@ -331,19 +331,23 @@ CREATE TABLE `tag` (
 ALTER TABLE `tag`
 MODIFY COLUMN `tag_name` VARCHAR(255) COLLATE utf8mb4_bin NOT NULL;
 
-CREATE TABLE `answer` (
-  `answer_id` int NOT NULL AUTO_INCREMENT,
-  `question_id` int NOT NULL,
-  `answer_text` text NOT NULL,
-  `is_correct` tinyint(1) NOT NULL DEFAULT '0',
+CREATE TABLE `quiz` (
+  `quiz_id` int NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL,
+  `description` text,
+  `thumbnail` varchar(500) DEFAULT NULL,
+  `passing_score` int NOT NULL DEFAULT '70' COMMENT 'Minimum % to pass',
+  `due_date` timestamp NULL DEFAULT NULL,
+  `assigned_user_ids` json DEFAULT NULL COMMENT 'Array of user IDs this quiz is assigned',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `status` varchar(20) NOT NULL DEFAULT 'DRAFTED',
   `created_by` varchar(50) NOT NULL,
   `updated_by` varchar(50) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`answer_id`),
-  KEY `question_id` (`question_id`),
-  CONSTRAINT `answer_ibfk_1` FOREIGN KEY (`question_id`) REFERENCES `question` (`question_id`)
+  PRIMARY KEY (`quiz_id`)
 );
+
 CREATE TABLE `question` (
   `question_id` int NOT NULL AUTO_INCREMENT,
   `question_number` int NOT NULL COMMENT 'Display number scoped per quiz (1, 2, 3...)',
@@ -362,21 +366,18 @@ CREATE TABLE `question` (
   CONSTRAINT `question_ibfk_1` FOREIGN KEY (`quiz_id`) REFERENCES `quiz` (`quiz_id`)
 ) ;
 
-CREATE TABLE `quiz` (
-  `quiz_id` int NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) NOT NULL,
-  `description` text,
-  `thumbnail` varchar(500) DEFAULT NULL,
-  `passing_score` int NOT NULL DEFAULT '70' COMMENT 'Minimum % to pass',
-  `due_date` timestamp NULL DEFAULT NULL,
-  `assigned_user_ids` json DEFAULT NULL COMMENT 'Array of user IDs this quiz is assigned',
-  `is_deleted` tinyint(1) NOT NULL DEFAULT '0',
-  `status` varchar(20) NOT NULL DEFAULT 'DRAFTED',
+CREATE TABLE `answer` (
+  `answer_id` int NOT NULL AUTO_INCREMENT,
+  `question_id` int NOT NULL,
+  `answer_text` text NOT NULL,
+  `is_correct` tinyint(1) NOT NULL DEFAULT '0',
   `created_by` varchar(50) NOT NULL,
   `updated_by` varchar(50) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`quiz_id`)
+  PRIMARY KEY (`answer_id`),
+  KEY `question_id` (`question_id`),
+  CONSTRAINT `answer_ibfk_1` FOREIGN KEY (`question_id`) REFERENCES `question` (`question_id`)
 );
 
 CREATE TABLE `quiz_feedback` (

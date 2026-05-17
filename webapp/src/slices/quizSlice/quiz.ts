@@ -174,15 +174,15 @@ export const fetchEmployeesByEmails = createAsyncThunk(
   async (emails: string[]) => {
     const responses = await Promise.all(
       emails.map(async (email) => {
-        if (!email) return { email, team: "—", location: "—" };
+        if (!email) return { email, team: "—", subteam: "—" };
         try {
           const resp = await ApiService.getInstance().get(
             AppConfig.serviceUrls.getEmployeeInfo + encodeURIComponent(email),
           );
           const data = resp?.data ?? {};
-          return { email, team: data.team ?? "—", location: data.location ?? "—" };
+          return { email, team: data.team ?? "—", subteam: data.subTeam ?? "—" };
         } catch {
-          return { email, team: "—", location: "—" };
+          return { email, team: "—", subteam: "—" };
         }
       }),
     );

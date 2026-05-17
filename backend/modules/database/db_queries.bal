@@ -1972,6 +1972,42 @@ isolated function getQuizStatusQuery(int quizId) returns sql:ParameterizedQuery 
         AND is_deleted = false
 `;
 
+# Get the status of a quiz by question ID.
+#
+# + questionId - Question ID
+# + return - SQL parameterized query
+isolated function getQuizStatusByQuestionIdQuery(int questionId) returns sql:ParameterizedQuery => `
+    SELECT 
+        qz.status
+    FROM 
+        quiz qz
+    JOIN 
+        question q ON qz.quiz_id = q.quiz_id
+    WHERE 
+        q.question_id = ${questionId} 
+        AND qz.is_deleted = false 
+        AND q.is_deleted = false
+`;
+
+# Get the status of a quiz by answer ID.
+#
+# + answerId - Answer ID
+# + return - SQL parameterized query
+isolated function getQuizStatusByAnswerIdQuery(int answerId) returns sql:ParameterizedQuery => `
+    SELECT 
+        qz.status
+    FROM 
+        quiz qz
+    JOIN 
+        question q ON qz.quiz_id = q.quiz_id
+    JOIN 
+        answer a ON q.question_id = a.question_id
+    WHERE 
+        a.answer_id = ${answerId} 
+        AND qz.is_deleted = false 
+        AND q.is_deleted = false
+`;
+
 # Get quiz details by ID.
 #
 # + quizId - Quiz ID

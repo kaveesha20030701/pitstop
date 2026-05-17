@@ -200,20 +200,21 @@ const QuizDialogBox = ({
 
         <Box>
           <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 0.75 }}>
-            Due date and time
+            Due date
           </Typography>
           <TextField
-            type="datetime-local"
+            type="date"
             value={formDueDate}
             onChange={(e) => setFormDueDate(e.target.value)}
             fullWidth
             size="small"
             required
             InputLabelProps={{ shrink: true }}
+            inputProps={{ min: new Date().toISOString().slice(0, 10) }}
             sx={{ ...inputSx, maxWidth: 240 }}
           />
           <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-            After this date and time the quiz disappears from the user dashboard.
+            After this date the quiz disappears from the user dashboard.
           </Typography>
         </Box>
 
@@ -251,7 +252,7 @@ const QuizDialogBox = ({
                   key={qIdx}
                   sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2, p: 2 }}
                 >
-                  {/* ── Question header ── */}
+                  {/* Question header */}
                   <Box
                     sx={{
                       display: "flex",
@@ -260,7 +261,7 @@ const QuizDialogBox = ({
                       mb: 1.5,
                     }}
                   >
-                    <Typography variant="subtitle2" fontWeight={600} color="primary">
+                    <Typography variant="subtitle2" fontWeight={600}>
                       Question {qIdx + 1}
                     </Typography>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -285,7 +286,7 @@ const QuizDialogBox = ({
                     </Box>
                   </Box>
 
-                  {/* ── Question prompt ── */}
+                  {/* Question prompt*/}
                   <TextField
                     placeholder="Type the question prompt"
                     value={q.text}

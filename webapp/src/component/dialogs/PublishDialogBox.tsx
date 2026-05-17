@@ -31,9 +31,10 @@ interface PublishDialogBoxProps {
   handleClose: () => void;
   quizId?: number;
   quizTitle?: string;
+  onPublishAndAssign?: () => void;
 }
 
-const PublishDialogBox = ({ open, handleClose, quizId, quizTitle }: PublishDialogBoxProps) => {
+const PublishDialogBox = ({ open, handleClose, quizId, quizTitle, onPublishAndAssign }: PublishDialogBoxProps) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
 
@@ -41,6 +42,12 @@ const PublishDialogBox = ({ open, handleClose, quizId, quizTitle }: PublishDialo
     if (quizId == null) return;
     handleClose();
     dispatch(publishQuiz(quizId));
+  };
+
+  const publishAndAssignHandler = () => {
+    if (quizId == null) return;
+    handleClose();
+    if (onPublishAndAssign) onPublishAndAssign();
   };
 
   return (
@@ -136,7 +143,23 @@ const PublishDialogBox = ({ open, handleClose, quizId, quizTitle }: PublishDialo
             color: theme.palette.common.white,
           }}
         >
-          Publish Quiz
+          Publish
+        </Button>
+        <Button
+          variant="contained"
+          onClick={publishAndAssignHandler}
+          sx={{
+            borderRadius: 4,
+            textTransform: "none",
+            px: 3,
+            backgroundColor: theme.palette.primary.main,
+            "&:hover": {
+              backgroundColor: theme.palette.primary.dark,
+            },
+            color: theme.palette.common.white,
+          }}
+        >
+          Publish & Assign
         </Button>
       </DialogActions>
     </Dialog>

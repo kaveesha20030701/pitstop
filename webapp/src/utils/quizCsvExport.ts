@@ -19,7 +19,7 @@ import { UserQuizAnalytics } from "@/types/types";
 export const exportAnalyticsToCSV = (
   analytics: UserQuizAnalytics[],
   quizTitle: string,
-  employeeInfos: { email: string; team: string; location: string }[] = [],
+  employeeInfos: { email: string; team: string; subteam: string }[] = [],
   answerSummaries: Record<number, string> = {},
   isQuizOverdue: boolean = false,
 ) => {
@@ -34,8 +34,12 @@ export const exportAnalyticsToCSV = (
     "Answers",
   ];
 
-  const rows = analytics.map((row, idx) => {
-    const emp = employeeInfos[idx] || { team: "—", location: "—", email: "" };
+  const rows = analytics.map((row) => {
+    const emp = employeeInfos.find((e) => e.email === row.userEmail) || {
+      team: "—",
+      subteam: "—",
+      email: "",
+    };
     const attempted = !!row.submittedAt;
     const status = attempted
       ? row.passed
@@ -48,17 +52,25 @@ export const exportAnalyticsToCSV = (
       row.userName || "—",
       row.userEmail || "—",
       emp.team,
-      emp.location,
+      emp.subteam,
       attempted ? row.scorePercentage : "N/A",
       status,
-      row.submittedAt ? new Date(row.submittedAt).toLocaleDateString() : "—",
+      row.submittedAt ? new Date(row.submittedAt).toLocaleDateString() : "N/A",
       attempted ? answerSummaries[row.userId] || "N/A" : "N/A",
     ];
   });
 
   const csvContent = [
     headers.map((h) => `"${h}"`).join(","),
-    ...rows.map((r) => r.map((cell) => `"${cell}"`).join(",")),
+    ...rows.map((r) =>
+      r
+        .map((cell) => {
+          const cellStr = cell === null || cell === undefined ? "" : String(cell);
+          const escaped = cellStr.replace(/"/g, '""');
+          return `"${escaped}"`;
+        })
+        .join(","),
+    ),
   ].join("\n");
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });

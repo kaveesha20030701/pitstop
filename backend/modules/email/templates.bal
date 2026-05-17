@@ -3843,7 +3843,7 @@ public final string quizAssignmentTemplate = string `
                                     text-align: left;
                                   "
                                 >
-                                  <strong>Time Limit: </strong>
+                                  <strong>Expected time to complete: </strong>
                                   <!-- [TIME_LIMIT] -->
                                 </p>
                               </li>

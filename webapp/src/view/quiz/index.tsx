@@ -38,6 +38,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
@@ -77,7 +78,7 @@ import type {
 import { ADMIN_QUIZZES_PER_PAGE } from "@config/constant";
 import AssignQuizModal from "./AssignQuizModal";
 import { exportAnalyticsToCSV } from "@utils/quizCsvExport";
-import { emptyQuestion, toDateTimeLocalValue } from "@utils/utils";
+import { emptyQuestion, toDateValue } from "@utils/utils";
 import { QuizAnswerAnalysis } from "./components/QuizAnswerAnalysis";
 
 const QuizAdminDashboard: React.FC = () => {
@@ -158,28 +159,17 @@ const QuizAdminDashboard: React.FC = () => {
               fetchUserDrillDown({ quizId: analyticsQuizId!, userId: row.userId }),
             ).unwrap();
             const answers = drillDownResult.answers ?? [];
-            const groupedAnswers = new Map<number, string[]>();
 
-            answers.forEach((answer) => {
-              const response = answer.selectedAnswerText || answer.selectedOptionText || "N/A";
-              const current = groupedAnswers.get(answer.questionNumber) || [];
+            const wrongAnswers = answers
+              .filter((a) => a && a.isCorrect === false)
+              .sort((a, b) => a.questionNumber - b.questionNumber)
+              .map((a) => {
+                const response =
+                  a.selectedAnswerText ?? a.selectedOptionText ?? a.selectedAnswerId ?? "N/A";
+                return { [`Q${a.questionNumber}`]: response };
+              });
 
-              if (!current.includes(response)) {
-                current.push(response);
-              }
-
-              groupedAnswers.set(answer.questionNumber, current);
-            });
-
-            const summary = Array.from(groupedAnswers.entries())
-              .sort(
-                ([firstQuestionNumber], [secondQuestionNumber]) =>
-                  firstQuestionNumber - secondQuestionNumber,
-              )
-              .map(([questionNumber, responses]) => `Q${questionNumber}: ${responses.join(", ")}`)
-              .join(" | ");
-
-            return [row.userId, summary || "N/A"] as const;
+            return [row.userId, wrongAnswers.length > 0 ? JSON.stringify(wrongAnswers) : "N/A"] as const;
           } catch {
             return [row.userId, "N/A"] as const;
           }
@@ -277,7 +267,7 @@ const QuizAdminDashboard: React.FC = () => {
     setEditingQuiz(quiz);
     setFormTitle(quiz.title);
     setFormDescription(quiz.description || "");
-    setFormDueDate(quiz.dueDate ? toDateTimeLocalValue(quiz.dueDate) : "");
+    setFormDueDate(quiz.dueDate ? toDateValue(quiz.dueDate) : "");
     setFormPassingScore(quiz.passingScore ?? "");
     setIsLoadingQuestions(true);
     setFormQuestions([]); 
@@ -599,11 +589,6 @@ const QuizAdminDashboard: React.FC = () => {
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="caption" color="text.secondary">
                             {quiz.totalQuestions} questions
-                            {quiz.dueDate &&
-                              ` · Due ${new Date(quiz.dueDate).toLocaleDateString("en-US", {
-                                month: "short",
-                                day: "numeric",
-                              })}`}
                           </Typography>
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
                             <Typography variant="subtitle1" fontWeight={600} color="text.primary">
@@ -621,6 +606,22 @@ const QuizAdminDashboard: React.FC = () => {
                                 height: 20,
                               }}
                             />
+                            {quiz.dueDate && (
+                              <Chip
+                                label={`Due ${new Date(quiz.dueDate).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  day: "numeric",
+                                })}`}
+                                size="small"
+                                sx={{
+                                  backgroundColor: alpha(theme.palette.info.main, 0.12),
+                                  color: theme.palette.info.main,
+                                  fontWeight: 600,
+                                  fontSize: "0.7rem",
+                                  height: 20,
+                                }}
+                              />
+                            )}
                             {!!quiz.dueDate && new Date(quiz.dueDate) < new Date() && (
                               <Chip
                                 label="Overdue"
@@ -695,22 +696,31 @@ const QuizAdminDashboard: React.FC = () => {
                             </Button>
                           )}
                           {quiz.status !== "PUBLISHED" && (
-                            <Button
-                              size="small"
-                              variant="contained"
-                              onClick={() => handlePublish(quiz.quizId)}
-                              sx={{
-                                textTransform: "none",
-                                borderRadius: 8,
-                                backgroundColor: theme.palette.primary.main,
-                                color: "#fff",
-                                "&:hover": {
-                                  backgroundColor: theme.palette.primary.dark,
-                                },
-                              }}
-                            >
-                              Publish
-                            </Button>
+                            <Tooltip title={quiz.totalQuestions === 0 ? "Add questions to publish" : ""} arrow placement="top">
+                              <span>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  disabled={quiz.totalQuestions === 0}
+                                  onClick={() => handlePublish(quiz.quizId)}
+                                  sx={{
+                                    textTransform: "none",
+                                    borderRadius: 8,
+                                    backgroundColor: theme.palette.primary.main,
+                                    color: "#fff",
+                                    "&:hover": {
+                                      backgroundColor: theme.palette.primary.dark,
+                                    },
+                                    "&.Mui-disabled": {
+                                      backgroundColor: theme.palette.action.disabledBackground,
+                                      color: theme.palette.action.disabled,
+                                    },
+                                  }}
+                                >
+                                  Publish
+                                </Button>
+                              </span>
+                            </Tooltip>
                           )}
                           {quiz.status !== "PUBLISHED" && (
                             <Button
@@ -812,6 +822,14 @@ const QuizAdminDashboard: React.FC = () => {
         }}
         quizId={selectedQuiz?.quizId}
         quizTitle={selectedQuiz?.title}
+        onPublishAndAssign={() => {
+          if (selectedQuiz) {
+            const quiz = adminQuizzes.find((q) => q.quizId === selectedQuiz.quizId);
+            if (quiz) {
+              setAssignQuiz(quiz);
+            }
+          }
+        }}
       />
 
       <Dialog

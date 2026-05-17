@@ -174,7 +174,7 @@ export const emptyQuestion = (): QuestionFormData => ({
   refLinks: [],
 });
 
-export const toDateTimeLocalValue = (value: string): string => {
+export const toDateValue = (value: string): string => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return "";
@@ -184,8 +184,6 @@ export const toDateTimeLocalValue = (value: string): string => {
   const year = date.getFullYear();
   const month = pad(date.getMonth() + 1);
   const day = pad(date.getDate());
-  const hours = pad(date.getHours());
-  const minutes = pad(date.getMinutes());
 
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  return `${year}-${month}-${day}`;
 };

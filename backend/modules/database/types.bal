@@ -509,7 +509,7 @@ public type AssignUsersPayload record {|
     # User IDs
     int[] userIds;
     # Time limit (minutes)
-    int timeLimitMinutes;
+    int? timeLimitMinutes = ();
 |};
 
 # Question record.

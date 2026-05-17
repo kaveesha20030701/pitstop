@@ -1155,3 +1155,19 @@ public isolated function getQuizStatus(int quizId) returns string|error {
     QuizStatus result = check dbClient->queryRow(getQuizStatusQuery(quizId));
     return result.status;
 }
+
+# Get quiz status for a question ID.
+# + questionId - Question ID
+# + return - Quiz status or error
+public isolated function getQuizStatusByQuestionId(int questionId) returns string|error {
+    QuizStatus result = check dbClient->queryRow(getQuizStatusByQuestionIdQuery(questionId));
+    return result.status;
+}
+
+# Get quiz status for an answer ID.
+# + answerId - Answer ID
+# + return - Quiz status or error
+public isolated function getQuizStatusByAnswerId(int answerId) returns string|error {
+    QuizStatus result = check dbClient->queryRow(getQuizStatusByAnswerIdQuery(answerId));
+    return result.status;
+}

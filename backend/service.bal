@@ -25,6 +25,7 @@ import pitstop.types;
 import ballerina/http;
 import ballerina/log;
 import ballerina/time;
+import ballerina/sql;
 
 configurable int recentContentsLimit = 6;
 configurable int suggestedContentsLimit = 12;
@@ -2293,7 +2294,7 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + payload - User assignment payload
     # + return - OK, not found, forbidden, or error response
     resource function patch quizzes/[int quizId]/assign(http:RequestContext ctx, database:AssignUsersPayload payload)
-        returns http:Ok|http:NotFound|http:Forbidden|http:InternalServerError {
+        returns http:Ok|http:NotFound|http:Forbidden|http:InternalServerError|http:BadRequest {
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
@@ -2342,6 +2343,17 @@ service http:InterceptableService / on new http:Listener(9090) {
             }
         }
 
+        int chosenTimeLimit = 0;
+        if newlyAssignedUserIds.length() > 0 {
+            int? timeLimitVal = payload.timeLimitMinutes;
+            if timeLimitVal is () {
+                return <http:BadRequest>{
+                    body: "Time limit is required when assigning new users."
+                };
+            }
+            chosenTimeLimit = timeLimitVal;
+        }
+
         int|error? result = database:assignUsersToQuiz(quizId, payload.userIds, userEmail);
         if result is error || result is () {
             string customError = "Error while assigning users to quiz";
@@ -2368,7 +2380,6 @@ service http:InterceptableService / on new http:Listener(9090) {
                         string userEmailAddress = user.email;
                         string emailSubject = string `[${appName}] New Quiz - ${quizDetails.title}`;
                         string renderedTemplate = renderAppName(email:quizAssignmentTemplate, appName);
-                        int chosenTimeLimit = payload.timeLimitMinutes;
                         string timeLimitText = string `${chosenTimeLimit} mins`;
                         string dueDateText = "Not specified";
                         string dueDateRaw = quizDetails.dueDate ?: "";
@@ -2562,7 +2573,7 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + questionId - Question ID
     # + return - OK, not found, forbidden, or error response
     resource function delete quizzes/[int quizId]/questions/[int questionId](http:RequestContext ctx)
-        returns http:Ok|http:NotFound|http:Forbidden|http:InternalServerError {
+        returns http:Ok|http:NotFound|http:Forbidden|http:BadRequest|http:InternalServerError {
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
@@ -2575,6 +2586,21 @@ service http:InterceptableService / on new http:Listener(9090) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
                 body: {message: constants:UNAUTHORIZED_ACCESS_ERROR}
+            };
+        }
+
+        string|error currentStatus = database:getQuizStatus(quizId);
+        if currentStatus is error {
+            string customError = "Error while fetching quiz status";
+            log:printError(customError, currentStatus);
+            return <http:InternalServerError>{
+                body: {message: customError}
+            };
+        }
+
+        if currentStatus == "PUBLISHED" {
+            return <http:BadRequest>{
+                body: {message: "Cannot delete questions from a published quiz."}
             };
         }
 
@@ -2734,7 +2760,7 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + answerId - Answer ID
     # + return - OK, not found, forbidden, or error response
     resource function delete questions/[int questionId]/answers/[int answerId](http:RequestContext ctx)
-        returns http:Ok|http:NotFound|http:Forbidden|http:InternalServerError {
+        returns http:Ok|http:NotFound|http:Forbidden|http:BadRequest|http:InternalServerError {
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
@@ -2747,6 +2773,23 @@ service http:InterceptableService / on new http:Listener(9090) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
                 body: {message: constants:UNAUTHORIZED_ACCESS_ERROR}
+            };
+        }
+
+        string|error currentStatus = database:getQuizStatusByAnswerId(answerId);
+        if currentStatus is string {
+            if currentStatus == "PUBLISHED" {
+                return <http:BadRequest>{
+                    body: {message: "Cannot delete answers from a published quiz."}
+                };
+            }
+        } else if currentStatus is sql:NoRowsError {
+            // Let the delete call handle the "not found" state.
+        } else {
+            string customError = "Error while fetching quiz status";
+            log:printError(customError, currentStatus);
+            return <http:InternalServerError>{
+                body: {message: customError}
             };
         }
 

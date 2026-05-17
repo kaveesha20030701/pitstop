@@ -56,9 +56,10 @@ import {
   fetchAssignedQuizUsers,
   fetchQuizEmployeeSuggestions,
   fetchQuizUserByEmail,
+  publishQuiz,
   resetAssign,
 } from "@slices/quizSlice/quiz";
-import { RootState, useAppDispatch, useAppSelector } from "@slices/store";
+import { useAppDispatch } from "@slices/store";
 
 interface Props {
   open: boolean;
@@ -69,7 +70,6 @@ interface Props {
 const AssignQuizModal: React.FC<Props> = ({ open, quiz, onClose }) => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
-  const assignStatus = useAppSelector((state: RootState) => state.quiz.assignStatus);
   const isDarkMode = theme.palette.mode === "dark";
 
   const dialogBackground = isDarkMode ? theme.palette.grey[900] : theme.palette.background.paper;
@@ -93,6 +93,7 @@ const AssignQuizModal: React.FC<Props> = ({ open, quiz, onClose }) => {
   const [suggestions, setSuggestions] = useState<EmployeeSuggestion[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const [isRemoving, setIsRemoving] = useState<number | null>(null);
+  const [isAssigning, setIsAssigning] = useState(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -237,11 +238,15 @@ const AssignQuizModal: React.FC<Props> = ({ open, quiz, onClose }) => {
 
   const handleAssign = async () => {
     if (!quiz || timeLimit === "" || Number.isNaN(Number(timeLimit))) return;
+    setIsAssigning(true);
     try {
       const allUserIds = [
         ...currentlyAssignedUsers.map((u) => u.userId),
         ...pendingUsers.map((u) => u.userId),
       ];
+      if (quiz.status === "DRAFTED") {
+        await dispatch(publishQuiz(quiz.quizId)).unwrap();
+      }
       await dispatch(
         assignUsersToQuiz({
           quizId: quiz.quizId,
@@ -253,6 +258,8 @@ const AssignQuizModal: React.FC<Props> = ({ open, quiz, onClose }) => {
       onClose();
     } catch (error) {
       console.error("Failed to assign users:", error);
+    } finally {
+      setIsAssigning(false);
     }
   };
 
@@ -265,7 +272,7 @@ const AssignQuizModal: React.FC<Props> = ({ open, quiz, onClose }) => {
     onClose();
   };
 
-  const isLoading = assignStatus === "loading" || loadingAssigned;
+  const isLoading = isAssigning || isRemoving !== null || loadingAssigned;
   const isAssignDisabled =
     isLoading || pendingUsers.length === 0 || timeLimit === "" || Number.isNaN(Number(timeLimit));
 
@@ -758,7 +765,7 @@ const AssignQuizModal: React.FC<Props> = ({ open, quiz, onClose }) => {
           onClick={handleAssign}
           disabled={isAssignDisabled}
           startIcon={
-            assignStatus === "loading" ? (
+            isAssigning ? (
               <CircularProgress size={16} color="inherit" />
             ) : (
               <SendIcon sx={{ fontSize: "16px !important" }} />
@@ -782,7 +789,7 @@ const AssignQuizModal: React.FC<Props> = ({ open, quiz, onClose }) => {
             },
           }}
         >
-          {assignStatus === "loading" ? "Assigning..." : "Assign"}
+          {isAssigning ? "Assigning..." : "Assign"}
         </Button>
       </DialogActions>
     </Dialog>
