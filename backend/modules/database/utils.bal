@@ -14,11 +14,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import pitstop.types;
 import pitstop.constants;
+import pitstop.types;
 
-import ballerina/lang.regexp;
 import ballerina/lang.'int as langint;
+import ballerina/lang.regexp;
 import ballerina/log;
 import ballerina/sql;
 import ballerina/time;
@@ -309,13 +309,11 @@ public isolated function formatDateTime(string? dateTimeStr) returns string? {
 # + return - Created quiz ID or error
 isolated function createQuizWithQuestionsAndAnswers(QuizPayload quiz, string createdBy) returns int|error {
     int quizId;
-    
+
     transaction {
-        // Create base quiz record
         sql:ExecutionResult result = check dbClient->execute(createQuizQuery(quiz, createdBy));
         quizId = check result.lastInsertId.ensureType(int);
 
-        // Process each question
         foreach int i in 0 ..< quiz.questions.length() {
             var q = quiz.questions[i];
             QuestionPayload qPayload = {
@@ -326,7 +324,6 @@ isolated function createQuizWithQuestionsAndAnswers(QuizPayload quiz, string cre
             };
             int questionId = check createQuestion(quizId, qPayload, createdBy);
 
-            // Process each answer for this question
             foreach var a in q.answers {
                 AnswerPayload aPayload = {
                     answerText: a.text,
@@ -335,37 +332,32 @@ isolated function createQuizWithQuestionsAndAnswers(QuizPayload quiz, string cre
                 _ = check createAnswer(questionId, aPayload, createdBy);
             }
         }
-        
+
         check commit;
     }
-    
+
     return quizId;
 }
 
 # Orchestrates quiz update with nested questions and answers in a single transaction.
-# 
+#
 # + quizId - Quiz ID to update
 # + payload - Updated quiz payload with nested questions and answers
 # + updatedBy - User email who updated the quiz
 # + return - Total affected rows for the quiz update or error
 isolated function updateQuizWithQuestionsAndAnswers(int quizId, UpdateQuizPayload payload, string updatedBy) returns int|error? {
     int totalAffectedRows = 0;
-    
+
     transaction {
-        // Update base quiz record
         sql:ExecutionResult result = check dbClient->execute(updateQuizQuery(quizId, payload, updatedBy));
         totalAffectedRows = check result.affectedRowCount.ensureType(int);
 
-        // Check if questions need to be updated
         NestedQuestionPayload[]? questions = payload.questions;
         if questions is NestedQuestionPayload[] {
-            // Delete existing answers first (FK constraint)
             _ = check dbClient->execute(deleteAnswersByQuizIdQuery(quizId));
-            
-            // Delete existing questions
+
             _ = check dbClient->execute(deleteQuestionsByQuizIdQuery(quizId));
 
-            // Recreate questions with new answers
             foreach int i in 0 ..< questions.length() {
                 var q = questions[i];
                 QuestionPayload qPayload = {
@@ -385,48 +377,43 @@ isolated function updateQuizWithQuestionsAndAnswers(int quizId, UpdateQuizPayloa
                 }
             }
         }
-        
+
         check commit;
     }
-    
+
     return totalAffectedRows;
 }
 
 # Submits user answers with conditional logic for feedback and re-attempts in a single transaction.
-# 
+#
 # + quizId - Quiz ID being attempted
 # + userId - User ID submitting the answers
 # + answers - Array of user answer payloads with question type and feedback
 # + return - Total affected rows for the submission or error
 isolated function submitUserAnswersWithFeedback(int quizId, int userId, UserAnswerPayload[] answers) returns int|error {
     int totalAffected = 0;
-    
+
     transaction {
-        // Process each answer with conditional logic
         foreach UserAnswerPayload ua in answers {
             if ua.questionType == "feedback" {
-                // Handle feedback submission
                 string feedbackText = ua.feedbackText ?: "";
                 sql:ExecutionResult fbResult = check dbClient->execute(
                     insertQuizFeedbackQuery(quizId, userId, feedbackText)
                 );
-                
+
                 int? rowCount = fbResult.affectedRowCount;
                 if rowCount is int {
                     totalAffected += rowCount;
                 }
             } else {
-                // Handle regular answer submission (handles re-attempts)
                 _ = check dbClient->execute(
                     deleteUserAnswersForQuestionQuery(quizId, userId, ua.questionId)
                 );
-                
-                // Insert one row per selected answer
                 foreach int answerId in ua.selectedAnswerIds {
                     sql:ExecutionResult result = check dbClient->execute(
                         insertUserAnswerQuery(quizId, userId, ua.questionId, answerId)
                     );
-                    
+
                     int? rowCount = result.affectedRowCount;
                     if rowCount is int {
                         totalAffected += rowCount;
@@ -434,10 +421,10 @@ isolated function submitUserAnswersWithFeedback(int quizId, int userId, UserAnsw
                 }
             }
         }
-        
+
         check commit;
     }
-    
+
     return totalAffected;
 }
 
@@ -487,7 +474,7 @@ isolated function buildQuizResultWithTransformations(int quizId, string userEmai
 # Transforms raw database rows of submitted answers into structured SubmittedAnswer records.
 # + resultStream - Stream of raw database rows for submitted answers
 # + return - Array of SubmittedAnswer or error
-isolated function transformRawAnswersToSubmittedAnswers(stream<record {}, sql:Error?> resultStream) 
+isolated function transformRawAnswersToSubmittedAnswers(stream<record {}, sql:Error?> resultStream)
         returns SubmittedAnswer[]|error {
     SubmittedAnswer[] answers = [];
 
@@ -548,9 +535,9 @@ public isolated function formatDueDateWithOffset(string dueDateStr, string? offs
     if !formatted.endsWith("Z") && !formatted.includes("+") {
         formatted = formatted + "Z";
     }
-    
+
     time:Utc utc = check time:utcFromString(formatted);
-    
+
     int offsetMinutes = 0;
     if offsetHeader is string {
         var parsedOffset = langint:fromString(offsetHeader);
@@ -558,11 +545,11 @@ public isolated function formatDueDateWithOffset(string dueDateStr, string? offs
             offsetMinutes = parsedOffset;
         }
     }
-    
+
     if offsetMinutes == 0 {
         return formatted;
     }
-    
+
     int offsetSeconds = -offsetMinutes * 60;
     time:Utc shifted = [utc[0] + offsetSeconds, utc[1]];
     string localUtcStr = time:utcToString(shifted);
@@ -570,10 +557,10 @@ public isolated function formatDueDateWithOffset(string dueDateStr, string? offs
     int absOffset = offsetMinutes < 0 ? -offsetMinutes : offsetMinutes;
     int offHours = absOffset / 60;
     int offMins = absOffset % 60;
-    
+
     string sign = offsetMinutes < 0 ? "+" : "-";
     string offHoursStr = offHours < 10 ? "0" + offHours.toString() : offHours.toString();
     string offMinsStr = offMins < 10 ? "0" + offMins.toString() : offMins.toString();
-    
+
     return string `${withoutZ}${sign}${offHoursStr}:${offMinsStr}`;
 }
