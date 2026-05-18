@@ -3834,19 +3834,6 @@ public final string quizAssignmentTemplate = string `
                                   <!-- [DUE_DATE] -->
                                 </p>
                               </li>
-                              <li>
-                                <p
-                                  style="
-                                    font-family: 'Roboto', Helvetica, sans-serif;
-                                    font-size: 17px;
-                                    color: #465868;
-                                    text-align: left;
-                                  "
-                                >
-                                  <strong>Expected time to complete: </strong>
-                                  <!-- [TIME_LIMIT] -->
-                                </p>
-                              </li>
                             </ul>
 
                             <p
@@ -3861,8 +3848,10 @@ public final string quizAssignmentTemplate = string `
                                 padding-top: 10px;
                               "
                             >
-                              Please ensure you complete the quiz before the due date and time. The quiz is expected 
-                              to take approximately <!-- [TIME_LIMIT] --> to complete. Click the button below to start.
+                              Please ensure you complete the quiz before the due date and time. 
+                              The estimated time to complete the quiz is <!-- [TIME_LIMIT] -->. 
+                              <br></br>
+                              Click the button below to start.
                             </p>
 
                             <p
