@@ -302,7 +302,7 @@ public isolated function formatDateTime(string? dateTimeStr) returns string? {
 }
 
 # Orchestrates quiz creation with nested questions and answers in a single transaction.
-# 
+#
 # + quiz - Quiz payload with nested questions and answers
 # + createdBy - User email who created the quiz
 # + return - Created quiz ID or error
@@ -342,7 +342,7 @@ isolated function createQuizWithQuestionsAndAnswers(QuizCreatePayload quiz, stri
 # + payload - Updated quiz payload with nested questions and answers
 # + updatedBy - User email who updated the quiz
 # + return - Total affected rows for the quiz update or error
-isolated function updateQuizWithQuestionsAndAnswers(int quizId, QuizUpdatePayload payload, string updatedBy) 
+isolated function updateQuizWithQuestionsAndAnswers(int quizId, QuizUpdatePayload payload, string updatedBy)
     returns int|error? {
 
     int totalAffectedRows = 0;
@@ -423,17 +423,14 @@ isolated function submitUserAnswersWithFeedback(int quizId, int userId, UserAnsw
 }
 
 # Builds the quiz result for a user.
-# 
+#
 # + quizId - Quiz ID for which to build the result
 # + userEmail - User email to fetch the result for
 # + return - QuizResult with transformations applied or error
 isolated function buildQuizResultWithTransformations(int quizId, string userEmail) returns QuizResult|error? {
-    QuizResultRaw|sql:Error raw = dbClient->queryRow(getUserResultQuery(quizId, userEmail));
-    if raw is sql:Error {
-        if raw is sql:NoRowsError {
-            return ();
-        }
-        return raw;
+    QuizResultRaw|sql:Error result = dbClient->queryRow(getUserResultQuery(quizId, userEmail));
+    if result is sql:Error {
+        return result is sql:NoRowsError ? () : result;
     }
 
     int|error? userId = getUserIdByUserEmail(userEmail);
@@ -455,19 +452,19 @@ isolated function buildQuizResultWithTransformations(int quizId, string userEmai
     }
 
     return {
-        totalQuestions: raw.totalQuestions,
-        correctAnswers: <int>(raw.correctAnswers ?: 0),
-        scorePercentage: raw.scorePercentage,
-        marksObtained: <int>(raw.marksObtained ?: 0),
-        passed: raw.passed == 1,
-        completed: raw.completed == 1,
+        totalQuestions: result.totalQuestions,
+        correctAnswers: <int>(result.correctAnswers ?: 0),
+        scorePercentage: result.scorePercentage,
+        marksObtained: <int>(result.marksObtained ?: 0),
+        passed: result.passed == 1,
+        completed: result.completed == 1,
         answers,
         feedback
     };
 }
 
 # Transforms raw database rows of submitted answers into structured SubmittedAnswer records.
-# 
+#
 # + resultStream - Stream of raw database rows for submitted answers
 # + return - Array of SubmittedAnswer or error
 isolated function transformRawAnswersToSubmittedAnswers(stream<record {}, sql:Error?> resultStream)

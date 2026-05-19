@@ -140,7 +140,7 @@ service http:InterceptableService / on new http:Listener(9090) {
         
         error? addResult = database:addUser(employee);
         if addResult is error {
-            log:printError("Error adding user to DB", addResult);
+            log:printError("Error occurred while adding user", addResult);
         }
         
         int|error? userIdResult = database:getUserIdByUserEmail(email);
