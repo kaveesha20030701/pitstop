@@ -58,6 +58,7 @@ import {
   fetchQuizUserByEmail,
   publishQuiz,
   resetAssign,
+  unassignUsersFromQuiz,
 } from "@slices/quizSlice/quiz";
 import { useAppDispatch } from "@slices/store";
 import { parseDateAsUtc } from "@utils/utils";
@@ -206,13 +207,7 @@ const AssignQuizModal: React.FC<Props> = ({ open, quiz, onClose }) => {
 
     setIsRemoving(userId);
     try {
-      const remainingUserIds = currentlyAssignedUsers
-        .filter((u) => u.userId !== userId)
-        .map((u) => u.userId);
-
-      await dispatch(
-        assignUsersToQuiz({ quizId: quiz.quizId, userIds: remainingUserIds }),
-      ).unwrap();
+      await dispatch(unassignUsersFromQuiz({ quizId: quiz.quizId, userIds: [userId] })).unwrap();
 
       setCurrentlyAssignedUsers((prev) => prev.filter((u) => u.userId !== userId));
       dispatch(fetchAdminQuizzes());

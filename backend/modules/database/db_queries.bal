@@ -1921,7 +1921,7 @@ isolated function deleteQuestionsByQuizIdQuery(int quizId) returns sql:Parameter
 # + userId - Optional User ID. When provided, returns only the user's published quizzes.
 # + return - SQL parameterized query
 isolated function getQuizzesQuery(int? userId = ()) returns sql:ParameterizedQuery {
-sql:ParameterizedQuery query = `
+    sql:ParameterizedQuery query = `
         SELECT
             q.quiz_id,
             q.title AS quiz_title,
@@ -1970,23 +1970,6 @@ isolated function getQuizStatusQuery(int quizId) returns sql:ParameterizedQuery 
     WHERE 
         quiz_id = ${quizId} 
         AND is_deleted = false
-`;
-
-# Get the status of a quiz by question ID.
-#
-# + questionId - Question ID
-# + return - SQL parameterized query
-isolated function getQuizStatusByQuestionIdQuery(int questionId) returns sql:ParameterizedQuery => `
-    SELECT
-        qz.quiz_id
-    FROM
-        quiz qz
-    JOIN
-        question q ON qz.quiz_id = q.quiz_id
-    WHERE
-        q.question_id = ${questionId}
-        AND qz.is_deleted = false
-        AND q.is_deleted = false
 `;
 
 # Get the status of a quiz by answer ID.
@@ -2081,13 +2064,13 @@ isolated function updateQuizQuery(int quizId, QuizUpdatePayload payload, string 
     return sql:queryConcat(q, ` WHERE quiz_id = ${quizId} AND is_deleted = false`);
 }
 
-# Assign users to a quiz.
+# Update assignees of a quiz.
 #
 # + quizId - Quiz ID
 # + userIds - Array of user IDs to assign
 # + updatedBy - User email who made the assignment
 # + return - SQL parameterized query
-isolated function assignUsersToQuizQuery(int quizId, int[] userIds, string updatedBy)
+isolated function updateAssigneesQuery(int quizId, int[] userIds, string updatedBy)
         returns sql:ParameterizedQuery => `
 
     UPDATE 
@@ -2134,6 +2117,28 @@ isolated function getQuestionsByQuizIdQuery(int quizId) returns sql:Parameterize
     FROM question
     WHERE quiz_id = ${quizId} AND is_deleted = false
     ORDER BY question_number ASC
+`;
+
+# Get question by ID.
+#
+# + questionId - Question ID
+# + return - SQL parameterized query
+isolated function getQuestionByIdQuery(int questionId) returns sql:ParameterizedQuery => `
+    SELECT
+        question_id,
+        question_number,
+        quiz_id,
+        question_text,
+        question_type,
+        COALESCE(ref_links, JSON_ARRAY()) AS ref_links,
+        is_deleted,
+        created_by,
+        updated_by,
+        created_at,
+        updated_at
+    FROM question
+    WHERE question_id = ${questionId}
+        AND is_deleted = false
 `;
 
 # Create a new question for a quiz.
@@ -2218,43 +2223,6 @@ isolated function deleteQuestionQuery(int questionId) returns sql:ParameterizedQ
         AND is_deleted = false
 `;
 
-# Get all answers for a question (public view - excludes is_correct).
-#
-# + questionId - Question ID
-# + return - SQL parameterized query
-isolated function getAnswersByQuestionIdPublicQuery(int questionId) returns sql:ParameterizedQuery => `
-    SELECT
-        answer_id, 
-        question_id, 
-        answer_text,
-        created_at, 
-        updated_at
-    FROM 
-        answer
-    WHERE 
-        question_id = ${questionId}
-`;
-
-# Get all answers for a question (includes is_correct).
-#
-# + questionId - Question ID
-# + return - SQL parameterized query
-isolated function getAnswersByQuestionIdQuery(int questionId) returns sql:ParameterizedQuery => `
-    SELECT
-        answer_id, 
-        question_id, 
-        answer_text, 
-        is_correct,
-        created_by, 
-        updated_by, 
-        created_at, 
-        updated_at
-    FROM 
-        answer
-    WHERE 
-        question_id = ${questionId}
-`;
-
 # Create a new answer for a question.
 #
 # + questionId - Question ID
@@ -2276,6 +2244,24 @@ isolated function createAnswerQuery(int questionId, AnswerPayload a, string crea
         ${createdBy}, 
         ${createdBy}
     )
+`;
+
+# Get answer by ID.
+#
+# + answerId - Answer ID
+# + return - SQL parameterized query
+isolated function getAnswerByIdQuery(int answerId) returns sql:ParameterizedQuery => `
+    SELECT
+        answer_id,
+        question_id,
+        answer_text,
+        is_correct,
+        created_by,
+        updated_by,
+        created_at,
+        updated_at
+    FROM answer
+    WHERE answer_id = ${answerId}
 `;
 
 # Update an answer with selective field updates.

@@ -389,6 +389,7 @@ CREATE TABLE `quiz_feedback` (
   PRIMARY KEY (`feedback_id`),
   KEY `idx_quiz_id` (`quiz_id`),
   CONSTRAINT `fk_quiz_feedback_quiz` FOREIGN KEY (`quiz_id`) REFERENCES `quiz` (`quiz_id`)
+  CONSTRAINT `fk_quiz_feedback_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`)
 ) ;
 
 CREATE TABLE `user_answer` (

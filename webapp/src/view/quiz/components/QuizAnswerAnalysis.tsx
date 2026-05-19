@@ -22,15 +22,20 @@ import { alpha } from "@mui/material/styles";
 import React from "react";
 
 import type { QuizAnswerOption, SubmittedAnswer } from "@/types/types";
-import { fetchAnswerOptions } from "@slices/quizSlice/quiz";
+import { fetchAdminAnswerOptionsForQuiz } from "@slices/quizSlice/quiz";
 import type { AppDispatch } from "@slices/store";
 
 interface QuizAnswerAnalysisProps {
+  quizId: number;
   drillDown: { answers: SubmittedAnswer[]; feedback: Record<string, unknown> };
   dispatch: AppDispatch;
 }
 
-export const QuizAnswerAnalysis: React.FC<QuizAnswerAnalysisProps> = ({ drillDown, dispatch }) => {
+export const QuizAnswerAnalysis: React.FC<QuizAnswerAnalysisProps> = ({
+  quizId,
+  drillDown,
+  dispatch,
+}) => {
   const theme = useTheme();
 
   const [correctMap, setCorrectMap] = React.useState<Record<number, string>>({});
@@ -49,29 +54,28 @@ export const QuizAnswerAnalysis: React.FC<QuizAnswerAnalysisProps> = ({ drillDow
 
     const fetchAll = async () => {
       const newMap: Record<number, string> = {};
-      await Promise.all(
-        wrongQuestionIds.map(async (qId) => {
-          try {
-            const res = await dispatch(fetchAnswerOptions(qId)).unwrap();
-            const options: (QuizAnswerOption & { isCorrect?: boolean })[] =
-              res.options ?? res ?? [];
-            const correctOpts = options.filter(
-              (o: QuizAnswerOption & { isCorrect?: boolean }) => o.isCorrect,
-            );
-            if (correctOpts.length > 0) {
-              newMap[qId] = correctOpts
-                .map((o: QuizAnswerOption & { isCorrect?: boolean }) => o.answerText ?? "")
-                .join(", ");
-            }
-          } catch {
-            // skip if error occurs, correct answer will not be shown
+      try {
+        const res = await dispatch(fetchAdminAnswerOptionsForQuiz(quizId)).unwrap();
+        const options = (res ?? []) as (QuizAnswerOption & { isCorrect?: boolean })[];
+
+        wrongQuestionIds.forEach((qId) => {
+          const correctOpts = options.filter(
+            (o: QuizAnswerOption & { isCorrect?: boolean }) => o.questionId === qId && o.isCorrect,
+          );
+          if (correctOpts.length > 0) {
+            newMap[qId] = correctOpts
+              .map((o: QuizAnswerOption & { isCorrect?: boolean }) => o.answerText ?? "")
+              .join(", ");
           }
-        }),
-      );
+        });
+      } catch {
+        // skip if error occurs, correct answer will not be shown
+      }
+
       setCorrectMap(newMap);
     };
     fetchAll();
-  }, [drillDown.answers, dispatch]);
+  }, [drillDown.answers, dispatch, quizId]);
 
   const grouped = drillDown.answers.reduce(
     (acc, ans) => {

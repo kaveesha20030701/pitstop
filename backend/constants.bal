@@ -26,3 +26,5 @@ const RECENT_CONTENT_SECTION_TYPE = "recent_content";
 
 const DEFAULT_CONTENTS_LIMIT = 50;
 const DEFAULT_CONTENTS_OFFSET = 0;
+
+const TIMEZONE_OFFSET_HEADER = "x-timezone-offset";

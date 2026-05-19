@@ -79,60 +79,49 @@ service http:InterceptableService / on new http:Listener(9090) {
     #
     # + userId - User ID
     # + return - User object or error
-    resource function get users/[int userId]() returns types:User|http:NotFound|http:InternalServerError {
-        types:User|error? userResult = database:getUserById(userId);
-        if userResult is () {
-            return <http:NotFound>{ body: "User not found" };
-        }
-        if userResult is error {
-            log:printError("Error while fetching user details", userResult);
-            return <http:InternalServerError>{ body: "Error while fetching user details" };
-        }
-        return userResult;
-    }
+    resource function get users/[int userId](http:RequestContext ctx)
+        returns types:User|http:NotFound|http:Forbidden|http:InternalServerError {
 
-    # Retrieve the current logged-in user based on token email.
-    #
-    # + ctx - Request context
-    # + return - User object or error response
-    resource function get users/me(http:RequestContext ctx) returns types:User|http:NotFound|http:InternalServerError {
         string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
         if userEmail is error {
-            log:printError("Error while fetching user email from token", userEmail);
-            return <http:InternalServerError>{ body: "Error while fetching user email from token" };
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: constants:GET_USER_ID_ERROR
+            };
         }
 
-        int|error? userIdResult = database:getUserIdByUserEmail(userEmail);
-        if userIdResult is int {
-            types:User|error? userResult = database:getUserById(userIdResult);
-            if userResult is types:User {
-                return userResult;
-            }
+        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
+        if userGroups is error {
+            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
+            return <http:InternalServerError>{
+                body: constants:GET_USER_ROLE_ERROR
+            };
+        }
+
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
+            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
+            return http:FORBIDDEN;
         }
         
-        // If not found in DB, fetch from HR
-        entity:Employee|error employee = entity:getEmployee(userEmail);
-        if employee is error {
-            log:printError("Error fetching employee from HR", employee);
-            return <http:NotFound>{ body: "Employee not found" };
+        types:User|error? userResult = database:getUserById(userId);
+
+        if userResult is () {
+            string customError = "User not found";
+            log:printError(customError);
+            return <http:NotFound> {
+                body: customError
+            };
         }
-        
-        // Add to DB
-        error? addResult = database:addUser(employee);
-        if addResult is error {
-            log:printError("Error adding user to DB", addResult);
-            return <http:InternalServerError>{ body: "Error adding user" };
+
+        if userResult is error {
+            string customError = "Error while fetching user details";
+            log:printError(customError, userResult);
+            return <http:InternalServerError> {
+                body: customError
+            };
         }
-        
-        // Fetch again to get the generated ID
-        userIdResult = database:getUserIdByUserEmail(userEmail);
-        if userIdResult is int {
-            types:User|error? userResult = database:getUserById(userIdResult);
-            if userResult is types:User {
-                return userResult;
-            }
-        }
-        return <http:InternalServerError>{ body: "Failed to retrieve user after creation" };
+
+        return userResult;
     }
 
     # Retrieve basic information of a employee.
@@ -148,6 +137,17 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: customError
             };
         }
+        
+        error? addResult = database:addUser(employee);
+        if addResult is error {
+            log:printError("Error adding user to DB", addResult);
+        }
+        
+        int|error? userIdResult = database:getUserIdByUserEmail(email);
+        if userIdResult is int {
+            employee.userId = userIdResult;
+        }
+
         return employee;
     }
 
@@ -2036,13 +2036,33 @@ service http:InterceptableService / on new http:Listener(9090) {
 
         return http:OK;
     }
-    # Get quizzes.
+    # Get quizzes for the logged-in user. 
     #
     # + ctx - Request context
     # + req - HTTP request
     # + return - Quiz list or error response
-    resource function get quizzes(http:RequestContext ctx, http:Request req)
+    resource function get users/me/quizzes(http:RequestContext ctx, http:Request req)
         returns database:Quiz[]|http:InternalServerError {
+
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
+
+        int|error? userId = database:getUserIdByUserEmail(userEmail);
+        if userId is error {
+            log:printError(constants:GET_USER_ID_ERROR, userId);
+            return <http:InternalServerError>{
+                body: {message: "Error fetching user ID"}
+            };
+        }
+
+        if userId is () {
+            return[];
+        }
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
@@ -2052,19 +2072,6 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
-        if userEmail is error {
-            log:printError(constants:GET_USER_ID_ERROR, userEmail);
-            return <http:InternalServerError>{
-                body: {message: constants:GET_USER_ID_ERROR}
-            };
-        }
-        int|error? userId = database:getUserIdByUserEmail(userEmail);
-        if userId is () || userId is error {
-            return <http:InternalServerError>{
-                body: {message: "Error fetching user ID"}
-            };
-        }
         database:Quiz[]|error result = database:getQuizzes(userId);
         if result is error {
             string customError = "Error while fetching quizzes";
@@ -2075,12 +2082,12 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         string? offsetHeader = ();
-        string|error headerVal = req.getHeader("x-timezone-offset");
+        string|error headerVal = req.getHeader(TIMEZONE_OFFSET_HEADER);
         if headerVal is string {
             offsetHeader = headerVal;
         }
 
-        foreach var quiz in result {
+        foreach database:Quiz quiz in result {
             string? dueDate = quiz.dueDate;
             if dueDate is string {
                 string|error converted = database:formatDueDateWithOffset(dueDate, offsetHeader);
@@ -2098,9 +2105,29 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + ctx - Request context
     # + req - HTTP request
     # + return - Quiz list or error response
-    resource function get quizzes/admin(http:RequestContext ctx, http:Request req)
+    resource function get quizzes(http:RequestContext ctx, http:Request req)
         returns database:Quiz[]|http:Forbidden|http:InternalServerError {
+        
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
 
+        int|error? userId = database:getUserIdByUserEmail(userEmail);
+        if userId is error {
+            log:printError(constants:GET_USER_ID_ERROR, userId);
+            return <http:InternalServerError>{
+                body: {message: "Error fetching user ID"}
+            };
+        }
+
+        if userId is () {
+            return[];
+        }
+        
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
             log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
@@ -2110,8 +2137,9 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
+            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
-                body: {message: "Forbidden"}
+                body: {message: constants:UNAUTHORIZED_ACCESS_ERROR}
             };
         }
 
@@ -2125,12 +2153,12 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         string? offsetHeader = ();
-        string|error headerVal = req.getHeader("x-timezone-offset");
+        string|error headerVal = req.getHeader(TIMEZONE_OFFSET_HEADER);
         if headerVal is string {
             offsetHeader = headerVal;
         }
-
-        foreach var quiz in result {
+        
+        foreach database:Quiz quiz in result {
             string? dueDate = quiz.dueDate;
             if dueDate is string {
                 string|error converted = database:formatDueDateWithOffset(dueDate, offsetHeader);
@@ -2151,6 +2179,14 @@ service http:InterceptableService / on new http:Listener(9090) {
     resource function post quizzes(http:RequestContext ctx, database:QuizCreatePayload quiz)
         returns http:Created|http:Forbidden|http:InternalServerError {
 
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
+
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
             log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
@@ -2165,14 +2201,6 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
-        if userEmail is error {
-            log:printError(constants:GET_USER_ID_ERROR, userEmail);
-            return <http:InternalServerError>{
-                body: {message: constants:GET_USER_ID_ERROR}
-            };
-        }
-
         int|error result = database:createQuiz(quiz, userEmail);
         if result is error {
             string customError = "Error while creating quiz";
@@ -2181,6 +2209,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: customError}
             };
         }
+
         return http:CREATED;
     }
 
@@ -2193,6 +2222,14 @@ service http:InterceptableService / on new http:Listener(9090) {
     resource function patch quizzes/[int quizId](http:RequestContext ctx, database:QuizUpdatePayload payload)
         returns http:InternalServerError|http:BadRequest|http:NotFound|http:Ok|http:Forbidden {
 
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
+
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
             log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
@@ -2207,15 +2244,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
-        if userEmail is error {
-            log:printError(constants:GET_USER_ID_ERROR, userEmail);
-            return <http:InternalServerError>{
-                body: {message: constants:GET_USER_ID_ERROR}
-            };
-        }
-
-        string|error currentStatus = database:getQuizStatus(quizId);
+        database:QuizStatus|error currentStatus = database:getQuizStatus(quizId);
         if currentStatus is error {
             string customError = "Error while fetching quiz status";
             log:printError(customError, currentStatus);
@@ -2225,22 +2254,21 @@ service http:InterceptableService / on new http:Listener(9090) {
         }
 
         // If PUBLISHED — only allow status changes in the payload, block everything else
-        if currentStatus == "PUBLISHED" {
-            boolean hasOtherFields =
-                payload.title != () ||
-                payload.description != () ||
-                payload.thumbnail != () ||
-                payload.passingScore != () ||
-                payload.dueDate != () ||
-                payload.questions != () ||
-                payload.status != ();
+        if currentStatus.toString() == database:PUBLISHED {
+                boolean hasOtherFields =
+                    payload.title != () ||
+                    payload.description != () ||
+                    payload.thumbnail != () ||
+                    payload.passingScore != () ||
+                    payload.dueDate != () ||
+                    payload.questions != ();
 
-            if hasOtherFields {
-                return <http:BadRequest>{
-                    body: {message: "Cannot edit a published quiz. Only status changes are allowed."}
-                };
+                if hasOtherFields {
+                    return <http:BadRequest>{
+                        body: {message: "Cannot edit a published quiz."}
+                    };
+                }
             }
-        }
 
 
         int|error? result = database:updateQuiz(quizId, payload, userEmail);
@@ -2256,73 +2284,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: notFoundError}
             };
         }
-        return http:OK;
-    }
 
-    # Publish a quiz.
-    # Once published, the quiz cannot be reverted to draft.
-    #
-    # + ctx - Request context
-    # + quizId - Quiz ID
-    # + return - OK, not found, forbidden, bad request, or error response
-
-    resource function patch quizzes/[int quizId]/publish(http:RequestContext ctx)
-        returns http:Ok|http:NotFound|http:Forbidden|http:BadRequest|http:InternalServerError {
-
-        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
-        if userGroups is error {
-            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
-            return <http:InternalServerError>{
-                body: {message: constants:GET_USER_ROLE_ERROR}
-            };
-        }
-        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
-            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
-            return <http:Forbidden>{
-                body: {message: constants:UNAUTHORIZED_ACCESS_ERROR}
-            };
-        }
-
-        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
-        if userEmail is error {
-            log:printError(constants:GET_USER_ID_ERROR, userEmail);
-            return <http:InternalServerError>{
-                body: {message: constants:GET_USER_ID_ERROR}
-            };
-        }
-
-        string|error currentStatus = database:getQuizStatus(quizId);
-        if currentStatus is error {
-            string customError = "Error while fetching quiz status";
-            log:printError(customError, currentStatus);
-            return <http:InternalServerError>{
-                body: {message: customError}
-            };
-        }
-
-        if currentStatus == "PUBLISHED" {
-            return <http:BadRequest>{
-                body: {message: "Quiz is already published."}
-            };
-        }
-
-        database:QuizUpdatePayload publishPayload = {
-            status: "PUBLISHED"
-        };
-        
-        int|error? result = database:updateQuiz(quizId, publishPayload, userEmail);
-        if result is error || result is () {
-            string customError = "Error while publishing quiz";
-            log:printError(customError, result);
-            return <http:InternalServerError>{body: {message: customError}};
-        }
-        if result == 0 {
-            string notFoundError = "Quiz not found!";
-            log:printError(notFoundError);
-            return <http:NotFound>{
-                body: {message: notFoundError}
-            };
-        }
         return http:OK;
     }
 
@@ -2333,8 +2295,17 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + quizId - Quiz ID
     # + payload - User assignment payload
     # + return - OK, not found, forbidden, or error response
-    resource function patch quizzes/[int quizId]/assign(http:RequestContext ctx, database:AssignUsersPayload payload)
+    resource function post quizzes/[int quizId]/assignees(http:RequestContext ctx,
+            database:AssignUsersPayload payload)
         returns http:Ok|http:NotFound|http:Forbidden|http:InternalServerError|http:BadRequest {
+
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
@@ -2350,20 +2321,12 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
-        if userEmail is error {
-            log:printError(constants:GET_USER_ID_ERROR, userEmail);
-            return <http:InternalServerError>{
-                body: {message: constants:GET_USER_ID_ERROR}
-            };
-        }
-
-        // Fetch current assigned users to identify newly assigned ones
         int[]|error currentAssignedUserIds = database:getAssignedUserIds(quizId);
         if currentAssignedUserIds is error {
-            log:printError("Error fetching current assigned users", currentAssignedUserIds);
+            string customError = "Error fetching current assigned users";
+            log:printError(customError, currentAssignedUserIds);
             return <http:InternalServerError>{
-                body: {message: "Error fetching current assignments"}
+                body: {message: customError}
             };
         }
 
@@ -2381,17 +2344,6 @@ service http:InterceptableService / on new http:Listener(9090) {
             if currentAssignedUserIds.indexOf(userId) is () {
                 newlyAssignedUserIds.push(userId);
             }
-        }
-
-        int chosenTimeLimit = 0;
-        if newlyAssignedUserIds.length() > 0 {
-            int? timeLimitVal = payload.timeLimitMinutes;
-            if timeLimitVal is () {
-                return <http:BadRequest>{
-                    body: "Time limit is required when assigning new users."
-                };
-            }
-            chosenTimeLimit = timeLimitVal;
         }
 
         int|error? result = database:assignUsersToQuiz(quizId, payload.userIds, userEmail);
@@ -2420,23 +2372,13 @@ service http:InterceptableService / on new http:Listener(9090) {
                         string userEmailAddress = user.email;
                         string emailSubject = string `[${appName}] New Quiz - ${quizDetails.title}`;
                         string renderedTemplate = renderAppName(email:quizAssignmentTemplate, appName);
-                        string timeLimitText = string `${chosenTimeLimit} mins`;
-                        string dueDateText = "Not specified";
-                        string dueDateRaw = quizDetails.dueDate ?: "";
-                        if dueDateRaw != "" {
-                            int? spaceIndex = dueDateRaw.indexOf(" ");
-                            if spaceIndex is int && spaceIndex >= 0 {
-                                dueDateText = dueDateRaw.substring(0, spaceIndex);
-                            } else {
-                                dueDateText = dueDateRaw;
-                            }
-                        }
+                        string timeLimitText = string `${payload.timeLimitMinutes} mins`;
 
                         string|error content = email:bindKeyValues(renderedTemplate,
                             {
                                 "USER_NAME": string `${user.firstName}`,
                                 "QUIZ_TITLE": quizDetails.title,
-                                "DUE_DATE": dueDateText,
+                                "DUE_DATE": quizDetails.dueDate,
                                 "TIME_LIMIT": timeLimitText,
                                 "ASSIGNED_BY": employeeInfo.firstName + " " + employeeInfo.lastName,
                                 "QUIZ_LINK": string `${frontendBaseUrl}/my-board?quizId=${quizId}`
@@ -2463,13 +2405,21 @@ service http:InterceptableService / on new http:Listener(9090) {
         return http:OK;
     }
 
-    # Delete a quiz (admin only).
+    # Get all answers for a quiz (admin view).
     #
     # + ctx - Request context
     # + quizId - Quiz ID
-    # + return - OK, not found, forbidden, or error response
-    resource function delete quizzes/[int quizId](http:RequestContext ctx)
-        returns http:Ok|http:NotFound|http:Forbidden|http:InternalServerError {
+    # + return - Answer list or error response
+    resource function get quizzes/[int quizId]/answers(http:RequestContext ctx)
+            returns database:Answer[]|http:Forbidden|http:InternalServerError {
+
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
@@ -2478,6 +2428,154 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: constants:GET_USER_ROLE_ERROR}
             };
         }
+
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
+            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
+            return <http:Forbidden>{body: {message: constants:UNAUTHORIZED_ACCESS_ERROR}};
+        }
+
+        database:Answer[]|error result = database:getAnswersByQuizId(quizId);
+        if result is error {
+            string customError = "Error while fetching answers";
+            log:printError(customError, result);
+            return <http:InternalServerError>{body: {message: customError}};
+        }
+        return result;
+    }
+
+    # Get public answers for a quiz.
+    #
+    # + ctx - Request context
+    # + quizId - Quiz ID
+    # + return - Public answer list or error response
+    resource function get quizzes/[int quizId]/answers/users(http:RequestContext ctx)
+            returns database:AnswerPublic[]|http:InternalServerError {
+
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
+
+        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
+        if userGroups is error {
+            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ROLE_ERROR}
+            };
+        }
+
+        database:AnswerPublic[]|error result = database:getAnswersByQuizIdPublic(quizId);
+        if result is error {
+            string customError = "Error while fetching answers";
+            log:printError(customError, result);
+            return <http:InternalServerError>{body: {message: customError}};
+        }
+        return result;
+    }
+
+    # Unassign users from a quiz.
+    #
+    # + ctx - Request context
+    # + quizId - Quiz ID
+    # + payload - User unassignment payload
+    # + return - OK, not found, forbidden, or error response
+    resource function delete quizzes/[int quizId]/assignees(http:RequestContext ctx,
+            database:UnAssignUsersPayload payload)
+        returns http:Ok|http:NotFound|http:Forbidden|http:InternalServerError|http:BadRequest {
+
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
+
+        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
+        if userGroups is error {
+            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ROLE_ERROR}
+            };
+        }
+
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
+            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
+            return <http:Forbidden>{
+                body: {message: constants:UNAUTHORIZED_ACCESS_ERROR}
+            };
+        }
+
+        int[]|error currentAssignedUserIds = database:getAssignedUserIds(quizId);
+        if currentAssignedUserIds is error {
+            string customError = "Error fetching current assigned users";
+            log:printError(customError, currentAssignedUserIds);
+            return <http:InternalServerError>{
+                body: {message: customError}
+            };
+        }
+
+        int[] remainingUserIds = [];
+        foreach int assignedUserId in currentAssignedUserIds {
+            boolean shouldRemove = false;
+            foreach int userId in payload.userIds {
+                if userId == assignedUserId {
+                    shouldRemove = true;
+                    break;
+                }
+            }
+
+            if !shouldRemove {
+                remainingUserIds.push(assignedUserId);
+            }
+        }
+
+        int|error? result = database:assignUsersToQuiz(quizId, remainingUserIds, userEmail);
+        if result is error || result is () {
+            string customError = "Error while unassigning users from quiz";
+            log:printError(customError, result);
+            return <http:InternalServerError>{
+                body: {message: customError}
+            };
+        }
+        if result == 0 {
+            string notFoundError = "Quiz not found!";
+            log:printError(notFoundError);
+            return <http:NotFound>{
+                body: {message: notFoundError}
+            };
+        }
+
+        return http:OK;
+    }
+
+    # Delete a quiz (admin only).
+    #
+    # + ctx - Request context
+    # + quizId - Quiz ID
+    # + return - OK, not found, forbidden, or error response
+    resource function delete quizzes/[int quizId](http:RequestContext ctx)
+        returns http:Ok|http:NotFound|http:Forbidden|http:InternalServerError {
+
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
+
+        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
+        if userGroups is error {
+            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ROLE_ERROR}
+            };
+        }
+
         if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
@@ -2509,12 +2607,29 @@ service http:InterceptableService / on new http:Listener(9090) {
     resource function get quizzes/[int quizId]/questions(http:RequestContext ctx)
         returns database:Question[]|http:InternalServerError {
 
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
+
+        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
+        if userGroups is error {
+            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ROLE_ERROR}
+            };
+        }
+
         database:Question[]|error result = database:getQuestionsByQuizId(quizId);
         if result is error {
             string customError = "Error while fetching questions";
             log:printError(customError, result);
             return <http:InternalServerError>{body: {message: customError}};
         }
+
         return result;
     }
 
@@ -2524,22 +2639,9 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + quizId - Quiz ID
     # + payload - Question payload
     # + return - Created, forbidden, or error response
-    resource function post quizzes/[int quizId]/questions(http:RequestContext ctx, database:QuestionCreatePayload payload)
+    resource function post quizzes/[int quizId]/questions(http:RequestContext ctx, 
+            database:QuestionCreatePayload payload)
         returns http:Created|http:Forbidden|http:InternalServerError {
-
-        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
-        if userGroups is error {
-            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
-            return <http:InternalServerError>{
-                body: {message: constants:GET_USER_ROLE_ERROR}
-            };
-        }
-        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
-            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
-            return <http:Forbidden>{
-                body: {message: constants:UNAUTHORIZED_ACCESS_ERROR}
-            };
-        }
 
         string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
         if userEmail is error {
@@ -2549,12 +2651,28 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
+        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
+        if userGroups is error {
+            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ROLE_ERROR}
+            };
+        }
+
+        if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
+            log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
+            return <http:Forbidden>{
+                body: {message: constants:UNAUTHORIZED_ACCESS_ERROR}
+            };
+        }
+
         int|error result = database:createQuestion(quizId, payload, userEmail);
         if result is error {
             string customError = "Error while creating question";
             log:printError(customError, result);
             return <http:InternalServerError>{body: {message: customError}};
         }
+
         return http:CREATED;
     }
 
@@ -2568,6 +2686,14 @@ service http:InterceptableService / on new http:Listener(9090) {
     resource function patch quizzes/[int quizId]/questions/[int questionId](http:RequestContext ctx, database:QuestionUpdatePayload payload)
         returns http:Ok|http:NotFound|http:Forbidden|http:InternalServerError {
 
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
+
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
             log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
@@ -2575,6 +2701,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: constants:GET_USER_ROLE_ERROR}
             };
         }
+        
         if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
@@ -2582,11 +2709,17 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
-        if userEmail is error {
-            log:printError(constants:GET_USER_ID_ERROR, userEmail);
-            return <http:InternalServerError>{
-                body: {message: constants:GET_USER_ID_ERROR}
+        database:Question|error? question = database:getQuestionById(questionId);
+        if question is error {
+            string customError = "Error while fetching question";
+            log:printError(customError, question);
+            return <http:InternalServerError>{body: {message: customError}};
+        }
+        if question is () || question.quizId != quizId {
+            string notFoundError = "Question not found!";
+            log:printError(notFoundError);
+            return <http:NotFound>{
+                body: {message: notFoundError}
             };
         }
 
@@ -2596,6 +2729,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             log:printError(customError, result);
             return <http:InternalServerError>{body: {message: customError}};
         }
+        
         if result == 0 {
             string notFoundError = "Question not found!";
             log:printError(notFoundError);
@@ -2615,6 +2749,14 @@ service http:InterceptableService / on new http:Listener(9090) {
     resource function delete quizzes/[int quizId]/questions/[int questionId](http:RequestContext ctx)
         returns http:Ok|http:NotFound|http:Forbidden|http:BadRequest|http:InternalServerError {
 
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
+
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
             log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
@@ -2629,7 +2771,21 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string|error currentStatus = database:getQuizStatus(quizId);
+        database:Question|error? question = database:getQuestionById(questionId);
+        if question is error {
+            string customError = "Error while fetching question";
+            log:printError(customError, question);
+            return <http:InternalServerError>{body: {message: customError}};
+        }
+        if question is () || question.quizId != quizId {
+            string notFoundError = "Question not found!";
+            log:printError(notFoundError);
+            return <http:NotFound>{
+                body: {message: notFoundError}
+            };
+        }
+
+        database:QuizStatus|error currentStatus = database:getQuizStatus(quizId);
         if currentStatus is error {
             string customError = "Error while fetching quiz status";
             log:printError(customError, currentStatus);
@@ -2638,17 +2794,13 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if currentStatus == "PUBLISHED" {
-            return <http:BadRequest>{
-                body: {message: "Cannot delete questions from a published quiz."}
-            };
-        }
-
         int|error? result = database:deleteQuestion(questionId);
         if result is error || result is () {
             string customError = "Error while deleting question";
             log:printError(customError, result);
-            return <http:InternalServerError>{body: {message: customError}};
+            return <http:InternalServerError>{
+                body: {message: customError}
+            };
         }
         if result == 0 {
             string notFoundError = "Question not found!";
@@ -2660,85 +2812,6 @@ service http:InterceptableService / on new http:Listener(9090) {
         return http:OK;
     }
 
-    # Get all answer options for a quiz.
-    #
-    # + ctx - Request context
-    # + quizId - Quiz ID
-    # + return - Answer list or error response
-    resource function get quizzes/[int quizId]/answers(http:RequestContext ctx, string? mask)
-            returns database:Answer[]|database:AnswerPublic[]|http:InternalServerError {
-
-            if mask is string && mask.toLowerAscii() == "true" {
-                database:AnswerPublic[]|error result = database:getAnswersByQuizIdPublic(quizId);
-                if result is error {
-                    string customError = "Error while fetching answers";
-                    log:printError(customError, result);
-                    return <http:InternalServerError>{body: {message: customError}};
-                }
-                return result;
-            }
-
-            string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
-
-            if userGroups is string[] && authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
-                database:Answer[]|error result = database:getAnswersByQuizId(quizId);
-                if result is error {
-                    string customError = "Error while fetching answers";
-                    log:printError(customError, result);
-                    return <http:InternalServerError>{body: {message: customError}};
-                }
-                return result;
-            }
-
-            database:AnswerPublic[]|error result = database:getAnswersByQuizIdPublic(quizId);
-            if result is error {
-                string customError = "Error while fetching answers";
-                log:printError(customError, result);
-                return <http:InternalServerError>{body: {message: customError}};
-            }
-            return result;
-        }
-
-    # Get all answer options for a question.
-    #
-    # + ctx - Request context
-    # + questionId - Question ID
-    # + return - Answer list or error response
-    resource function get questions/[int questionId]/answers(http:RequestContext ctx, string? mask)
-            returns database:Answer[]|database:AnswerPublic[]|http:InternalServerError {
-
-            // If query param `mask=true` is provided, always return public answers (no is_correct)
-            if mask is string && mask.toLowerAscii() == "true" {
-                database:AnswerPublic[]|error result = database:getAnswersByQuestionIdPublic(questionId);
-                if result is error {
-                    string customError = "Error while fetching answers";
-                    log:printError(customError, result);
-                    return <http:InternalServerError>{body: {message: customError}};
-                }
-                return result;
-            }
-
-            string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
-
-            if userGroups is string[] && authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
-                database:Answer[]|error result = database:getAnswersByQuestionId(questionId);
-                if result is error {
-                    string customError = "Error while fetching answers";
-                    log:printError(customError, result);
-                    return <http:InternalServerError>{body: {message: customError}};
-                }
-                return result;
-            }
-            
-            database:AnswerPublic[]|error result = database:getAnswersByQuestionIdPublic(questionId);
-            if result is error {
-                string customError = "Error while fetching answers";
-                log:printError(customError, result);
-                return <http:InternalServerError>{body: {message: customError}};
-            }
-            return result;
-        }
-
     # Create an answer option (admin only).
     #
     # + ctx - Request context
@@ -2747,6 +2820,14 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + return - Created, forbidden, or error response
     resource function post questions/[int questionId]/answers(http:RequestContext ctx, database:AnswerPayload payload)
         returns http:Created|http:Forbidden|http:InternalServerError {
+
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
@@ -2759,14 +2840,6 @@ service http:InterceptableService / on new http:Listener(9090) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
                 body: {message: constants:UNAUTHORIZED_ACCESS_ERROR}
-            };
-        }
-
-        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
-        if userEmail is error {
-            log:printError(constants:GET_USER_ID_ERROR, userEmail);
-            return <http:InternalServerError>{
-                body: {message: constants:GET_USER_ID_ERROR}
             };
         }
 
@@ -2788,8 +2861,17 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + answerId - Answer ID
     # + payload - Update payload
     # + return - OK, not found, forbidden, or error response
-    resource function patch questions/[int questionId]/answers/[int answerId](http:RequestContext ctx, database:UpdateAnswerPayload payload)
+    resource function patch questions/[int questionId]/answers/[int answerId](http:RequestContext ctx, 
+            database:UpdateAnswerPayload payload) 
         returns http:Ok|http:NotFound|http:Forbidden|http:InternalServerError {
+
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
@@ -2805,11 +2887,17 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
-        if userEmail is error {
-            log:printError(constants:GET_USER_ID_ERROR, userEmail);
-            return <http:InternalServerError>{
-                body: {message: constants:GET_USER_ID_ERROR}
+        database:Answer|error? answer = database:getAnswerById(answerId);
+        if answer is error {
+            string customError = "Error while fetching answer";
+            log:printError(customError, answer);
+            return <http:InternalServerError>{body: {message: customError}};
+        }
+        if answer is () || answer.questionId != questionId {
+            string notFoundError = "Answer not found!";
+            log:printError(notFoundError);
+            return <http:NotFound>{
+                body: {message: notFoundError}
             };
         }
 
@@ -2821,6 +2909,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: customError}
             };
         }
+
         if result == 0 {
             string notFoundError = "Answer not found!";
             log:printError(notFoundError);
@@ -2828,6 +2917,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: notFoundError}
             };
         }
+
         return http:OK;
     }
 
@@ -2840,6 +2930,13 @@ service http:InterceptableService / on new http:Listener(9090) {
     resource function delete questions/[int questionId]/answers/[int answerId](http:RequestContext ctx)
         returns http:Ok|http:NotFound|http:Forbidden|http:BadRequest|http:InternalServerError {
 
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
             log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
@@ -2847,6 +2944,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: constants:GET_USER_ROLE_ERROR}
             };
         }
+
         if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
@@ -2854,13 +2952,27 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string|error? currentStatus = database:getQuizStatusByAnswerId(answerId);
-        if currentStatus is string {
-            if currentStatus == "PUBLISHED" {
-                return <http:BadRequest>{
-                    body: {message: "Cannot delete answers from a published quiz."}
-                };
-            }
+        database:Answer|error? answer = database:getAnswerById(answerId);
+        if answer is error {
+            string customError = "Error while fetching answer";
+            log:printError(customError, answer);
+            return <http:InternalServerError>{body: {message: customError}};
+        }
+        if answer is () || answer.questionId != questionId {
+            string notFoundError = "Answer not found!";
+            log:printError(notFoundError);
+            return <http:NotFound>{
+                body: {message: notFoundError}
+            };
+        }
+
+        database:QuizStatus|error? currentStatus = database:getQuizStatusByAnswerId(answerId);
+        if currentStatus is database:PUBLISHED {
+            string errorMessage = "Published quizzes cannot be modified!";
+            return <http:BadRequest>{
+                body: {message: errorMessage}
+            };
+
         } else if currentStatus is error {
             string customError = "Error while fetching quiz status";
             log:printError(customError, currentStatus);
@@ -2893,8 +3005,8 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + quizId - Quiz ID
     # + answers - Submitted answers
     # + return - OK or error response
-    resource function post quizzes/[int quizId]/submit(http:RequestContext ctx, database:UserAnswerPayload[] answers)
-        returns http:Ok|http:InternalServerError {
+    resource function post quizzes/[int quizId]/submissions(http:RequestContext ctx,
+            database:UserAnswerPayload[] answers) returns http:Ok|http:InternalServerError {
 
         string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
         if userEmail is error {
@@ -2904,33 +3016,28 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        entity:Employee|error employee = entity:getEmployee(userEmail);
-        if employee is error {
-            string customError = "Failed to get employee info";
-            log:printError(customError, employee);
+        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
+        if userGroups is error {
+            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
             return <http:InternalServerError>{
-                body: {message: customError}
-            };
-        }
-
-        error? addUserErr = database:addUser(employee);
-        if addUserErr is error {
-            string customError = "Failed to add user";
-            log:printError(customError, addUserErr);
-            return <http:InternalServerError>{
-                body: {message: customError}
+                body: {message: constants:GET_USER_ROLE_ERROR}
             };
         }
 
         int|error? userId = database:getUserIdByUserEmail(userEmail);
         if userId == () {
+            string notFoundError = "User not found";
+            log:printError(notFoundError);
             return <http:InternalServerError>{
-                body: {message: "User ID not found"}
+                body: {message: notFoundError}
             };
         }
+
         if userId is error {
+            string customError = "Error fetching user ID";
+            log:printError(customError, userId);
             return <http:InternalServerError>{
-                body: {message: "Error occurred while fetching user ID"}
+                body: {message: customError}
             };
         }
 
@@ -2942,6 +3049,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: customError}
             };
         }
+
         return http:OK;
     }
 
@@ -2951,7 +3059,7 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + ctx - Request context
     # + quizId - Quiz ID
     # + return - Quiz result, not found, or error response
-    resource function get quizzes/[int quizId]/results\-me(http:RequestContext ctx)
+    resource function get quizzes/[int quizId]/results/me(http:RequestContext ctx)
         returns database:QuizResult|http:NotFound|http:InternalServerError {
 
         string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
@@ -2959,6 +3067,14 @@ service http:InterceptableService / on new http:Listener(9090) {
             log:printError(constants:GET_USER_ID_ERROR, userEmail);
             return <http:InternalServerError>{
                 body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
+
+        string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
+        if userGroups is error {
+            log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ROLE_ERROR}
             };
         }
 
@@ -2979,16 +3095,12 @@ service http:InterceptableService / on new http:Listener(9090) {
 
         database:QuizResult|error result = database:getUserQuizResult(quizId, userEmail);
         if result is error {
-            log:printError("Error while fetching quiz result", result);
+            string customError = "Error while fetching quiz result";
+            log:printError(customError, result);
             return <http:InternalServerError>{
-                body: {message: "Error while fetching quiz result"}
+                body: {message: customError}
             };
         }
-
-        // Hide reference links if user passed
-        // if result.passed {
-        //     result.refLinks = ();
-        // }
 
         return result;
     }
@@ -3001,6 +3113,14 @@ service http:InterceptableService / on new http:Listener(9090) {
     resource function get quizzes/[int quizId]/analytics(http:RequestContext ctx)
         returns database:UserQuizAnalytics[]|http:Forbidden|http:InternalServerError {
 
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error {
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
+
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
             log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
@@ -3008,6 +3128,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: constants:GET_USER_ROLE_ERROR}
             };
         }
+
         if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
@@ -3023,17 +3144,26 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: customError}
             };
         }
+
         return result;
     }
 
-    # Get a specific user's submitted answers for a quiz .
+    # Get a specific user's submitted answers for a quiz (admin-only).
     #
     # + ctx - Request context
     # + quizId - Quiz ID
     # + userId - User ID
     # + return - Drill-down data, forbidden, or error response
-    resource function get quizzes/[int quizId]/analytics/[int userId](http:RequestContext ctx)
+    resource function get quizzes/[int quizId]/submissions/[int userId](http:RequestContext ctx)
         returns database:UserAnswerDrillDown|http:Forbidden|http:InternalServerError {
+
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error { 
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
@@ -3042,6 +3172,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: constants:GET_USER_ROLE_ERROR}
             };
         }
+
         if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
@@ -3058,7 +3189,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        database:QuizFeedback|error? feedback = database:getUserFeedback(quizId, userId);
+        database:UserFeedback|error? feedback = database:getUserFeedback(quizId, userId);
         if feedback is error {
             string customError = "Error while fetching user feedback";
             log:printError(customError, feedback);
@@ -3076,7 +3207,15 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + quizId - Quiz ID
     # + return - Feedback list, forbidden, or error response
     resource function get quizzes/[int quizId]/feedback(http:RequestContext ctx)
-        returns database:QuizFeedbackAdmin[]|http:Forbidden|http:InternalServerError {
+        returns database:Feedback[]|http:Forbidden|http:InternalServerError {
+
+        string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
+        if userEmail is error { 
+            log:printError(constants:GET_USER_ID_ERROR, userEmail);
+            return <http:InternalServerError>{
+                body: {message: constants:GET_USER_ID_ERROR}
+            };
+        }
 
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
@@ -3092,7 +3231,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        database:QuizFeedbackAdmin[]|error result = database:getAllFeedbackForQuiz(quizId);
+        database:Feedback[]|error result = database:getAllFeedbackForQuiz(quizId);
         if result is error {
             string customError = "Error while fetching feedback";
             log:printError(customError, result);
@@ -3100,6 +3239,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: customError}
             };
         }
+
         return result;
     }
 }

@@ -16,6 +16,7 @@
 
 import pitstop.types;
 
+import ballerina/constraint;
 import ballerina/sql;
 
 # [Configurable] Database configuration.
@@ -404,6 +405,7 @@ public type Quiz record {|
     @sql:Column {name: "quiz_id"}
     int quizId;
     # Title
+    @constraint:String {minLength: 1, maxLength: 255}
     @sql:Column {name: "quiz_title"}
     string title;
     # Description
@@ -417,13 +419,13 @@ public type Quiz record {|
     int passingScore;
     # Due date
     @sql:Column {name: "due_date"}
-    string? dueDate;
+    string dueDate;
     # Assigned user IDs
     @sql:Column {name: "assigned_user_ids"}
     json? assignedUserIds;
     # Status
     @sql:Column {name: "status"}
-    string status;
+    QuizStatus status;
     # Deleted
     @sql:Column {name: "is_deleted"}
     boolean isDeleted;
@@ -454,6 +456,7 @@ public type QuizAssignedUserIds record {|
 # Quiz creation payload.
 public type QuizCreatePayload record {
     # Title
+    @constraint:String {minLength: 1, maxLength: 255}
     string title;
     # Description
     string? description = ();
@@ -466,7 +469,7 @@ public type QuizCreatePayload record {
     # User IDs
     int[] assignedUserIds = [];
     # Status
-    string status = "DRAFTED";
+    QuizStatus status = DRAFTED;
     # Questions
     NestedQuestionPayload[] questions = [];
 };
@@ -474,6 +477,7 @@ public type QuizCreatePayload record {
 # Quiz update payload.
 public type QuizUpdatePayload record {
     # Title
+    @constraint:String {minLength: 1, maxLength: 255}
     string? title = ();
     # Description
     string? description = ();
@@ -486,7 +490,7 @@ public type QuizUpdatePayload record {
     # User IDs
     int[]? assignedUserIds = ();
     # Status
-    string? status = ();
+    QuizStatus? status = ();
     # Questions
     NestedQuestionPayload[]? questions = ();
 };
@@ -511,12 +515,24 @@ public type NestedAnswerPayload record {|
     boolean isCorrect;
 |};
 
+# Quiz lifecycle status.
+public enum QuizStatus {
+    DRAFTED = "DRAFTED",
+    PUBLISHED = "PUBLISHED"
+}
+
 # Assign users payload.
 public type AssignUsersPayload record {|
     # User IDs
     int[] userIds;
     # Time limit (minutes)
-    int? timeLimitMinutes = ();
+    int timeLimitMinutes;
+|};
+
+# Unassign users payload.
+public type UnAssignUsersPayload record {| 
+    # User IDs
+    int[] userIds;
 |};
 
 # Question record.
@@ -670,7 +686,7 @@ public type QuizResult record {|
     # Answers
     SubmittedAnswer[] answers;
     # Feedback
-    QuizFeedback? feedback;
+    UserFeedback? feedback;
 |};
 
 # Raw quiz result (DB mapping).
@@ -768,11 +784,11 @@ public type UserAnswerDrillDown record {|
     # Answers
     SubmittedAnswer[] answers;
     # Feedback
-    QuizFeedback? feedback;
+    UserFeedback? feedback;
 |};
 
-# Quiz feedback.
-public type QuizFeedback record {|
+# User feedback.
+public type UserFeedback record {|
     # ID
     @sql:Column {name: "feedback_id"}
     int feedbackId;
@@ -791,7 +807,7 @@ public type QuizFeedback record {|
 |};
 
 # Quiz feedback (admin view).
-public type QuizFeedbackAdmin record {|
+public type Feedback record {|
     # ID
     @sql:Column {name: "feedback_id"}
     int feedbackId;

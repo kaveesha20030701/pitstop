@@ -456,7 +456,7 @@ isolated function buildQuizResultWithTransformations(int quizId, string userEmai
         }
     }
 
-    QuizFeedback|error? feedback = getUserFeedback(quizId, userId);
+    UserFeedback|error? feedback = getUserFeedback(quizId, userId);
     if feedback is error {
         return feedback;
     }

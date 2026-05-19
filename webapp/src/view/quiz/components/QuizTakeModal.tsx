@@ -36,7 +36,6 @@ import { QuizQuestion, QuizWithStatus } from "@/types/types";
 import {
   fetchAnswerOptionsForQuiz,
   fetchQuestionsForQuiz,
-  fetchQuizResult,
   resetQuestions,
   resetSubmit,
   submitQuizAnswers,
@@ -104,10 +103,8 @@ const QuizTakeModal: React.FC<Props> = ({ quiz, open, onClose, onSubmitted }) =>
 
   useEffect(() => {
     if (submitStatus === "success") {
-      dispatch(fetchQuizResult(quiz.quizId)).then(() => {
-        dispatch(resetSubmit());
-        onSubmitted();
-      });
+      dispatch(resetSubmit());
+      onSubmitted();
     }
   }, [submitStatus, dispatch, quiz.quizId, onSubmitted]);
 
@@ -423,6 +420,7 @@ const QuizTakeModal: React.FC<Props> = ({ quiz, open, onClose, onSubmitted }) =>
                       borderRadius: 2,
                       px: 4,
                       backgroundColor: theme.palette.primary.main,
+                      color: theme.palette.common.white,
                     }}
                   >
                     {submitStatus === "loading" ? (

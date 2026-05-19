@@ -699,7 +699,6 @@ export interface SubmittedAnswer {
   questionNumber: number;
   questionText: string;
   questionType: string;
-  marks: number;
   refLinks?: string[];
   selectedAnswerId: number;
   selectedAnswerText: string;
@@ -757,6 +756,7 @@ export interface QuizPayload {
   passingScore: number;
   dueDate?: string;
   assignedUserIds: number[];
+  status?: "DRAFTED" | "PUBLISHED";
   questions?: Array<{
     text: string;
     type: string;

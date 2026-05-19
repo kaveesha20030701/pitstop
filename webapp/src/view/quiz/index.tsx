@@ -51,7 +51,7 @@ import QuizDialogBox from "@components/dialogs/QuizDialogBox";
 import {
   createQuiz,
   fetchAdminQuizzes,
-  fetchAnswerOptions,
+  fetchAdminAnswerOptionsForQuiz,
   fetchAssignedQuizUsers,
   fetchEmployeesByEmails,
   fetchQuestionsForQuiz,
@@ -278,28 +278,25 @@ const QuizAdminDashboard: React.FC = () => {
     setFormDueDate(quiz.dueDate ? toDateValue(quiz.dueDate) : "");
     setFormPassingScore(quiz.passingScore ?? "");
     setIsLoadingQuestions(true);
-    setFormQuestions([]); 
+    setFormQuestions([]);
     setQuizDialogOpen(true);
     try {
       const result = await dispatch(fetchQuestionsForQuiz(quiz.quizId)).unwrap();
       const fetched: QuizQuestion[] = Array.isArray(result)
         ? result
         : ((result as { questions?: QuizQuestion[] })?.questions ?? []);
-      const answerResults = await Promise.all(
-        fetched.map((q: QuizQuestion) =>
-          q.questionType === "feedback"
-            ? Promise.resolve([])
-            : dispatch(fetchAnswerOptions(q.questionId))
-                .unwrap()
-                .then(
-                  (res: { questionId: number; options: QuizAnswerOption[] }) => res.options ?? [],
-                )
-                .catch(() => []),
-        ),
-      );
+      const allAnswerOptions = await dispatch(fetchAdminAnswerOptionsForQuiz(quiz.quizId)).unwrap();
+      const answerOptionsByQuestion: Record<number, QuizAnswerOption[]> = {};
 
-      const mapped: QuestionFormData[] = fetched.map((q: QuizQuestion, idx: number) => {
-        const options = answerResults[idx] || [];
+      allAnswerOptions.forEach((option) => {
+        if (!answerOptionsByQuestion[option.questionId]) {
+          answerOptionsByQuestion[option.questionId] = [];
+        }
+        answerOptionsByQuestion[option.questionId].push(option);
+      });
+
+      const mapped: QuestionFormData[] = fetched.map((q: QuizQuestion) => {
+        const options = answerOptionsByQuestion[q.questionId] || [];
         return {
           text: q.questionText,
           type: q.questionType,
@@ -1116,8 +1113,12 @@ const QuizAdminDashboard: React.FC = () => {
             <Box sx={{ py: 4, display: "flex", justifyContent: "center" }}>
               <CircularProgress />
             </Box>
-          ) : drillDown ? (
-            <QuizAnswerAnalysis drillDown={drillDown} dispatch={dispatch} />
+          ) : drillDown && analyticsQuizId !== null ? (
+            <QuizAnswerAnalysis
+              quizId={analyticsQuizId}
+              drillDown={drillDown}
+              dispatch={dispatch}
+            />
           ) : null}
         </DialogContent>
       </Dialog>

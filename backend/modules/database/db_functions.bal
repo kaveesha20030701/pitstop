@@ -953,7 +953,7 @@ public isolated function updateQuiz(int quizId, QuizUpdatePayload payload, strin
 # + updatedBy - User email who updated
 # + return - Affected row count or error
 public isolated function assignUsersToQuiz(int quizId, int[] userIds, string updatedBy) returns int|error? {
-    sql:ExecutionResult result = check dbClient->execute(assignUsersToQuizQuery(quizId, userIds, updatedBy));
+    sql:ExecutionResult result = check dbClient->execute(updateAssigneesQuery(quizId, userIds, updatedBy));
     return result.affectedRowCount;
 }
 
@@ -964,15 +964,6 @@ public isolated function assignUsersToQuiz(int quizId, int[] userIds, string upd
 public isolated function deleteQuiz(int quizId) returns int|error? {
     sql:ExecutionResult result = check dbClient->execute(deleteQuizQuery(quizId));
     return result.affectedRowCount;
-}
-
-# Get quiz title by quiz ID.
-#
-# + quizId - Quiz ID
-# + return - Quiz title or error
-public isolated function getQuizTitle(int quizId) returns string|error {
-    Quiz result = check dbClient->queryRow(getQuizByIdQuery(quizId));
-    return result.title;
 }
 
 # Get a quiz by its ID.
@@ -1008,6 +999,15 @@ public isolated function getQuestionsByQuizId(int quizId) returns Question[]|err
         select result;
 }
 
+# Get a question by its ID.
+#
+# + questionId - Question ID
+# + return - Question or error if not found
+public isolated function getQuestionById(int questionId) returns Question|error? {
+    Question|error result = dbClient->queryRow(getQuestionByIdQuery(questionId));
+    return result is sql:NoRowsError ? () : result;
+}
+
 # Get public questions (without correct answer) for a quiz.
 # + quizId - Quiz ID
 # + payload - Additional payload if needed for fetching public questions
@@ -1036,24 +1036,6 @@ public isolated function deleteQuestion(int questionId) returns int|error? {
     return result.affectedRowCount;
 }
 
-# Get answers for a question.
-# + questionId - Question ID
-# + return - Array of answers or error
-public isolated function getAnswersByQuestionId(int questionId) returns Answer[]|error {
-    stream<Answer, sql:Error?> resultStream = dbClient->query(getAnswersByQuestionIdQuery(questionId));
-    return from Answer result in resultStream
-        select result;
-}
-
-# Get public answers (without correct answer) for a question.
-# + questionId - Question ID
-# + return - Array of public answers or error
-public isolated function getAnswersByQuestionIdPublic(int questionId) returns AnswerPublic[]|error {
-    stream<AnswerPublic, sql:Error?> resultStream = dbClient->query(getAnswersByQuestionIdPublicQuery(questionId));
-    return from AnswerPublic result in resultStream
-        select result;
-}
-
 # Get answers for a quiz.
 # + quizId - Quiz ID
 # + return - Array of answers or error
@@ -1070,6 +1052,15 @@ public isolated function getAnswersByQuizIdPublic(int quizId) returns AnswerPubl
     stream<AnswerPublic, sql:Error?> resultStream = dbClient->query(getAnswersByQuizIdPublicQuery(quizId));
     return from AnswerPublic result in resultStream
         select result;
+}
+
+# Get an answer by its ID.
+#
+# + answerId - Answer ID
+# + return - Answer or error if not found
+public isolated function getAnswerById(int answerId) returns Answer|error? {
+    Answer|error result = dbClient->queryRow(getAnswerByIdQuery(answerId));
+    return result is sql:NoRowsError ? () : result;
 }
 
 
@@ -1140,8 +1131,8 @@ public isolated function getUserSubmittedAnswers(int quizId, int userId) returns
 # + quizId - Quiz ID
 # + userId - User ID
 # + return - User feedback or error
-public isolated function getUserFeedback(int quizId, int userId) returns QuizFeedback|error? {
-    QuizFeedback|error result = dbClient->queryRow(getUserFeedbackQuery(quizId, userId));
+public isolated function getUserFeedback(int quizId, int userId) returns UserFeedback|error? {
+    UserFeedback|error result = dbClient->queryRow(getUserFeedbackQuery(quizId, userId));
     if result is error {
         if result is sql:NoRowsError {
             return ();
@@ -1154,34 +1145,24 @@ public isolated function getUserFeedback(int quizId, int userId) returns QuizFee
 # Get all feedback for a quiz (admin view).
 # + quizId - Quiz ID
 # + return - Array of quiz feedback or error
-public isolated function getAllFeedbackForQuiz(int quizId) returns QuizFeedbackAdmin[]|error {
-    stream<QuizFeedbackAdmin, sql:Error?> resultStream = dbClient->query(getAllFeedbackForQuizQuery(quizId));
-    return from QuizFeedbackAdmin result in resultStream
+public isolated function getAllFeedbackForQuiz(int quizId) returns Feedback[]|error {
+    stream<Feedback, sql:Error?> resultStream = dbClient->query(getAllFeedbackForQuizQuery(quizId));
+    return from Feedback result in resultStream
         select result;
 }
 
 # Get quiz status for a quiz.
 # + quizId - Quiz ID
 # + return - Quiz status or error
-public isolated function getQuizStatus(int quizId) returns string|error {
+public isolated function getQuizStatus(int quizId) returns QuizStatus|error {
     Quiz result = check dbClient->queryRow(getQuizByIdQuery(quizId));
     return result.status;
-}
-
-# Get quiz status for a question ID.
-# + questionId - Question ID
-# + return - Quiz status or error
-public isolated function getQuizStatusByQuestionId(int questionId) returns string|error {
-    record { int quiz_id; } quizIdRow = check dbClient->queryRow(getQuizStatusByQuestionIdQuery(questionId));
-    int quizId = quizIdRow.quiz_id;
-    Quiz quiz = check dbClient->queryRow(getQuizByIdQuery(quizId));
-    return quiz.status;
 }
 
 # Get quiz status for an answer ID.
 # + answerId - Answer ID
 # + return - Quiz status, no rows, or error
-public isolated function getQuizStatusByAnswerId(int answerId) returns string|error? {
+public isolated function getQuizStatusByAnswerId(int answerId) returns QuizStatus|error? {
     record { int quiz_id; }|sql:Error quizIdResult = dbClient->queryRow(getQuizStatusByAnswerIdQuery(answerId));
     if quizIdResult is error {
         if quizIdResult is sql:NoRowsError {

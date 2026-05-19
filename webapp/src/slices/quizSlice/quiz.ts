@@ -339,17 +339,17 @@ export const fetchQuizUserByEmail = createAsyncThunk(
   "quiz/fetchQuizUserByEmail",
   async (email: string) => {
     const response = await ApiService.getInstance().get(
-      AppConfig.serviceUrls.getUsersInfo + "?email=" + email,
+      AppConfig.serviceUrls.getEmployeeInfo + encodeURIComponent(email),
     );
 
-    if (response.data && response.data.length > 0) {
-      const userData = response.data[0] as QuizUserDetailsResponse;
+    if (response.data) {
+      const userData = response.data;
       return {
         userId: userData.userId,
         firstName: userData.firstName,
         lastName: userData.lastName,
-        workEmail: userData.email,
-        employeeThumbnail: userData.thumbnail,
+        workEmail: userData.workEmail || email,
+        employeeThumbnail: userData.employeeThumbnail,
         department: userData.department || "",
       };
     }
@@ -370,7 +370,7 @@ export const assignUsersToQuiz = createAsyncThunk(
   ) => {
     return new Promise<void>((resolve, reject) => {
       ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.assignUsersToQuiz(quizId), { userIds, timeLimitMinutes })
+        .post(AppConfig.serviceUrls.assignUsersToQuiz(quizId), { userIds, timeLimitMinutes })
         .then(() => {
           dispatch(
             enqueueSnackbarMessage({
@@ -395,12 +395,44 @@ export const assignUsersToQuiz = createAsyncThunk(
   },
 );
 
+export const unassignUsersFromQuiz = createAsyncThunk(
+  "quiz/unassignUsers",
+  async ({ quizId, userIds }: { quizId: number; userIds: number[] }, { dispatch }) => {
+    return new Promise<void>((resolve, reject) => {
+      ApiService.getInstance()
+        .delete(AppConfig.serviceUrls.unassignUsersFromQuiz(quizId), {
+          data: { userIds },
+        })
+        .then(() => {
+          dispatch(
+            enqueueSnackbarMessage({
+              message: "Users unassigned successfully",
+              type: "success",
+              anchorOrigin: { vertical: "bottom", horizontal: "right" },
+            }),
+          );
+          resolve();
+        })
+        .catch((error) => {
+          dispatch(
+            enqueueSnackbarMessage({
+              message: "Failed to unassign users",
+              type: "error",
+              anchorOrigin: { vertical: "bottom", horizontal: "right" },
+            }),
+          );
+          reject(error);
+        });
+    });
+  },
+);
+
 export const publishQuiz = createAsyncThunk(
   "quiz/publish",
   async (quizId: number, { dispatch }) => {
     return new Promise<number>((resolve, reject) => {
       ApiService.getInstance()
-        .patch(AppConfig.serviceUrls.publishQuiz(quizId), {})
+        .patch(AppConfig.serviceUrls.updateQuiz(quizId), { status: "PUBLISHED" })
         .then(() => {
           dispatch(
             enqueueSnackbarMessage({
@@ -548,19 +580,19 @@ export const deleteQuestion = createAsyncThunk(
   },
 );
 
-export const fetchAnswerOptions = createAsyncThunk(
-  "quiz/fetchAnswerOptions",
-  async (questionId: number, { dispatch }) => {
-    return new Promise<{ questionId: number; options: QuizAnswerOption[] }>((resolve, reject) => {
+export const fetchAnswerOptionsForQuiz = createAsyncThunk(
+  "quiz/fetchAnswerOptionsForQuiz",
+  async (quizId: number, { dispatch }) => {
+    return new Promise<QuizAnswerOption[]>((resolve, reject) => {
       ApiService.getInstance()
-        .get(AppConfig.serviceUrls.getAnswersByQuestion(questionId))
+        .get(AppConfig.serviceUrls.getPublicAnswersByQuiz(quizId))
         .then((resp) => {
-          resolve({ questionId, options: resp.data });
+          resolve(resp.data);
         })
         .catch((error) => {
           dispatch(
             enqueueSnackbarMessage({
-              message: "Failed to load answer options",
+              message: "Failed to load quiz answer options",
               type: "error",
               anchorOrigin: { vertical: "bottom", horizontal: "right" },
             }),
@@ -571,12 +603,12 @@ export const fetchAnswerOptions = createAsyncThunk(
   },
 );
 
-export const fetchAnswerOptionsForQuiz = createAsyncThunk(
-  "quiz/fetchAnswerOptionsForQuiz",
+export const fetchAdminAnswerOptionsForQuiz = createAsyncThunk(
+  "quiz/fetchAdminAnswerOptionsForQuiz",
   async (quizId: number, { dispatch }) => {
     return new Promise<QuizAnswerOption[]>((resolve, reject) => {
       ApiService.getInstance()
-        .get(AppConfig.serviceUrls.getAnswersByQuiz(quizId))
+        .get(AppConfig.serviceUrls.getAdminAnswersByQuiz(quizId))
         .then((resp) => {
           resolve(resp.data);
         })
@@ -894,10 +926,6 @@ const quizSlice = createSlice({
 
     builder.addCase(deleteQuestion.fulfilled, (state, action) => {
       state.questions = state.questions.filter((q) => q.questionId !== action.payload.questionId);
-    });
-
-    builder.addCase(fetchAnswerOptions.fulfilled, (state, action) => {
-      state.answerOptions[action.payload.questionId] = action.payload.options;
     });
 
     builder.addCase(fetchAnswerOptionsForQuiz.fulfilled, (state, action) => {
