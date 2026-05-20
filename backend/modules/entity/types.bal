@@ -29,6 +29,8 @@ type EmployeeServiceConfig record {|
 // Get employee graphQL service Responses.
 # Employee.
 public type Employee record {|
+    # User ID
+    int userId?;
     # First Name
     string firstName;
     # Last Name

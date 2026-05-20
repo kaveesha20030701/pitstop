@@ -35,7 +35,8 @@ public isolated function getEmployee(string workEmail) returns Employee|error {
                 employeeThumbnail,
                 location,
                 department,
-                team
+                team,
+                subTeam
             }
         }
     `;

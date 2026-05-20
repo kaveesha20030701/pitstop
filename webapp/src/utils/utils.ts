@@ -18,6 +18,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { GOOGLE_DOCS_DOMAIN, GOOGLE_DRIVE_DOMAIN } from "@config/constant";
 import { CONTENT_SUBTYPE, FILETYPE } from "@utils/types";
+import { QuestionFormData } from "@/types/types";
 
 export const getGoogleDocsDownloadUrl = (url: string): string => {
   const fileId = extractFileIdFromURL(url);
@@ -162,3 +163,84 @@ export function useInViewport<T extends HTMLElement>(options?: IntersectionObser
 
   return { ref, isInViewport };
 }
+
+export const emptyQuestion = (): QuestionFormData => ({
+  text: "",
+  type: "mcq_single",
+  answers: [
+    { text: "", isCorrect: true },
+    { text: "", isCorrect: false },
+  ],
+  refLinks: [],
+});
+
+export const parseDateAsUtc = (value: string | undefined): Date | null => {
+  if (!value) return null;
+
+  if (value.includes("Z") || value.includes("+") || /-\d{2}:\d{2}$/.test(value)) {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  
+  let formatted = value.trim();
+  if (formatted.includes(" ")) {
+    formatted = formatted.replace(" ", "T");
+  }
+  if (!formatted.includes("Z") && !formatted.includes("+")) {
+    formatted = formatted + "Z";
+  }
+  
+  const d = new Date(formatted);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
+export const toDateValue = (value: string): string => {
+  const date = parseDateAsUtc(value);
+  if (!date || Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+return date.toISOString().split("T")[0];
+};
+
+export const calculateDueDateToSave = (formDueDate: string, createdAtStr?: string): string => {
+  if (!formDueDate) return "";
+  
+  const createdAt = parseDateAsUtc(createdAtStr) || new Date();
+  
+  const parts = formDueDate.split("-");
+  if (parts.length !== 3) return "";
+
+  const [dueYear, dueMonth, dueDay] = parts.map(Number);
+  if (
+    Number.isNaN(dueYear) ||
+    Number.isNaN(dueMonth) ||
+    Number.isNaN(dueDay) ||
+    !Number.isInteger(dueYear) ||
+    !Number.isInteger(dueMonth) ||
+    !Number.isInteger(dueDay)
+  ) {
+    return "";
+  }
+
+  if (dueYear < 1 || dueYear > 9999 || dueMonth < 1 || dueMonth > 12) {
+    return "";
+  }
+
+  const maxDays = new Date(Date.UTC(dueYear, dueMonth, 0)).getUTCDate();
+  if (dueDay < 1 || dueDay > maxDays) {
+    return "";
+  }
+
+  const createdYear = createdAt.getUTCFullYear();
+  const createdMonth = createdAt.getUTCMonth();
+  const createdDay = createdAt.getUTCDate();
+  
+  const createdDateUTC = Date.UTC(createdYear, createdMonth, createdDay);
+  const dueDateUTC = Date.UTC(dueYear, dueMonth - 1, dueDay);
+  
+  const diffTime = dueDateUTC - createdDateUTC;
+  
+  const targetDueDateUTC = new Date(createdAt.getTime() + diffTime);
+  return targetDueDateUTC.toISOString();
+};

@@ -14,12 +14,13 @@
 // specific language governing permissions and limitations
 // under the License.
 
-import pitstop.types;
 import pitstop.constants;
+import pitstop.types;
 
 import ballerina/lang.regexp;
 import ballerina/log;
 import ballerina/sql;
+import ballerina/time;
 
 # Build the database update query with dynamic attributes.
 #
@@ -284,4 +285,270 @@ public isolated function toContentResponseFromPinned(PinnedContentResponse row)
     }
 
     return convertedContent;
+}
+
+# Format ISO date string to MySQL datetime format.
+#
+# + dateTimeStr - ISO date string
+# + return - Formatted date string or ()
+public isolated function formatDateTime(string? dateTimeStr) returns string? {
+    if dateTimeStr is () {
+        return ();
+    }
+    string formatted = regexp:replace(re `T`, dateTimeStr, " ");
+    formatted = regexp:replace(re `\.\d+Z$`, formatted, "");
+    formatted = regexp:replace(re `Z$`, formatted, "");
+    return formatted;
+}
+
+# Orchestrates quiz creation with nested questions and answers in a single transaction.
+#
+# + quiz - Quiz payload with nested questions and answers
+# + createdBy - User email who created the quiz
+# + return - Created quiz ID or error
+isolated function createQuizWithQuestionsAndAnswers(QuizCreatePayload quiz, string createdBy) returns int|error {
+    int quizId;
+
+    transaction {
+        sql:ExecutionResult result = check dbClient->execute(createQuizQuery(quiz, createdBy));
+        quizId = check result.lastInsertId.ensureType(int);
+
+        foreach int questionIndex in 0 ..< quiz.questions.length() {
+            NestedQuestionPayload question = quiz.questions[questionIndex];
+            QuestionCreatePayload qPayload = {
+                questionNumber: questionIndex + 1,
+                questionText: question.text,
+                questionType: question.'type,
+                refLinks: question.refLinks
+            };
+            int questionId = check createQuestion(quizId, qPayload, createdBy);
+
+            foreach NestedAnswerPayload answer in question.answers {
+                AnswerPayload aPayload = {
+                    answerText: answer.text,
+                    isCorrect: answer.isCorrect
+                };
+                _ = check createAnswer(questionId, aPayload, createdBy);
+            }
+        }
+        check commit;
+    }
+    return quizId;
+}
+
+# Orchestrates quiz update with nested questions and answers in a single transaction.
+#
+# + quizId - Quiz ID to update
+# + payload - Updated quiz payload with nested questions and answers
+# + updatedBy - User email who updated the quiz
+# + return - Total affected rows for the quiz update or error
+isolated function updateQuizWithQuestionsAndAnswers(int quizId, QuizUpdatePayload payload, string updatedBy)
+    returns int|error? {
+
+    int totalAffectedRows = 0;
+
+    transaction {
+        sql:ExecutionResult result = check dbClient->execute(updateQuizQuery(quizId, payload, updatedBy));
+        totalAffectedRows = check result.affectedRowCount.ensureType(int);
+
+        NestedQuestionPayload[]? questions = payload.questions;
+        if questions is NestedQuestionPayload[] {
+            _ = check dbClient->execute(deleteAnswersByQuizIdQuery(quizId));
+            _ = check dbClient->execute(deleteQuestionsByQuizIdQuery(quizId));
+
+            foreach int i in 0 ..< questions.length() {
+                NestedQuestionPayload nestedQuestion = questions[i];
+                QuestionCreatePayload qPayload = {
+                    questionNumber: i + 1,
+                    questionText: nestedQuestion.text,
+                    questionType: nestedQuestion.'type,
+                    refLinks: nestedQuestion.refLinks
+                };
+                int questionId = check createQuestion(quizId, qPayload, updatedBy);
+
+                foreach NestedAnswerPayload nestedAnswer in nestedQuestion.answers {
+                    AnswerPayload aPayload = {
+                        answerText: nestedAnswer.text,
+                        isCorrect: nestedAnswer.isCorrect
+                    };
+                    _ = check createAnswer(questionId, aPayload, updatedBy);
+                }
+            }
+        }
+        check commit;
+    }
+    return totalAffectedRows;
+}
+
+# Submits user answers with conditional logic for feedback and re-attempts in a single transaction.
+#
+# + quizId - Quiz ID being attempted
+# + userId - User ID submitting the answers
+# + answers - Array of user answer payloads with question type and feedback
+# + return - Total affected rows for the submission or error
+isolated function submitUserAnswersWithFeedback(int quizId, int userId, UserAnswerPayload[] answers) returns int|error {
+    
+    int totalAffected = 0;
+
+    transaction {
+        foreach UserAnswerPayload ua in answers {
+            if ua.questionType == "feedback" {
+                string feedbackText = ua.feedbackText ?: "";
+                sql:ExecutionResult fbResult = check dbClient->execute(
+                    insertQuizFeedbackQuery(quizId, userId, feedbackText)
+                );
+
+                int? rowCount = fbResult.affectedRowCount;
+                if rowCount is int {
+                    totalAffected += rowCount;
+                }
+            } else {
+                _ = check dbClient->execute(
+                    deleteUserAnswersForQuestionQuery(quizId, userId, ua.questionId)
+                );
+                foreach int answerId in ua.selectedAnswerIds {
+                    sql:ExecutionResult result = check dbClient->execute(
+                        insertUserAnswerQuery(quizId, userId, ua.questionId, answerId)
+                    );
+
+                    int? rowCount = result.affectedRowCount;
+                    if rowCount is int {
+                        totalAffected += rowCount;
+                    }
+                }
+            }
+        }
+        check commit;
+    }
+    return totalAffected;
+}
+
+# Builds the quiz result for a user.
+#
+# + quizId - Quiz ID for which to build the result
+# + userEmail - User email to fetch the result for
+# + return - QuizResult with transformations applied or error
+isolated function buildQuizResultWithTransformations(int quizId, string userEmail) returns QuizResult|error? {
+    QuizResultRaw|sql:Error result = dbClient->queryRow(getUserResultQuery(quizId, userEmail));
+    if result is sql:Error {
+        return result is sql:NoRowsError ? () : result;
+    }
+
+    int|error? userId = getUserIdByUserEmail(userEmail);
+    if userId is () {
+        return ();
+    }
+    if userId is error {
+        return userId;
+    }
+
+    SubmittedAnswer[]|error answers = getUserSubmittedAnswers(quizId, userId);
+    if answers is error {
+        return answers;
+    }
+
+    UserFeedback|error? feedback = getUserFeedback(quizId, userId);
+    if feedback is error {
+        return feedback;
+    }
+
+    return {
+        totalQuestions: result.totalQuestions,
+        correctAnswers: <int>(result.correctAnswers ?: 0),
+        scorePercentage: result.scorePercentage,
+        marksObtained: <int>(result.marksObtained ?: 0),
+        passed: result.passed == 1,
+        completed: result.completed == 1,
+        answers,
+        feedback
+    };
+}
+
+# Transforms raw database rows of submitted answers into structured SubmittedAnswer records.
+#
+# + resultStream - Stream of raw database rows for submitted answers
+# + return - Array of SubmittedAnswer or error
+isolated function transformRawAnswersToSubmittedAnswers(stream<SubmittedAnswer, sql:Error?> resultStream)
+        returns SubmittedAnswer[]|error {
+            
+    SubmittedAnswer[] answers = [];
+
+    error? err = from SubmittedAnswer raw in resultStream
+        do {
+            int? qId = raw.questionId;
+            int? qNum = raw.questionNumber;
+            string? qText = raw.questionText;
+            string? qType = raw.questionType;
+            int? ansId = raw.selectedAnswerId;
+            string? ansText = raw.selectedAnswerText;
+            boolean? isCorrect = raw.isCorrect;
+            string? submittedAt = raw.submittedAt;
+
+            if qId is int && qNum is int && qText is string && qType is string &&
+                ansId is int && ansText is string && isCorrect is boolean && submittedAt is string {
+
+                SubmittedAnswer answer = {
+                    questionId: qId,
+                    questionNumber: qNum,
+                    questionText: qText,
+                    questionType: qType,
+                    refLinks: raw.refLinks,
+                    selectedAnswerId: ansId,
+                    selectedAnswerText: ansText,
+                    correctAnswerText: raw.correctAnswerText,
+                    isCorrect: isCorrect,
+                    submittedAt: submittedAt
+                };
+                answers.push(answer);
+            }
+        };
+
+    if err is error {
+        return err;
+    }
+
+    return answers;
+}
+
+# Shift and format a UTC date string to the local timezone of the client based on header.
+#
+# + dueDateStr - UTC due date string from database
+# + offsetHeader - Header representing the timezone offset in minutes from the client
+# + return - Formatted ISO-8601 string with local timezone offset or error
+public isolated function formatDueDateWithOffset(string dueDateStr, string? offsetHeader) returns string|error {
+    string formatted = dueDateStr.trim();
+    if formatted.includes(" ") {
+        formatted = regexp:replace(re ` `, formatted, "T");
+    }
+    if !formatted.endsWith("Z") && !formatted.includes("+") {
+        formatted = formatted + "Z";
+    }
+
+    time:Utc utc = check time:utcFromString(formatted);
+
+    int offsetMinutes = 0;
+    if offsetHeader is string {
+        var parsedOffset = int:fromString(offsetHeader);
+        if parsedOffset is int {
+            offsetMinutes = parsedOffset;
+        }
+    }
+
+    if offsetMinutes == 0 {
+        return formatted;
+    }
+
+    int offsetSeconds = -offsetMinutes * 60;
+    time:Utc shifted = [utc[0] + offsetSeconds, utc[1]];
+    string localUtcStr = time:utcToString(shifted);
+    string withoutZ = localUtcStr.substring(0, localUtcStr.length() - 1);
+    int absOffset = offsetMinutes < 0 ? -offsetMinutes : offsetMinutes;
+    int offHours = absOffset / 60;
+    int offMins = absOffset % 60;
+
+    string sign = offsetMinutes < 0 ? "+" : "-";
+    string offHoursStr = offHours < 10 ? "0" + offHours.toString() : offHours.toString();
+    string offMinsStr = offMins < 10 ? "0" + offMins.toString() : offMins.toString();
+
+    return string `${withoutZ}${sign}${offHoursStr}:${offMinsStr}`;
 }

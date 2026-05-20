@@ -16,6 +16,7 @@
 
 import pitstop.types;
 
+import ballerina/constraint;
 import ballerina/sql;
 
 # [Configurable] Database configuration.
@@ -396,4 +397,436 @@ public type ContentFilter record {|
     int 'limit = 10;
     # Pagination offset
     int 'offset = 0;
+|};
+
+# Quiz record.
+public type Quiz record {|
+    # Quiz ID
+    @sql:Column {name: "quiz_id"}
+    int quizId;
+    # Title
+    @constraint:String {minLength: 1, maxLength: 255}
+    @sql:Column {name: "quiz_title"}
+    string title;
+    # Description
+    @sql:Column {name: "quiz_description"}
+    string? description;
+    # Thumbnail URL
+    @sql:Column {name: "thumbnail"}
+    string? thumbnail;
+    # Passing score %
+    @sql:Column {name: "passing_score"}
+    int passingScore;
+    # Due date
+    @sql:Column {name: "due_date"}
+    string dueDate;
+    # Assigned user IDs
+    @sql:Column {name: "assigned_user_ids"}
+    json? assignedUserIds;
+    # Status
+    @sql:Column {name: "status"}
+    QuizStatus status;
+    # Deleted
+    @sql:Column {name: "is_deleted"}
+    boolean isDeleted;
+    # Created by
+    @sql:Column {name: "created_by"}
+    string createdBy;
+    # Updated by
+    @sql:Column {name: "updated_by"}
+    string? updatedBy;
+    # Created at
+    @sql:Column {name: "created_at"}
+    string createdAt;
+    # Updated at
+    @sql:Column {name: "updated_at"}
+    string? updatedAt;
+    # Total questions
+    @sql:Column {name: "total_questions"}
+    int totalQuestions;
+|};
+
+# Quiz assigned user IDs row.
+public type QuizAssignedUserIds record {|
+    # Assigned user IDs JSON array.
+    @sql:Column {name: "assigned_user_ids"}
+    json? assignedUserIds;
+|};
+
+# Quiz creation payload.
+public type QuizCreatePayload record {
+    # Title
+    @constraint:String {minLength: 1, maxLength: 255}
+    string title;
+    # Description
+    string? description = ();
+    # Thumbnail URL
+    string? thumbnail = ();
+    # Passing score %
+    int passingScore;
+    # Due date
+    string? dueDate = ();
+    # User IDs
+    int[] assignedUserIds = [];
+    # Status
+    QuizStatus status = DRAFTED;
+    # Questions
+    NestedQuestionPayload[] questions = [];
+};
+
+# Quiz update payload.
+public type QuizUpdatePayload record {
+    # Title
+    @constraint:String {minLength: 1, maxLength: 255}
+    string? title = ();
+    # Description
+    string? description = ();
+    # Thumbnail URL
+    string? thumbnail = ();
+    # Passing score %
+    int? passingScore = ();
+    # Due date
+    string? dueDate = ();
+    # User IDs
+    int[]? assignedUserIds = ();
+    # Status
+    QuizStatus? status = ();
+    # Questions
+    NestedQuestionPayload[]? questions = ();
+};
+
+# Question payload.
+public type NestedQuestionPayload record {|
+    # Text
+    string text;
+    # Type
+    string 'type;
+    # Reference links
+    string[]? refLinks = ();
+    # Answers
+    NestedAnswerPayload[] answers = [];
+|};
+
+# Answer payload.
+public type NestedAnswerPayload record {|
+    # Text
+    string text;
+    # Correct
+    boolean isCorrect;
+|};
+
+# Quiz lifecycle status.
+public enum QuizStatus {
+    DRAFTED,
+    PUBLISHED
+}
+
+# Assign users payload.
+public type AssignUsersPayload record {|
+    # User IDs
+    int[] userIds;
+    # Time limit (minutes). Used for email notification only
+    int timeLimitMinutes;
+|};
+
+# Unassign users payload.
+public type UnassignUsersPayload record {| 
+    # User IDs
+    int[] userIds;
+|};
+
+# Question record.
+public type Question record {|
+    # ID
+    @sql:Column {name: "question_id"}
+    int questionId;
+    # Number
+    @sql:Column {name: "question_number"}
+    int questionNumber;
+    # Quiz ID
+    @sql:Column {name: "quiz_id"}
+    int quizId;
+    # Text
+    @sql:Column {name: "question_text"}
+    string questionText;
+    # Type
+    @sql:Column {name: "question_type"}
+    string questionType;
+    # Reference links
+    @sql:Column {name: "ref_links"}
+    json? refLinks;
+    # Deleted
+    @sql:Column {name: "is_deleted"}
+    boolean isDeleted;
+    # Created by
+    @sql:Column {name: "created_by"}
+    string createdBy;
+    # Updated by
+    @sql:Column {name: "updated_by"}
+    string? updatedBy;
+    # Created at
+    @sql:Column {name: "created_at"}
+    string createdAt;
+    # Updated at
+    @sql:Column {name: "updated_at"}
+    string? updatedAt;
+|};
+
+# Question payload.
+public type QuestionCreatePayload record {|
+    # Number
+    int questionNumber;
+    # Text
+    string questionText;
+    # Type
+    string questionType;
+    # Reference links
+    string[]? refLinks = ();
+|};
+
+# Update question payload.
+public type QuestionUpdatePayload record {|
+    # Text
+    string? questionText;
+    # Type
+    string? questionType;
+    # Reference links
+    string[]? refLinks = ();
+|};
+
+# Answer record.
+public type Answer record {|
+    # ID
+    @sql:Column {name: "answer_id"}
+    int answerId;
+    # Question ID
+    @sql:Column {name: "question_id"}
+    int questionId;
+    # Text
+    @sql:Column {name: "answer_text"}
+    string answerText;
+    # Correct
+    @sql:Column {name: "is_correct"}
+    boolean isCorrect;
+    # Created by
+    @sql:Column {name: "created_by"}
+    string createdBy;
+    # Updated by
+    @sql:Column {name: "updated_by"}
+    string? updatedBy;
+    # Created at
+    @sql:Column {name: "created_at"}
+    string createdAt;
+    # Updated at
+    @sql:Column {name: "updated_at"}
+    string? updatedAt;
+|};
+
+# Public answer record.
+public type AnswerPublic record {|
+    # ID
+    @sql:Column {name: "answer_id"}
+    int answerId;
+    # Question ID
+    @sql:Column {name: "question_id"}
+    int questionId;
+    # Text
+    @sql:Column {name: "answer_text"}
+    string answerText;
+    # Created at
+    @sql:Column {name: "created_at"}
+    string createdAt;
+    # Updated at
+    @sql:Column {name: "updated_at"}
+    string? updatedAt;
+|};
+
+# Answer creation payload.
+public type AnswerPayload record {|
+    # Text
+    string answerText;
+    # Correct
+    boolean isCorrect;
+|};
+
+# Answer update payload.
+public type UpdateAnswerPayload record {|
+    # Text
+    string? answerText;
+    # Correct
+    boolean? isCorrect;
+|};
+
+# User answer submission.
+public type UserAnswerPayload record {
+    # Question ID
+    int questionId;
+    # Question type
+    string questionType;
+    # Selected answer IDs
+    int[] selectedAnswerIds;
+    # Feedback
+    string? feedbackText = ();
+};
+
+# Quiz result.
+public type QuizResult record {|
+    # Total questions
+    int totalQuestions;
+    # Correct answers
+    int correctAnswers;
+    # Score %
+    decimal scorePercentage;
+    # Marks obtained
+    int marksObtained;
+    # Passed
+    boolean passed;
+    # Completed
+    boolean completed;
+    # Answers
+    SubmittedAnswer[] answers;
+    # Feedback
+    UserFeedback? feedback;
+|};
+
+# Raw quiz result (DB mapping).
+public type QuizResultRaw record {|
+    # Total questions
+    @sql:Column {name: "total_questions"}
+    int totalQuestions;
+    # Correct answers
+    @sql:Column {name: "correct_answers"}
+    int? correctAnswers;
+    # Score %
+    @sql:Column {name: "score_percentage"}
+    decimal scorePercentage;
+    # Marks obtained
+    @sql:Column {name: "marks_obtained"}
+    int? marksObtained;
+    # Passed
+    @sql:Column {name: "passed"}
+    int passed;
+    # Completed
+    @sql:Column {name: "completed"}
+    int completed;
+|};
+
+# User quiz analytics.
+public type UserQuizAnalytics record {|
+    # User ID
+    @sql:Column {name: "user_id"}
+    int userId;
+    # User email
+    @sql:Column {name: "user_email"}
+    string userEmail;
+    # User name
+    @sql:Column {name: "user_name"}
+    string userName;
+    # Total questions
+    @sql:Column {name: "total_questions"}
+    int totalQuestions;
+    # Answered
+    int answered;
+    # Correct answers
+    @sql:Column {name: "correct_answers"}
+    int correctAnswers;
+    # Score %
+    @sql:Column {name: "score_percentage"}
+    decimal scorePercentage;
+    # Marks obtained
+    @sql:Column {name: "marks_obtained"}
+    int marksObtained;
+    # Completed
+    int completed;
+    # Passed
+    int passed;
+    # Submitted at
+    @sql:Column {name: "submitted_at"}
+    string? submittedAt;
+|};
+
+# Submitted answer.
+public type SubmittedAnswer record {|
+    # Question ID
+    @sql:Column {name: "question_id"}
+    int questionId;
+    # Question number
+    @sql:Column {name: "question_number"}
+    int questionNumber;
+    # Question text
+    @sql:Column {name: "question_text"}
+    string questionText;
+    # Question type
+    @sql:Column {name: "question_type"}
+    string questionType;
+    # Reference links (JSON string from database)
+    @sql:Column {name: "ref_links"}
+    string refLinks;
+    # Selected answer ID
+    @sql:Column {name: "selected_answer_id"}
+    int selectedAnswerId;
+    # Answer text
+    @sql:Column {name: "answer_text"}
+    string selectedAnswerText;
+    # Correct answer text
+    @sql:Column {name: "correct_answer_text"}
+    string correctAnswerText;
+    # Correct
+    @sql:Column {name: "is_correct"}
+    boolean isCorrect;
+    # Submitted at
+    @sql:Column {name: "submitted_at"}
+    string submittedAt;
+|};
+
+# User answer drill-down.
+public type UserAnswerDrillDown record {|
+    # Answers
+    SubmittedAnswer[] answers;
+    # Feedback
+    UserFeedback? feedback;
+|};
+
+# User feedback.
+public type UserFeedback record {|
+    # ID
+    @sql:Column {name: "feedback_id"}
+    int feedbackId;
+    # Quiz ID
+    @sql:Column {name: "quiz_id"}
+    int quizId;
+    # User ID
+    @sql:Column {name: "user_id"}
+    int userId;
+    # Feedback text
+    @sql:Column {name: "feedback_text"}
+    string feedbackText;
+    # Created at
+    @sql:Column {name: "created_at"}
+    string createdAt;
+|};
+
+# Quiz feedback (admin view).
+public type Feedback record {|
+    # ID
+    @sql:Column {name: "feedback_id"}
+    int feedbackId;
+    # Quiz ID
+    @sql:Column {name: "quiz_id"}
+    int quizId;
+    # User ID
+    @sql:Column {name: "user_id"}
+    int userId;
+    # User name
+    @sql:Column {name: "user_name"}
+    string userName;
+    # User email
+    @sql:Column {name: "user_email"}
+    string userEmail;
+    # Feedback text
+    @sql:Column {name: "feedback_text"}
+    string feedbackText;
+    # Created at
+    @sql:Column {name: "created_at"}
+    string createdAt;
 |};

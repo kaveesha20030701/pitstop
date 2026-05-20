@@ -140,6 +140,12 @@ public type SwapSectionOrders record {|
     int sectionOrder;
 |};
 
+# Simple mapping record for quiz id lookups
+public type QuizIdRow record {|
+    # Quiz ID
+    int quizId;
+|};
+
 # Update section payload.
 public type UpdateSectionPayload record {|
     # Type of the section
@@ -331,6 +337,19 @@ public type LikeResponse record {|
     string? thumbnail;
 |};
 
+# Application User
+public type User record {|
+    # User ID
+    int userId;
+    # User email
+    string email;
+    # User thumbnail
+    string? thumbnail;
+    # User first name
+    string firstName;
+    # User last name
+    string lastName;
+|};
 # Route helper.
 public type Route record {|
     # Route ID
