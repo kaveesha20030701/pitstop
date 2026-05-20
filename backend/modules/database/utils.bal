@@ -469,6 +469,7 @@ isolated function buildQuizResultWithTransformations(int quizId, string userEmai
 # + return - Array of SubmittedAnswer or error
 isolated function transformRawAnswersToSubmittedAnswers(stream<SubmittedAnswer, sql:Error?> resultStream)
         returns SubmittedAnswer[]|error {
+            
     SubmittedAnswer[] answers = [];
 
     error? err = from SubmittedAnswer raw in resultStream

@@ -2040,9 +2040,8 @@ service http:InterceptableService / on new http:Listener(9090) {
     # Get quizzes for the logged-in user. 
     #
     # + ctx - Request context
-    # + req - HTTP request
     # + return - Quiz list or error response
-    resource function get users/me/quizzes(http:RequestContext ctx, http:Request req)
+    resource function get users/me/quizzes(http:RequestContext ctx)
         returns database:Quiz[]|http:InternalServerError {
 
         string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
@@ -2082,11 +2081,8 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string? offsetHeader = ();
-        string|error headerVal = req.getHeader(TIMEZONE_OFFSET_HEADER);
-        if headerVal is string {
-            offsetHeader = headerVal;
-        }
+        string|error offsetHeaderVal = ctx.getWithType(authorization:REQUESTED_BY_USER_TIMEZONE_OFFSET);
+        string? offsetHeader = offsetHeaderVal is string ? offsetHeaderVal : ();
 
         foreach database:Quiz quiz in result {
             string|error converted = database:formatDueDateWithOffset(quiz.dueDate, offsetHeader);
@@ -2150,11 +2146,8 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        string? offsetHeader = ();
-        string|error headerVal = req.getHeader(TIMEZONE_OFFSET_HEADER);
-        if headerVal is string {
-            offsetHeader = headerVal;
-        }
+        string|error offsetHeaderVal = ctx.getWithType(authorization:REQUESTED_BY_USER_TIMEZONE_OFFSET);
+        string? offsetHeader = offsetHeaderVal is string ? offsetHeaderVal : ();
 
         foreach database:Quiz quiz in result {
             string|error converted = database:formatDueDateWithOffset(quiz.dueDate, offsetHeader);
@@ -2398,9 +2391,9 @@ service http:InterceptableService / on new http:Listener(9090) {
     #
     # + ctx - Request context
     # + quizId - Quiz ID
-    # + isAdminView - Whether the user is requesting as an admin
+    # + isAdmin - Whether the user is requesting as an admin
     # + return - Answer list or error response
-    resource function get quizzes/[int quizId]/answers(http:RequestContext ctx, boolean isAdminView = false)
+    resource function get quizzes/[int quizId]/answers(http:RequestContext ctx, boolean isAdmin = false)
             returns database:Answer[]|database:AnswerPublic[]|http:Forbidden|http:InternalServerError {
 
         string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
@@ -2419,7 +2412,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             };
         }
 
-        if isAdminView {
+        if isAdmin {
             if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
                 log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
                 return <http:Forbidden>{body: {message: constants:UNAUTHORIZED_ACCESS_ERROR}};
@@ -2654,7 +2647,8 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + questionId - Question ID
     # + payload - Update payload
     # + return - OK, not found, forbidden, or error response
-    resource function patch quizzes/[int quizId]/questions/[int questionId](http:RequestContext ctx, database:QuestionUpdatePayload payload)
+    resource function patch quizzes/[int quizId]/questions/[int questionId](http:RequestContext ctx,
+            database:QuestionUpdatePayload payload)
         returns http:Ok|http:NotFound|http:Forbidden|http:InternalServerError {
 
         string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);

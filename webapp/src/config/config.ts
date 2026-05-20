@@ -112,7 +112,7 @@ export const AppConfig = {
     createAnswer: (questionId: number) => ServiceBaseUrl + "/questions/" + questionId + "/answers",
     updateAnswer: (questionId: number, answerId: number) => ServiceBaseUrl + "/questions/" + questionId + "/answers/" + answerId,
     deleteAnswer: (questionId: number, answerId: number) => ServiceBaseUrl + "/questions/" + questionId + "/answers/" + answerId,
-    getAdminAnswersByQuiz: (quizId: number) => ServiceBaseUrl + "/quizzes/" + quizId + "/answers?isAdminView=true",
+    getAdminAnswersByQuiz: (quizId: number) => ServiceBaseUrl + "/quizzes/" + quizId + "/answers?isAdmin=true",
     getPublicAnswersByQuiz: (quizId: number) => ServiceBaseUrl + "/quizzes/" + quizId + "/answers",
     submitQuiz: (quizId: number) => ServiceBaseUrl + "/quizzes/" + quizId + "/submissions",
     getQuizResult: (quizId: number) => ServiceBaseUrl + "/quizzes/" + quizId + "/results/me",

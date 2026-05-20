@@ -95,6 +95,11 @@ public isolated service class JwtInterceptor {
                 ctx.set(REQUESTED_BY_USER_EMAIL, userInfo.email);
                 ctx.set(REQUESTED_BY_USER_ROLES, userInfo.groups);
 
+                string|error timezoneOffset = req.getHeader(TIMEZONE_OFFSET_HEADER);
+                if timezoneOffset is string {
+                    ctx.set(REQUESTED_BY_USER_TIMEZONE_OFFSET, timezoneOffset);
+                }
+
                 return ctx.next();
             }
         }
