@@ -387,6 +387,7 @@ isolated function updateQuizWithQuestionsAndAnswers(int quizId, QuizUpdatePayloa
 # + answers - Array of user answer payloads with question type and feedback
 # + return - Total affected rows for the submission or error
 isolated function submitUserAnswersWithFeedback(int quizId, int userId, UserAnswerPayload[] answers) returns int|error {
+    
     int totalAffected = 0;
 
     transaction {

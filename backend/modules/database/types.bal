@@ -830,4 +830,3 @@ public type Feedback record {|
     @sql:Column {name: "created_at"}
     string createdAt;
 |};
-

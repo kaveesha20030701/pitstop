@@ -2182,6 +2182,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: constants:GET_USER_ROLE_ERROR}
             };
         }
+
         if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
@@ -2225,6 +2226,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: constants:GET_USER_ROLE_ERROR}
             };
         }
+
         if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
@@ -2264,6 +2266,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             log:printError(customError, result);
             return <http:InternalServerError>{body: {message: customError}};
         }
+
         if result == 0 {
             string notFoundError = "Quiz not found!";
             log:printError(notFoundError);
@@ -2301,6 +2304,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: constants:GET_USER_ROLE_ERROR}
             };
         }
+
         if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
@@ -2336,6 +2340,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: customError}
             };
         }
+
         if result == 0 {
             string notFoundError = "Quiz not found!";
             log:printError(notFoundError);
@@ -2387,7 +2392,7 @@ service http:InterceptableService / on new http:Listener(9090) {
         return http:OK;
     }
 
-    # Get all answers for a quiz (admin and public view).
+    # Get all answers for a quiz (admin and user view).
     #
     # + ctx - Request context
     # + quizId - Quiz ID
@@ -2505,6 +2510,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: customError}
             };
         }
+
         if result == 0 {
             string notFoundError = "Quiz not found!";
             log:printError(notFoundError);
@@ -2553,6 +2559,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             log:printError(customError, result);
             return <http:InternalServerError>{body: {message: customError}};
         }
+
         if result == 0 {
             string notFoundError = "Quiz not found!";
             log:printError(notFoundError);
@@ -2560,6 +2567,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: notFoundError}
             };
         }
+
         return http:OK;
     }
 
@@ -2680,6 +2688,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             log:printError(customError, question);
             return <http:InternalServerError>{body: {message: customError}};
         }
+
         if question is () || question.quizId != quizId {
             string notFoundError = "Question not found!";
             log:printError(notFoundError);
@@ -2729,6 +2738,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: constants:GET_USER_ROLE_ERROR}
             };
         }
+
         if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
@@ -2742,6 +2752,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             log:printError(customError, question);
             return <http:InternalServerError>{body: {message: customError}};
         }
+
         if question is () || question.quizId != quizId {
             string notFoundError = "Question not found!";
             log:printError(notFoundError);
@@ -2767,6 +2778,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: customError}
             };
         }
+
         if result == 0 {
             string notFoundError = "Question not found!";
             log:printError(notFoundError);
@@ -2774,6 +2786,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: notFoundError}
             };
         }
+
         return http:OK;
     }
 
@@ -2801,6 +2814,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: constants:GET_USER_ROLE_ERROR}
             };
         }
+
         if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
@@ -2816,6 +2830,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: customError}
             };
         }
+
         return http:CREATED;
     }
 
@@ -2845,6 +2860,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: constants:GET_USER_ROLE_ERROR}
             };
         }
+
         if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
@@ -2858,6 +2874,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             log:printError(customError, answer);
             return <http:InternalServerError>{body: {message: customError}};
         }
+
         if answer is () || answer.questionId != questionId {
             string notFoundError = "Answer not found!";
             log:printError(notFoundError);
@@ -2902,6 +2919,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: constants:GET_USER_ID_ERROR}
             };
         }
+
         string[]|error userGroups = ctx.getWithType(authorization:REQUESTED_BY_USER_ROLES);
         if userGroups is error {
             log:printError(constants:GET_USER_ROLE_ERROR, userGroups);
@@ -2923,6 +2941,7 @@ service http:InterceptableService / on new http:Listener(9090) {
             log:printError(customError, answer);
             return <http:InternalServerError>{body: {message: customError}};
         }
+
         if answer is () || answer.questionId != questionId {
             string notFoundError = "Answer not found!";
             log:printError(notFoundError);
@@ -2954,6 +2973,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: customError}
             };
         }
+
         if result == 0 {
             string notFoundError = "Answer not found!";
             log:printError(notFoundError);
@@ -3190,6 +3210,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                 body: {message: constants:GET_USER_ROLE_ERROR}
             };
         }
+        
         if !authorization:hasPermission([authorization:authorizedRoles.adminRole], userGroups) {
             log:printError(constants:UNAUTHORIZED_ACCESS_ERROR);
             return <http:Forbidden>{
