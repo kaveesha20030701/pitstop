@@ -2472,7 +2472,7 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + payload - User unassignment payload
     # + return - OK, not found, forbidden, or error response
     resource function delete quizzes/[int quizId]/assignees(http:RequestContext ctx,
-            database:UnAssignUsersPayload payload)
+            database:UnassignUsersPayload payload)
         returns http:Ok|http:NotFound|http:Forbidden|http:InternalServerError|http:BadRequest {
 
         string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
@@ -2995,7 +2995,7 @@ service http:InterceptableService / on new http:Listener(9090) {
     # + answers - Submitted answers
     # + return - OK or error response
     resource function post quizzes/[int quizId]/submissions(http:RequestContext ctx,
-            database:UserAnswerPayload[] answers) returns http:Ok|http:InternalServerError {
+            database:UserAnswerPayload[] answers) returns http:Ok|http:Forbidden|http:InternalServerError {
 
         string|error userEmail = ctx.getWithType(authorization:REQUESTED_BY_USER_EMAIL);
         if userEmail is error {
@@ -3027,6 +3027,15 @@ service http:InterceptableService / on new http:Listener(9090) {
             log:printError(customError, userId);
             return <http:InternalServerError>{
                 body: {message: customError}
+            };
+        }
+
+        int[]|error assignedIds = database:getAssignedUserIds(quizId);
+        if assignedIds is error || assignedIds.indexOf(userId) is () {
+            string forbiddenError = "You are not assigned to this quiz";
+            log:printError(forbiddenError);
+            return <http:Forbidden>{
+                body: {message: forbiddenError}
             };
         }
 

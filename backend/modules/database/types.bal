@@ -525,12 +525,12 @@ public enum QuizStatus {
 public type AssignUsersPayload record {|
     # User IDs
     int[] userIds;
-    # Time limit (minutes)
+    # Time limit (minutes). Used for email notification only
     int timeLimitMinutes;
 |};
 
 # Unassign users payload.
-public type UnAssignUsersPayload record {| 
+public type UnassignUsersPayload record {| 
     # User IDs
     int[] userIds;
 |};

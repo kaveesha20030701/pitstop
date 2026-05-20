@@ -1903,7 +1903,7 @@ isolated function deleteAnswersByQuizIdQuery(int quizId) returns sql:Parameteriz
         quiz_id = ${quizId})
 `;
 
-# Mark all questions of a quiz as deleted.
+# Mark questions of a quiz as deleted.
 #
 # + quizId - Quiz ID
 # + return - SQL parameterized query
@@ -1912,7 +1912,7 @@ isolated function deleteQuestionsByQuizIdQuery(int quizId) returns sql:Parameter
         question 
     SET is_deleted = true 
     WHERE 
-        quiz_id = ${quizId} 
+        quiz_id = ${quizId}
         AND is_deleted = false
 `;
 
@@ -2359,7 +2359,7 @@ isolated function insertQuizFeedbackQuery(int quizId, int userId, string feedbac
         ${quizId}, 
         ${userId}, 
         ${feedbackText})
-    ON DUPLICATE KEY UPDATE feedback_text = ${feedbackText}, created_at = CURRENT_TIMESTAMP
+    ON DUPLICATE KEY UPDATE feedback_text = ${feedbackText}
 `;
 
 # Get comprehensive quiz result for a user including score, marks, and pass status.
@@ -2636,10 +2636,7 @@ isolated function getQuizTitleQuery(int quizId) returns sql:ParameterizedQuery =
 # + return - SQL parameterized query
 isolated function getAssignedUserIdsQuery(int quizId) returns sql:ParameterizedQuery => `
     SELECT 
-        (
-            SELECT COALESCE(array_agg((v)::int), ARRAY[]::int[])
-            FROM jsonb_array_elements_text(assigned_user_ids) AS v
-        ) AS assigned_user_ids
+        assigned_user_ids
     FROM quiz 
     WHERE quiz_id = ${quizId} AND is_deleted = false
 `;

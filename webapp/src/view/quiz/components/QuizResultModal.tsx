@@ -382,7 +382,7 @@ const QuizResultModal: React.FC<Props> = ({ quiz, result, open, onClose }) => {
                     </Box>
                   )}
 
-                  {refLinks.length > 0 && (
+                  {refLinks.length > 0 && isWrongScoredQuestion && (
                     <Box
                       sx={{
                         mt: 1,

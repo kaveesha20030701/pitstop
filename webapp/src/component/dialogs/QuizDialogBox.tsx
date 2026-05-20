@@ -121,6 +121,14 @@ const QuizDialogBox = ({
       borderRadius: "10px",
       backgroundColor: theme.palette.background.default,
     },
+    ...(theme.palette.mode === "dark"
+      ? {
+          "& input[type='date']::-webkit-calendar-picker-indicator": {
+            filter: "invert(1)",
+            opacity: 1,
+          },
+        }
+      : {}),
   };
 
   const isSaveDisabled =

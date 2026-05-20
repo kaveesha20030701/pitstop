@@ -15,7 +15,6 @@
 // under the License.
 
 import AddIcon from "@mui/icons-material/Add";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import BarChartIcon from "@mui/icons-material/BarChart";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
@@ -42,7 +41,6 @@ import {
   Typography,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
-import { useNavigate } from "react-router-dom";
 
 import React, { useCallback, useEffect, useState } from "react";
 
@@ -84,7 +82,6 @@ import { QuizAnswerAnalysis } from "./components/QuizAnswerAnalysis";
 const QuizAdminDashboard: React.FC = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const adminQuizzes = useAppSelector((s: RootState) => s.quiz.adminQuizzes);
   const adminQuizzesStatus = useAppSelector((s: RootState) => s.quiz.adminQuizzesStatus);
@@ -464,14 +461,7 @@ const QuizAdminDashboard: React.FC = () => {
       }}
     >
       <Container maxWidth="lg">
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate("/my-board")}
-          sx={{ textTransform: "none", color: theme.palette.text.secondary, mb: 3 }}
-        >
-          Back to My Board
-        </Button>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4, mt: 6 }}>
           <Box
             sx={{
               width: 56,

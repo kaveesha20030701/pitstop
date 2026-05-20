@@ -62,7 +62,14 @@ const AppHandler = () => {
       path: "/",
       element: <Layout />,
       errorElement: <Error />,
-      children: getActiveRoutesV2(route.routes),
+      children: [
+        ...getActiveRoutesV2(route.routes),
+        {
+          path: "/quiz-admin",
+          element: React.createElement(View.QuizAdminDashboard),
+          errorElement: <Error />,
+        },
+      ],
     },
     {
       path: "/search",
@@ -82,11 +89,6 @@ const AppHandler = () => {
     {
       path: "/vertical/:verticalName/:tags",
       element: <VerticalTemplate />,
-      errorElement: <Error />,
-    },
-    {
-      path: "/quiz-admin",
-      element: React.createElement(View.QuizAdminDashboard),
       errorElement: <Error />,
     },
   ]), [route.routes]);

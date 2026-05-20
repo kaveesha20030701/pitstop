@@ -15,8 +15,6 @@
 // under the License.
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import LockIcon from "@mui/icons-material/Lock";
-import LockOpenIcon from "@mui/icons-material/LockOpen";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import {
@@ -28,9 +26,9 @@ import {
   ListItemText,
   Menu,
   MenuItem,
-  Tooltip,
   Typography,
   useTheme,
+  Chip,
 } from "@mui/material";
 
 import React, { useState } from "react";
@@ -91,42 +89,35 @@ const CustomerTestimonialCard: React.FC<CustomerTestimonialCardProps> = ({
         },
       }}
     >
-      {/* Shareable Toggle Button */}
-      <Tooltip title={testimonial.isShareable ? "Shareable" : "Not Shareable"} placement="top">
-        <span
-          style={{
-            position: "absolute",
-            top: 8,
-            left: 8,
-            zIndex: 10,
-            display: "inline-block",
-            cursor: "default",
+      {/* Shareable status chip (text-only, no icon) */}
+      <span
+        style={{
+          position: "absolute",
+          top: 8,
+          left: 8,
+          zIndex: 10,
+          display: "inline-block",
+          cursor: "default",
+        }}
+      >
+        <Chip
+          label={testimonial.isShareable ? "internal" : "External"}
+          size="small"
+          variant="outlined"
+          sx={{
+            color: testimonial.isShareable ? "success.main" : "error.main",
+            borderColor: testimonial.isShareable ? "success.main" : "error.main",
+            backgroundColor: "transparent",
+            boxShadow: "none",
+            fontSize: "0.625rem",
+            height: 22,
+            px: 0.6,
+            fontWeight: 600,
+            pointerEvents: "none",
+            borderRadius: "10px",
           }}
-        >
-          <IconButton
-            size="small"
-            disableRipple
-            sx={{
-              backgroundColor: testimonial.isShareable ? "success.main" : "error.main",
-              boxShadow: "0 2px 12px rgba(0, 0, 0, 0.15)",
-              color: theme.palette.common.white,
-              opacity: 1,
-              cursor: "default",
-              pointerEvents: "none",
-              "&:hover": {
-                backgroundColor: testimonial.isShareable ? "success.dark" : "error.dark",
-                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
-              },
-            }}
-          >
-            {testimonial.isShareable ? (
-              <LockOpenIcon fontSize="small" />
-            ) : (
-              <LockIcon fontSize="small" />
-            )}
-          </IconButton>
-        </span>
-      </Tooltip>
+        />
+      </span>
 
       {/* Menu Button  */}
       {isAdmin && (

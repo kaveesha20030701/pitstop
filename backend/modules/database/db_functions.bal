@@ -1008,7 +1008,7 @@ public isolated function getQuestionById(int questionId) returns Question|error?
     return result is sql:NoRowsError ? () : result;
 }
 
-# Get public questions (without correct answer) for a quiz.
+# Create a new question for a quiz.
 # + quizId - Quiz ID
 # + payload - Additional payload if needed for fetching public questions
 # + createdBy - User email who is fetching the questions
