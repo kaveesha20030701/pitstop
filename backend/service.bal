@@ -2357,7 +2357,7 @@ service http:InterceptableService / on new http:Listener(9090) {
                     types:User|error? user = database:getUserById(userId);
                     if user is types:User {
                         string userEmailAddress = user.email;
-                        string emailSubject = string `[${appName}] New Quiz - ${quizDetails.title}`;
+                        string emailSubject = string `${appName}: New Quiz - ${quizDetails.title}`;
                         string renderedTemplate = renderAppName(email:quizAssignmentTemplate, appName);
                         string timeLimitText = string `${payload.timeLimitMinutes} mins`;
                         string dueDateText = quizDetails.dueDate;
