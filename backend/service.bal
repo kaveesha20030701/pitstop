@@ -2360,12 +2360,16 @@ service http:InterceptableService / on new http:Listener(9090) {
                         string emailSubject = string `[${appName}] New Quiz - ${quizDetails.title}`;
                         string renderedTemplate = renderAppName(email:quizAssignmentTemplate, appName);
                         string timeLimitText = string `${payload.timeLimitMinutes} mins`;
+                        string dueDateText = quizDetails.dueDate;
+                        if dueDateText.length() >= 10 {
+                            dueDateText = dueDateText.substring(0, 10);
+                        }
 
                         string|error content = email:bindKeyValues(renderedTemplate,
                             {
                                 "USER_NAME": string `${user.firstName}`,
                                 "QUIZ_TITLE": quizDetails.title,
-                                "DUE_DATE": quizDetails.dueDate,
+                                "DUE_DATE": dueDateText,
                                 "TIME_LIMIT": timeLimitText,
                                 "ASSIGNED_BY": employeeInfo.firstName + " " + employeeInfo.lastName,
                                 "QUIZ_LINK": string `${frontendBaseUrl}/my-board?quizId=${quizId}`
