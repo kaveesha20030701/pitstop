@@ -14,13 +14,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
+import { NA_VALUE } from "../config/constant";
 import { UserQuizAnalytics } from "@/types/types";
 import { parseDateAsUtc } from "./utils";
 
 const parseQuestionAnswers = (summary: string | undefined) => {
   const answers = new Map<number, string>();
 
-  if (!summary || summary === "N/A") {
+  if (!summary || summary === NA_VALUE) {
     return answers;
   }
 
@@ -74,7 +75,7 @@ export const exportAnalyticsToCSV = (
       subteam: "",
       email: "",
     };
-    const region = emp.subteam && emp.subteam !== "—" ? emp.subteam : "N/A";
+    const region = emp.subteam && emp.subteam !== "—" ? emp.subteam : NA_VALUE;
     const attempted = !!row.submittedAt;
     const isSubmissionLate =
       attempted &&
@@ -91,14 +92,14 @@ export const exportAnalyticsToCSV = (
     return [
       row.userName || "—",
       row.userEmail || "—",
-      emp.team || "N/A",
+      emp.team || NA_VALUE,
       region,
-      attempted ? row.scorePercentage : "N/A",
+      attempted ? row.scorePercentage : NA_VALUE,
       status,
-      row.submittedAt ? new Date(row.submittedAt).toLocaleDateString() : "N/A",
+      row.submittedAt ? new Date(row.submittedAt).toLocaleDateString() : NA_VALUE,
       ...questionHeaders.map((_, index) => {
         if (!attempted) {
-          return "N/A";
+          return NA_VALUE;
         }
 
         const questionNumber = index + 1;
