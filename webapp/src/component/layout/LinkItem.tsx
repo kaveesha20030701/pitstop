@@ -117,6 +117,9 @@ const ListItemLink = (props: ListItemLinkProps) => {
           e.stopPropagation();
           if (routeId !== INVALID_ROUTE_ID) {
             e.preventDefault();
+            if (to === pathname) {
+              return;
+            }
             dispatch(setNavigationLoading(true));
             handleSideBar();
             setTimeout(() => {
@@ -234,6 +237,9 @@ const ListItemLink = (props: ListItemLinkProps) => {
                 if ((!component.children || component.children.length === 0) && 
                     component.path && 
                     component.path !== "#") {
+                  if (component.path === pathname) {
+                    return;
+                  }
                   dispatch(setNavigationLoading(true));
                   handleSideBar();
                   setTimeout(() => {
