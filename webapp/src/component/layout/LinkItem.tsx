@@ -116,8 +116,12 @@ const ListItemLink = (props: ListItemLinkProps) => {
         onClick={(e: React.MouseEvent) => {
           e.stopPropagation();
           if (routeId !== INVALID_ROUTE_ID) {
+            e.preventDefault();
             dispatch(setNavigationLoading(true));
             handleSideBar();
+            setTimeout(() => {
+              navigate(to);
+            }, 180);
           }
         }}
         sx={{
@@ -231,8 +235,10 @@ const ListItemLink = (props: ListItemLinkProps) => {
                     component.path && 
                     component.path !== "#") {
                   dispatch(setNavigationLoading(true));
-                  navigate(component.path);
                   handleSideBar();
+                  setTimeout(() => {
+                    navigate(component.path);
+                  }, 180);
                 }
               }}
               sx={{
