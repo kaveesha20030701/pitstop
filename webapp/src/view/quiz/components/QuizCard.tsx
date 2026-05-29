@@ -105,6 +105,7 @@ const QuizCard: React.FC<Props> = ({ quiz }) => {
   };
 
   const handleSubmitted = () => {
+    syncQuizIdInUrl();
     setTakingQuiz(false);
     setViewingResult(true);
     // Fetch results immediately after quiz submission
