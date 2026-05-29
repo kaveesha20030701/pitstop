@@ -197,8 +197,7 @@ const AssignQuizModal: React.FC<Props> = ({ open, quiz, onClose }) => {
         setPendingUsers((prev) =>
           prev.some(
             (user) =>
-              user.userId === fullEmployee.userId ||
-              user.workEmail === fullEmployee.workEmail,
+              user.userId === fullEmployee.userId || user.workEmail === fullEmployee.workEmail,
           )
             ? prev
             : [...prev, fullEmployee],
@@ -274,10 +273,7 @@ const AssignQuizModal: React.FC<Props> = ({ open, quiz, onClose }) => {
 
   const isLoading = isAssigning || isRemoving !== null || loadingAssigned;
   const isAssignDisabled =
-    isLoading ||
-    isQuizOverdue ||
-    pendingUsers.length === 0 ||
-    !isValidTimeLimit;
+    isLoading || isQuizOverdue || pendingUsers.length === 0 || !isValidTimeLimit;
 
   return (
     <Dialog
@@ -354,7 +350,7 @@ const AssignQuizModal: React.FC<Props> = ({ open, quiz, onClose }) => {
           <Typography component="span" variant="body2" fontWeight={700} color="text.primary">
             {quiz?.title}
           </Typography>{" "}
-          to people from your HR directory. They'll get an email notification.
+          to employees. Selected employees will receive an email notification.
         </Typography>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2.5 }}>
           <TextField
